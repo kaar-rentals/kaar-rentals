@@ -1,54 +1,36 @@
-# Welcome to your Lovable project
+# Kaar.Rentals - Luxury Car Rental Platform
 
-## Project info
+## Project Overview
 
-**URL**: https://lovable.dev/projects/2241b5bf-4b43-4cca-bf4a-254d9307e160
+Kaar.Rentals is a premium car rental service offering luxury vehicles with exceptional customer experience. This platform provides an easy-to-use interface for customers to browse, book, and manage their car rental needs.
 
-## How can I edit this code?
+## Getting Started
 
-There are several ways of editing your application.
+### Prerequisites
 
-**Use Lovable**
+- Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/2241b5bf-4b43-4cca-bf4a-254d9307e160) and start prompting.
+### Installation
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Follow these steps to set up the project locally:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Step 1: Clone the repository
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Step 2: Navigate to the project directory
+cd kaar-rentals
 
-# Step 3: Install the necessary dependencies.
+# Step 3: Install the necessary dependencies
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Step 4: Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Development
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+The application will be available at `http://localhost:8080` with hot reload enabled.
 
 ## What technologies are used for this project?
 
@@ -60,14 +42,19 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/2241b5bf-4b43-4cca-bf4a-254d9307e160) and click on Share -> Publish.
+To deploy this project:
 
-## Can I connect a custom domain to my Lovable project?
+1. Build the production version: `npm run build`
+2. Deploy the `dist` folder to your preferred hosting platform
+3. Configure your domain and SSL certificates as needed
 
-Yes, you can!
+## Features
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- Luxury car browsing and filtering
+- Real-time booking system
+- User authentication and profiles
+- Payment processing
+- Responsive design for all devices
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)

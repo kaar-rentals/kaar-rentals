@@ -23,7 +23,7 @@ const Header = () => {
             <div className="bg-gradient-to-r from-primary to-accent p-2 rounded-lg">
               <Car className="h-6 w-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-gradient">LuxeRide</span>
+            <span className="text-xl font-bold text-gradient">Kaar.Rentals</span>
           </Link>
 
           {/* Desktop Navigation */}

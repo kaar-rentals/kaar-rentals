@@ -1,7 +1,7 @@
 import { Heart, Star, User, Fuel, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Car } from '@/types/car';
+import { Car } from '@/services/api';
 import { Link } from 'react-router-dom';
 
 interface CarCardProps {
@@ -14,7 +14,7 @@ const CarCard = ({ car }: CarCardProps) => {
       {/* Image Section */}
       <div className="relative">
         <img 
-          src={car.image} 
+          src={car.images?.[0] || car.image || '/placeholder-car.jpg'} 
           alt={`${car.brand} ${car.model}`}
           className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
         />
@@ -22,11 +22,7 @@ const CarCard = ({ car }: CarCardProps) => {
         {/* Brand Logo Overlay */}
         <div className="absolute top-4 left-4">
           <div className="bg-white/90 backdrop-blur-sm rounded-lg p-2">
-            <img 
-              src={car.logo} 
-              alt={car.brand}
-              className="h-6 w-6 object-contain"
-            />
+            <span className="text-sm font-bold text-primary">{car.brand}</span>
           </div>
         </div>
 
@@ -56,33 +52,33 @@ const CarCard = ({ car }: CarCardProps) => {
               <span className="text-sm text-muted-foreground">4.8</span>
             </div>
           </div>
-          <p className="text-muted-foreground text-sm">{car.year} • {car.engineCapacity}</p>
+          <p className="text-muted-foreground text-sm">{car.year || 'N/A'} • {car.engineCapacity || 'N/A'}</p>
         </div>
 
         {/* Features */}
         <div className="grid grid-cols-3 gap-4 text-sm text-muted-foreground">
           <div className="flex items-center space-x-1">
             <User className="h-4 w-4" />
-            <span>{car.seating}</span>
+            <span>{car.seating || 'N/A'}</span>
           </div>
           <div className="flex items-center space-x-1">
             <Fuel className="h-4 w-4" />
-            <span>{car.mileage}</span>
+            <span>{car.mileage || 'N/A'}</span>
           </div>
           <div className="flex items-center space-x-1">
             <Settings className="h-4 w-4" />
-            <span>{car.transmission.slice(0, 4)}</span>
+            <span>{(car.transmission || 'N/A').slice(0, 4)}</span>
           </div>
         </div>
 
         {/* Key Features */}
         <div className="flex flex-wrap gap-1">
-          {car.features.slice(0, 3).map((feature, index) => (
+          {(car.features || []).slice(0, 3).map((feature, index) => (
             <Badge key={index} variant="outline" className="text-xs">
               {feature}
             </Badge>
           ))}
-          {car.features.length > 3 && (
+          {car.features && car.features.length > 3 && (
             <Badge variant="outline" className="text-xs">
               +{car.features.length - 3} more
             </Badge>
@@ -93,23 +89,24 @@ const CarCard = ({ car }: CarCardProps) => {
         <div className="flex items-center justify-between pt-4 border-t border-border">
           <div className="space-y-1">
             <div className="text-2xl font-bold text-primary">
-              ${car.price}
+              PKR {(car.pricePerDay || car.price || 0).toLocaleString()}
               <span className="text-sm text-muted-foreground font-normal">/day</span>
             </div>
           </div>
           
           <div className="flex space-x-2">
-            <Link to={`/car/${car.id}/details`}>
+            <Link to={`/car/${car._id || car.id}/details`}>
               <Button variant="outline" size="sm">
                 Details
               </Button>
             </Link>
-            <Link to={`/car/${car.id}/book`}>
+            <Link to={`/car/${car._id || car.id}/book`}>
               <Button 
                 size="sm" 
                 className="bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary"
+                disabled={car.isRented}
               >
-                Book Now
+                {car.isRented ? 'Rented' : 'Book Now'}
               </Button>
             </Link>
           </div>

@@ -90,7 +90,7 @@ const CarDetails = () => {
                 {/* Price */}
                 <div className="bg-gradient-card p-6 rounded-xl">
                   <div className="text-3xl font-bold text-primary mb-2">
-                    ${car.price}
+                    PKR {car.price.toLocaleString()}
                     <span className="text-lg text-muted-foreground font-normal">/day</span>
                   </div>
                   <p className="text-muted-foreground">Best price guaranteed</p>

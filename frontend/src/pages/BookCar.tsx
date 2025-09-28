@@ -254,7 +254,7 @@ const BookCar = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span>Daily Rate</span>
-                      <span>${car.price}</span>
+                      <span>PKR {car.price.toLocaleString()}</span>
                     </div>
                     {days > 0 && (
                       <>
@@ -265,17 +265,17 @@ const BookCar = () => {
                         <div className="border-t border-border pt-3">
                           <div className="flex justify-between font-semibold">
                             <span>Subtotal</span>
-                            <span>${totalPrice}</span>
+                            <span>PKR {totalPrice.toLocaleString()}</span>
                           </div>
                         </div>
                         <div className="flex justify-between text-sm text-muted-foreground">
                           <span>Taxes & Fees</span>
-                          <span>${Math.round(totalPrice * 0.15)}</span>
+                          <span>PKR {Math.round(totalPrice * 0.15).toLocaleString()}</span>
                         </div>
                         <div className="border-t border-border pt-3">
                           <div className="flex justify-between text-lg font-bold">
                             <span>Total</span>
-                            <span>${totalPrice + Math.round(totalPrice * 0.15)}</span>
+                            <span>PKR {(totalPrice + Math.round(totalPrice * 0.15)).toLocaleString()}</span>
                           </div>
                         </div>
                       </>

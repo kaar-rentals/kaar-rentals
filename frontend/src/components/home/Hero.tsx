@@ -11,19 +11,19 @@ const Hero = () => {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${heroBg})` }}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/70 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/70 to-transparent"></div>
       </div>
 
       {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="text-white space-y-8 fade-in">
+          <div className="text-foreground space-y-8 fade-in">
             <div className="space-y-4">
               <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
                 Drive Your
                 <span className="block text-accent">Dreams</span>
               </h1>
-              <p className="text-xl text-white/90 max-w-lg">
+              <p className="text-xl text-foreground/80 max-w-lg">
                 Experience luxury car rental like never before. Premium vehicles, exceptional service, unbeatable prices.
               </p>
             </div>
@@ -39,7 +39,7 @@ const Hero = () => {
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="border-white text-white hover:bg-white hover:text-primary font-semibold px-8 py-4 text-lg"
+                  className="border-foreground text-foreground hover:bg-foreground hover:text-background font-semibold px-8 py-4 text-lg"
                 >
                   List Your Car
                 </Button>
@@ -52,22 +52,22 @@ const Hero = () => {
                 <div className="flex items-center justify-center w-12 h-12 bg-accent/20 rounded-full mb-2 mx-auto">
                   <Car className="h-6 w-6 text-accent" />
                 </div>
-                <div className="text-2xl font-bold">500+</div>
-                <div className="text-sm text-white/80">Premium Cars</div>
+                <div className="text-2xl font-bold text-foreground">500+</div>
+                <div className="text-sm text-foreground/70">Premium Cars</div>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center w-12 h-12 bg-accent/20 rounded-full mb-2 mx-auto">
                   <Users className="h-6 w-6 text-accent" />
                 </div>
-                <div className="text-2xl font-bold">10K+</div>
-                <div className="text-sm text-white/80">Happy Customers</div>
+                <div className="text-2xl font-bold text-foreground">10K+</div>
+                <div className="text-sm text-foreground/70">Happy Customers</div>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center w-12 h-12 bg-accent/20 rounded-full mb-2 mx-auto">
                   <Star className="h-6 w-6 text-accent" />
                 </div>
-                <div className="text-2xl font-bold">4.9</div>
-                <div className="text-sm text-white/80">Rating</div>
+                <div className="text-2xl font-bold text-foreground">4.9</div>
+                <div className="text-sm text-foreground/70">Rating</div>
               </div>
             </div>
           </div>
@@ -75,9 +75,9 @@ const Hero = () => {
           {/* Right side - Optional feature showcase */}
           <div className="hidden lg:block slide-up">
             <div className="relative">
-              <div className="premium-card p-6 bg-white/10 backdrop-blur-sm border-white/20">
-                <h3 className="text-white text-xl font-semibold mb-4">Why Choose LuxeRide?</h3>
-                <ul className="space-y-3 text-white/90">
+              <div className="premium-card p-6 bg-background/90 backdrop-blur-sm border-border">
+                <h3 className="text-foreground text-xl font-semibold mb-4">Why Choose Kaar.Rentals?</h3>
+                <ul className="space-y-3 text-foreground/80">
                   <li className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-accent rounded-full"></div>
                     <span>Premium luxury vehicles</span>
@@ -102,9 +102,9 @@ const Hero = () => {
       </div>
 
       {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white animate-bounce">
-        <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
-          <div className="w-1 h-3 bg-white/60 rounded-full mt-2 animate-pulse"></div>
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-foreground animate-bounce">
+        <div className="w-6 h-10 border-2 border-foreground/30 rounded-full flex justify-center">
+          <div className="w-1 h-3 bg-foreground/60 rounded-full mt-2 animate-pulse"></div>
         </div>
       </div>
     </section>

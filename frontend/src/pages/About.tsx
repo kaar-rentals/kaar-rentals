@@ -40,9 +40,9 @@ const About = () => {
         {/* Hero Section */}
         <section className="bg-gradient-to-r from-primary via-primary-dark to-accent py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-5xl font-bold text-white mb-4">About LuxeRide</h1>
+            <h1 className="text-5xl font-bold text-white mb-4">About Kaar.Rentals</h1>
             <p className="text-xl text-white/90 max-w-2xl mx-auto">
-              Pioneering premium car rental experiences since 2008
+              Reliable Rides Anytime
             </p>
           </div>
         </section>
@@ -56,15 +56,13 @@ const About = () => {
                   Our <span className="text-gradient">Story</span>
                 </h2>
                 <p className="text-lg text-muted-foreground">
-                  Founded in 2008, LuxeRide began with a simple vision: to make luxury car rentals 
-                  accessible, reliable, and exceptional. What started as a small collection of premium 
-                  vehicles has grown into one of the most trusted names in automotive rental services.
+                At Kaar Rentals, we make car hiring simple, reliable, and affordable. Whether you need a vehicle for a business trip, a weekend getaway, or daily use, we offer a wide range of well-maintained cars to suit your needs.
                 </p>
                 <p className="text-lg text-muted-foreground">
-                  Today, we proudly serve thousands of customers worldwide, offering an extensive 
-                  fleet of meticulously maintained vehicles from the world's most prestigious brands. 
-                  Our commitment to excellence has earned us industry recognition and, more importantly, 
-                  the trust of our valued customers.
+                Our goal is to provide a seamless rental experience with transparent pricing, flexible options, and 24/7 customer support. From economy rides to premium vehicles, every car is carefully inspected to ensure comfort and safety.
+                </p>
+                <p className="text-lg text-muted-foreground">
+                  With easy online booking, quick confirmations, and doorstep delivery options, we’re redefining convenience in car rentals.
                 </p>
               </div>
               <div className="premium-card p-8">

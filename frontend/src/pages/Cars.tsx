@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Filter, Grid, List } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -7,22 +7,42 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { cars } from '@/data/cars';
+import { apiService, Car } from '@/services/api';
 
 const Cars = () => {
+  const [cars, setCars] = useState<Car[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [priceRange, setPriceRange] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  useEffect(() => {
+    loadCars();
+  }, []);
+
+  const loadCars = async () => {
+    try {
+      setLoading(true);
+      const carsData = await apiService.getCars();
+      setCars(carsData);
+    } catch (error) {
+      console.error('Error loading cars:', error);
+      // Fallback to empty array if API is not available
+      setCars([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredCars = cars.filter(car => {
     const matchesSearch = car.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          car.model.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || car.category.toLowerCase() === selectedCategory;
     const matchesPrice = priceRange === 'all' || 
-                        (priceRange === 'budget' && car.price < 250) ||
-                        (priceRange === 'mid' && car.price >= 250 && car.price < 350) ||
-                        (priceRange === 'luxury' && car.price >= 350);
+                        (priceRange === 'budget' && car.pricePerDay < 30000) ||
+                        (priceRange === 'mid' && car.pricePerDay >= 30000 && car.pricePerDay < 50000) ||
+                        (priceRange === 'luxury' && car.pricePerDay >= 50000);
     
     return matchesSearch && matchesCategory && matchesPrice;
   });
@@ -76,9 +96,9 @@ const Cars = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Prices</SelectItem>
-                    <SelectItem value="budget">Under $250</SelectItem>
-                    <SelectItem value="mid">$250 - $350</SelectItem>
-                    <SelectItem value="luxury">$350+</SelectItem>
+                    <SelectItem value="budget">Under PKR 30,000</SelectItem>
+                    <SelectItem value="mid">PKR 30,000 - 50,000</SelectItem>
+                    <SelectItem value="luxury">PKR 50,000+</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -119,8 +139,8 @@ const Cars = () => {
               )}
               {priceRange !== 'all' && (
                 <Badge variant="secondary">
-                  {priceRange === 'budget' ? 'Under $250' : 
-                   priceRange === 'mid' ? '$250-$350' : '$350+'}
+                  {priceRange === 'budget' ? 'Under PKR 30,000' : 
+                   priceRange === 'mid' ? 'PKR 30,000-50,000' : 'PKR 50,000+'}
                   <button 
                     onClick={() => setPriceRange('all')}
                     className="ml-2 hover:text-destructive"
@@ -138,11 +158,16 @@ const Cars = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-semibold">
-                {filteredCars.length} Vehicle{filteredCars.length !== 1 ? 's' : ''} Available
+                {loading ? 'Loading...' : `${filteredCars.length} Vehicle${filteredCars.length !== 1 ? 's' : ''} Available`}
               </h2>
             </div>
 
-            {filteredCars.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading cars...</p>
+              </div>
+            ) : filteredCars.length === 0 ? (
               <div className="text-center py-20">
                 <div className="text-muted-foreground mb-4">
                   <Filter className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
@@ -164,7 +189,7 @@ const Cars = () => {
                   : 'grid-cols-1'
               }`}>
                 {filteredCars.map((car) => (
-                  <CarCard key={car.id} car={car} />
+                  <CarCard key={car._id} car={car} />
                 ))}
               </div>
             )}

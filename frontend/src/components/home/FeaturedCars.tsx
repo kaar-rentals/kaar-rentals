@@ -1,11 +1,43 @@
+import { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import CarCard from '@/components/cars/CarCard';
-import { cars } from '@/data/cars';
+import { apiService, Car } from '@/services/api';
+import { cars as staticCars } from '@/data/cars';
 
 const FeaturedCars = () => {
-  const featuredCars = cars.slice(0, 3);
+  const [featuredCars, setFeaturedCars] = useState<Car[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadFeaturedCars();
+  }, []);
+
+  const loadFeaturedCars = async () => {
+    try {
+      setLoading(true);
+      const carsData = await apiService.getCars();
+      if (carsData && Array.isArray(carsData)) {
+        setFeaturedCars(carsData.slice(0, 3));
+      } else {
+        throw new Error('Invalid data format from API');
+      }
+    } catch (error) {
+      console.error('Error loading featured cars:', error);
+      // Fallback to static data if API is not available
+      console.log('Using static data as fallback');
+      console.log('Static cars available:', staticCars.length);
+      if (staticCars && staticCars.length > 0) {
+        setFeaturedCars(staticCars.slice(0, 3));
+      } else {
+        console.error('No static cars available');
+        setFeaturedCars([]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <section className="py-20 bg-muted/30">
@@ -20,13 +52,25 @@ const FeaturedCars = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12 slide-up">
-          {featuredCars.map((car, index) => (
-            <div key={car.id} style={{ animationDelay: `${index * 0.1}s` }}>
-              <CarCard car={car} />
-            </div>
-          ))}
-        </div>
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading featured cars...</p>
+          </div>
+        ) : featuredCars.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12 slide-up">
+            {featuredCars.map((car, index) => (
+              <div key={car._id || car.id} style={{ animationDelay: `${index * 0.1}s` }}>
+                <CarCard car={car} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No cars available at the moment.</p>
+            <p className="text-sm text-muted-foreground mt-2">Please try again later.</p>
+          </div>
+        )}
 
         <div className="text-center fade-in">
           <Link to="/cars">

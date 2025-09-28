@@ -1,4 +1,4 @@
-import { MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, MessageCircle, Facebook, Instagram } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -9,24 +9,24 @@ import { Label } from '@/components/ui/label';
 const Contact = () => {
   const contactInfo = [
     {
-      icon: MapPin,
-      title: 'Visit Us',
-      details: ['123 Luxury Avenue', 'Premium City, PC 12345', 'United States']
-    },
-    {
       icon: Phone,
       title: 'Call Us',
-      details: ['+1 (555) 123-4567', '+1 (555) 987-6543', 'Available 24/7']
+      details: ['03090017510', 'Available 24/7', 'Direct line to our team']
     },
     {
       icon: Mail,
       title: 'Email Us',
-      details: ['info@luxeride.com', 'support@luxeride.com', 'sales@luxeride.com']
+      details: ['kaar.rentals@gmail.com', 'Quick response guaranteed', 'Support & inquiries']
     },
     {
-      icon: Clock,
-      title: 'Business Hours',
-      details: ['Mon - Fri: 8:00 AM - 8:00 PM', 'Sat - Sun: 9:00 AM - 6:00 PM', 'Emergency: 24/7']
+      icon: MessageCircle,
+      title: 'WhatsApp',
+      details: ['+923090017510', 'Instant messaging', 'Quick booking support']
+    },
+    {
+      icon: MapPin,
+      title: 'Visit Us',
+      details: ['DHA Phase 5, Karachi', 'Gulberg, Lahore', 'Islamabad & Rawalpindi']
     }
   ];
 
@@ -120,6 +120,54 @@ const Contact = () => {
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Social Media Links */}
+                <div className="premium-card p-6">
+                  <h3 className="text-xl font-semibold mb-4">Follow Us</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Stay connected with us on social media for updates, special offers, and more!
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    <a 
+                      href="https://www.facebook.com/share/16sg1pXed3/?mibextid=wwXIfr" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <Facebook className="h-5 w-5" />
+                      <span>Facebook</span>
+                    </a>
+                    <a 
+                      href="https://www.instagram.com/kaar.rentals/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors"
+                    >
+                      <Instagram className="h-5 w-5" />
+                      <span>Instagram</span>
+                    </a>
+                    <a 
+                      href="https://wa.me/923090017510" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      <MessageCircle className="h-5 w-5" />
+                      <span>WhatsApp</span>
+                    </a>
+                    <a 
+                      href="https://www.tiktok.com/@kaar.rentals" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+                    >
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                      </svg>
+                      <span>TikTok</span>
+                    </a>
+                  </div>
                 </div>
 
                 {/* Map Placeholder */}

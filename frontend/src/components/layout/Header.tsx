@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Car, Menu, X } from 'lucide-react';
+import { Car, Menu, X, User, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   const navigation = [
     { name: 'Home', href: '/' },
     { name: 'Cars', href: '/cars' },
     { name: 'About', href: '/about' },
-    { name: 'Services', href: '/services' },
     { name: 'Contact', href: '/contact' },
   ];
 
@@ -41,14 +42,48 @@ const Header = () => {
 
           {/* Desktop CTA Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link to="/list-car">
-              <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                List Your Car
-              </Button>
-            </Link>
-            <Button className="bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary">
-              Book Now
-            </Button>
+            {user ? (
+              <>
+                {user.role === 'admin' && (
+                  <Link to="/admin">
+                    <Button variant="outline" className="border-accent text-accent hover:bg-accent hover:text-accent-foreground">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Admin
+                    </Button>
+                  </Link>
+                )}
+                {(user.role === 'owner' || user.role === 'admin') && (
+                  <Link to="/owner-profile">
+                    <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                      <User className="h-4 w-4 mr-2" />
+                      My Cars
+                    </Button>
+                  </Link>
+                )}
+                <Link to="/list-car">
+                  <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                    List Your Car
+                  </Button>
+                </Link>
+                <Button onClick={logout} variant="outline">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/list-car">
+                  <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                    List Your Car
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button className="bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary">
+                    Sign In
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -78,14 +113,48 @@ const Header = () => {
                 </Link>
               ))}
               <div className="pt-4 space-y-2">
-                <Link to="/list-car" className="block">
-                  <Button variant="outline" className="w-full">
-                    List Your Car
-                  </Button>
-                </Link>
-                <Button className="w-full bg-gradient-to-r from-primary to-primary-dark">
-                  Book Now
-                </Button>
+                {user ? (
+                  <>
+                    {user.role === 'admin' && (
+                      <Link to="/admin" className="block">
+                        <Button variant="outline" className="w-full">
+                          <Settings className="h-4 w-4 mr-2" />
+                          Admin Panel
+                        </Button>
+                      </Link>
+                    )}
+                    {(user.role === 'owner' || user.role === 'admin') && (
+                      <Link to="/owner-profile" className="block">
+                        <Button variant="outline" className="w-full">
+                          <User className="h-4 w-4 mr-2" />
+                          My Cars
+                        </Button>
+                      </Link>
+                    )}
+                    <Link to="/list-car" className="block">
+                      <Button variant="outline" className="w-full">
+                        List Your Car
+                      </Button>
+                    </Link>
+                    <Button onClick={logout} variant="outline" className="w-full">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/list-car" className="block">
+                      <Button variant="outline" className="w-full">
+                        List Your Car
+                      </Button>
+                    </Link>
+                    <Link to="/auth" className="block">
+                      <Button className="w-full bg-gradient-to-r from-primary to-primary-dark">
+                        Sign In
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>

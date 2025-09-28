@@ -234,13 +234,13 @@ const ListCar = () => {
                   <Input 
                     id="price" 
                     type="number" 
-                    placeholder="2000"
+                    placeholder="30000"
                     value={formData.price}
                     onChange={(e) => setFormData(prev => ({...prev, price: e.target.value}))}
                     required 
                   />
                   <p className="text-sm text-muted-foreground">
-                    Set a competitive daily rate. We'll help optimize pricing based on market analysis.
+                    Set a competitive daily rate in Pakistani Rupees. We'll help optimize pricing based on market analysis.
                   </p>
                 </div>
               </div>

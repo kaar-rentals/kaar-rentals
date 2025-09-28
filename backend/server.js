@@ -9,15 +9,33 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors({ origin: process.env.FRONTEND_URL || "http://localhost:3000" }));
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:8080", 
+  "http://localhost:8081",
+  "http://localhost:8082",
+  "http://localhost:8083",
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
+app.use(cors({ 
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(morgan("dev"));
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static('uploads'));
 
 // Routes
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/cars", require("./routes/cars"));
 app.use("/api/bookings", require("./routes/bookings"));
 app.use("/api/payments", require("./routes/payments"));
+app.use("/api/admin", require("./routes/admin"));
 app.use("/api/seed", require("./routes/seed"));
 
 // Health check
@@ -28,9 +46,12 @@ app.get("/api/health", (_req, res) =>
 // Root
 app.get("/", (_req, res) => res.send("🚀 Kaar.rentals Backend API is running"));
 
+// Connect to MongoDB
+connectDB(process.env.MONGO_URI || "mongodb://localhost:27017/kaarDB");
+
 // Start
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, async () => {
-  await connectDB(process.env.MONGO_URI);
+app.listen(PORT, () => {
   console.log(`🚀 Backend running on http://localhost:${PORT}`);
+  console.log(`📊 Connected to MongoDB database: ${process.env.MONGO_DBNAME || 'kaarDB'}`);
 });

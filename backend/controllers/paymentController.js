@@ -107,16 +107,28 @@ async function webhook(req, res, next) {
       payment.providerRef = data.transaction_id || data.txn_id || data.id || payment.providerRef;
       await payment.save();
 
-      // activate membership for user
-      const plan = payment.plan || (data.metadata && data.metadata.plan);
-      const days = PLAN_DAYS[plan] || PLAN_DAYS['basic'];
-      const expiry = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+      if (payment.type === 'membership') {
+        // activate membership for user
+        const plan = payment.plan || (data.metadata && data.metadata.plan);
+        const days = PLAN_DAYS[plan] || PLAN_DAYS['basic'];
+        const expiry = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
-      await User.findByIdAndUpdate(payment.user, {
-        membershipActive: true,
-        membershipPlan: plan,
-        membershipExpiry: expiry
-      });
+        await User.findByIdAndUpdate(payment.user, {
+          membershipActive: true,
+          membershipPlan: plan,
+          membershipExpiry: expiry
+        });
+      } else if (payment.type === 'ad') {
+        // approve car listing
+        const carId = payment.metadata?.carId;
+        if (carId) {
+          const Car = require('../models/Car');
+          await Car.findByIdAndUpdate(carId, {
+            paymentStatus: 'PAID',
+            isApproved: true
+          });
+        }
+      }
 
       // TODO: send email to user notifying activation (optional)
     } else if (statusRaw.includes('fail') || statusRaw.includes('failed') || statusRaw.includes('cancel')) {
@@ -138,4 +150,61 @@ async function webhook(req, res, next) {
   }
 }
 
-module.exports = { createMembershipCheckout, webhook };
+/**
+ * POST /api/payments/create-car-listing
+ * body: { carId: 'car_id', amount: 5000 }
+ * req.user must be logged in (owner)
+ */
+async function createCarListingPayment(req, res, next) {
+  try {
+    const userId = req.user && req.user._id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { carId, amount } = req.body;
+    if (!carId || !amount) return res.status(400).json({ error: 'carId and amount required' });
+
+    // Verify car belongs to user
+    const Car = require('../models/Car');
+    const car = await Car.findOne({ _id: carId, owner: userId });
+    if (!car) return res.status(404).json({ error: 'Car not found' });
+
+    // create Payment record
+    const payment = await Payment.create({
+      user: userId,
+      type: 'ad',
+      amount,
+      currency: 'PKR',
+      status: 'PENDING',
+      metadata: { carId }
+    });
+
+    // use payment._id as order id
+    const orderId = payment._id.toString();
+    payment.orderId = orderId;
+    await payment.save();
+
+    // Update car with payment reference
+    car.paymentId = payment._id;
+    await car.save();
+
+    // Build safepay payload for frontend
+    const payload = {
+      merchant_key: SAFE_PAY_KEY,
+      order_id: orderId,
+      amount: payment.amount,
+      item_name: `Car Listing: ${car.brand} ${car.model}`,
+      currency: payment.currency,
+      return_url: `${FRONTEND_URL}/payment/callback`,
+      notify_url: `${BASE_URL}/api/payments/webhook`,
+      customer_name: req.user.name || '',
+      customer_email: req.user.email || '',
+      metadata: { paymentId: payment._id.toString(), carId }
+    };
+
+    res.json({ paymentId: payment._id, orderId, amount: payment.amount, payload });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { createMembershipCheckout, createCarListingPayment, webhook };

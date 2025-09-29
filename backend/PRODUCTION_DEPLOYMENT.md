@@ -61,3 +61,4 @@ After deploying the backend, update the frontend API URL:
 ## Test Credentials
 - Admin: `admin@kaar.rentals` / `admin123`
 - Owner: `owner@kaar.rentals` / `owner123`
+

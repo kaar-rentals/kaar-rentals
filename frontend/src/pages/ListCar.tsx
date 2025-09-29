@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Upload, Car, DollarSign, MapPin } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Upload, Car, DollarSign, MapPin, X, Image as ImageIcon } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/contexts/AuthContext';
+import { apiService } from '@/services/api';
 
 const ListCar = () => {
+  const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
   const [formData, setFormData] = useState({
     brand: '',
     model: '',
@@ -51,11 +60,133 @@ const ListCar = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    
+    // Validate file types and sizes
+    const validFiles = files.filter(file => {
+      const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(file.type);
+      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
+      return isValidType && isValidSize;
+    });
+
+    if (validFiles.length !== files.length) {
+      setError('Some files were rejected. Please upload only JPG, PNG, or GIF files under 10MB each.');
+    }
+
+    // Limit to 10 images total
+    const newImages = [...images, ...validFiles].slice(0, 10);
+    setImages(newImages);
+
+    // Create previews
+    const newPreviews = validFiles.map(file => URL.createObjectURL(file));
+    setImagePreviews(prev => [...prev, ...newPreviews].slice(0, 10));
+  };
+
+  const removeImage = (index: number) => {
+    const newImages = images.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    
+    // Revoke object URL to prevent memory leaks
+    URL.revokeObjectURL(imagePreviews[index]);
+    
+    setImages(newImages);
+    setImagePreviews(newPreviews);
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Listing submission:', formData);
-    alert('Car listing submitted successfully! We will review and contact you soon.');
+    setLoading(true);
+    setError('');
+
+    if (!user) {
+      setError('Please log in to list a car');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Create FormData for file upload
+      const submitData = new FormData();
+      
+      // Add car data
+      submitData.append('brand', formData.brand);
+      submitData.append('model', formData.model);
+      submitData.append('category', formData.category);
+      submitData.append('year', formData.year);
+      submitData.append('pricePerDay', formData.price);
+      submitData.append('engineCapacity', formData.engineCapacity);
+      submitData.append('fuelType', formData.fuelType);
+      submitData.append('transmission', formData.transmission);
+      submitData.append('mileage', formData.mileage);
+      submitData.append('seating', formData.seating);
+      submitData.append('description', formData.description);
+      submitData.append('features', JSON.stringify(formData.features));
+      submitData.append('location', formData.location);
+      submitData.append('city', formData.location.split(',')[0] || formData.location);
+
+      // Add images
+      images.forEach((image, index) => {
+        submitData.append('images', image);
+      });
+
+      console.log('Submitting car listing...', {
+        brand: formData.brand,
+        model: formData.model,
+        images: images.length
+      });
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/cars`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: submitData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit car listing');
+      }
+
+      const result = await response.json();
+      console.log('Car listing submitted successfully:', result);
+      
+      alert('Car listing submitted successfully! We will review and contact you soon.');
+      
+      // Reset form
+      setFormData({
+        brand: '',
+        model: '',
+        category: '',
+        year: '',
+        price: '',
+        engineCapacity: '',
+        fuelType: '',
+        transmission: '',
+        mileage: '',
+        seating: '',
+        description: '',
+        features: [],
+        dealerName: '',
+        whatsapp: '',
+        location: '',
+        email: '',
+        phone: ''
+      });
+      setImages([]);
+      setImagePreviews([]);
+      
+    } catch (err: any) {
+      console.error('Error submitting car listing:', err);
+      setError(err.message || 'Failed to submit car listing');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -314,17 +445,73 @@ const ListCar = () => {
               {/* Photo Upload */}
               <div className="premium-card p-8">
                 <h3 className="text-xl font-semibold mb-6">Vehicle Photos</h3>
+                
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                    {error}
+                  </div>
+                )}
+
+                {/* Image Previews */}
+                {imagePreviews.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-medium mb-3">Uploaded Photos ({imagePreviews.length}/10)</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={preview}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload Area */}
                 <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
                   <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h4 className="text-lg font-semibold mb-2">Upload Vehicle Photos</h4>
                   <p className="text-muted-foreground mb-4">
                     Add high-quality photos of your vehicle (exterior, interior, engine bay)
                   </p>
-                  <Button variant="outline">Choose Files</Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={triggerFileInput}
+                    disabled={images.length >= 10}
+                  >
+                    <ImageIcon className="h-4 w-4 mr-2" />
+                    Choose Files
+                  </Button>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Support: JPG, PNG (Max 10MB each, up to 10 photos)
+                    Support: JPG, PNG, GIF (Max 10MB each, up to 10 photos)
                   </p>
+                  {images.length >= 10 && (
+                    <p className="text-sm text-orange-600 mt-2">
+                      Maximum 10 photos reached
+                    </p>
+                  )}
                 </div>
+
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/jpg,image/png,image/gif"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
               </div>
 
               {/* Submit */}
@@ -333,8 +520,9 @@ const ListCar = () => {
                   type="submit" 
                   size="lg"
                   className="bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary px-12"
+                  disabled={loading}
                 >
-                  Submit Listing
+                  {loading ? 'Submitting...' : 'Submit Listing'}
                 </Button>
                 <p className="text-sm text-muted-foreground mt-4">
                   Your listing will be reviewed within 24 hours. We'll contact you once approved.

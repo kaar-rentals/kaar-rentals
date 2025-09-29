@@ -33,3 +33,4 @@ router.patch('/users/:id/role', updateUserRole);
 router.get('/bookings', getRecentBookings);
 
 module.exports = router;
+

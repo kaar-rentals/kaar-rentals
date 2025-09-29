@@ -126,6 +126,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (name: string, email: string, password: string) => {
     try {
       setLoading(true);
+      console.log('Attempting registration with:', { name, email, password: '***' });
+      
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
@@ -138,19 +140,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let errorMessage = 'Registration failed';
         try {
           const errorData = await response.json();
+          console.log('Registration error response:', errorData);
           errorMessage = errorData.error || errorData.message || errorMessage;
         } catch {
           errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         }
+        console.log('Registration failed with error:', errorMessage);
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      if (!data.user) {
+      console.log('Registration successful:', data);
+      
+      if (!data._id) {
         throw new Error('Invalid response from server');
       }
 
-      // Auto-login after registration
+      // Auto-login after successful registration
+      console.log('Auto-logging in after registration...');
       await login(email, password);
     } catch (error) {
       console.error('Registration error:', error);

@@ -8,6 +8,9 @@ export default defineConfig({
     host: "::",
     port: 8080,
   },
+  build: {
+    sourcemap: true,
+  },
   plugins: [
     react(),
   ],

@@ -1,4 +1,6 @@
 import { useState, useRef } from 'react';
+import { storage } from '@/firebase';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Upload, Car, DollarSign, MapPin, X, Image as ImageIcon } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -110,42 +112,42 @@ const ListCar = () => {
     }
 
     try {
-      // Create FormData for file upload
-      const submitData = new FormData();
-      
-      // Add car data
-      submitData.append('brand', formData.brand);
-      submitData.append('model', formData.model);
-      submitData.append('category', formData.category);
-      submitData.append('year', formData.year);
-      submitData.append('pricePerDay', formData.price);
-      submitData.append('engineCapacity', formData.engineCapacity);
-      submitData.append('fuelType', formData.fuelType);
-      submitData.append('transmission', formData.transmission);
-      submitData.append('mileage', formData.mileage);
-      submitData.append('seating', formData.seating);
-      submitData.append('description', formData.description);
-      submitData.append('features', JSON.stringify(formData.features));
-      submitData.append('location', formData.location);
-      submitData.append('city', formData.location.split(',')[0] || formData.location);
+      // 1) Upload images to Firebase Storage
+      const uploadedUrls: string[] = [];
+      for (const file of images) {
+        const path = `cars/${Date.now()}-${file.name}`;
+        const fileRef = storageRef(storage, path);
+        await uploadBytes(fileRef, file, { contentType: file.type });
+        const url = await getDownloadURL(fileRef);
+        uploadedUrls.push(url);
+      }
 
-      // Add images
-      images.forEach((image, index) => {
-        submitData.append('images', image);
-      });
+      console.log('Submitting car listing...', { brand: formData.brand, model: formData.model, images: uploadedUrls.length });
 
-      console.log('Submitting car listing...', {
-        brand: formData.brand,
-        model: formData.model,
-        images: images.length
-      });
-
+      // 2) Send only URLs and metadata to backend
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/cars`, {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
-        body: submitData,
+        body: JSON.stringify({
+          brand: formData.brand,
+          model: formData.model,
+          category: formData.category,
+          year: formData.year,
+          pricePerDay: formData.price,
+          engineCapacity: formData.engineCapacity,
+          fuelType: formData.fuelType,
+          transmission: formData.transmission,
+          mileage: formData.mileage,
+          seating: formData.seating,
+          description: formData.description,
+          features: formData.features,
+          location: formData.location,
+          city: formData.location.split(',')[0] || formData.location,
+          images: uploadedUrls,
+        }),
       });
 
       if (!response.ok) {

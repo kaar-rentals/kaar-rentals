@@ -20,7 +20,7 @@ router.get('/:id', getCarById);
 
 // Owner routes (require authentication and membership)
 router.get('/owner/my-cars', auth(['owner', 'admin']), getOwnerCars);
-router.post('/', auth(['owner', 'admin']), ensureMembership, upload.array('images', 5), addCar);
+router.post('/', auth(['owner', 'admin']), ensureMembership, addCar);
 router.put('/:id', auth(['owner', 'admin']), upload.array('images', 5), updateCar);
 router.patch('/:id/toggle-rental', auth(['owner', 'admin']), toggleCarRentalStatus);
 router.delete('/:id', auth(['owner', 'admin']), deleteCar);

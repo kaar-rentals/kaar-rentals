@@ -24,13 +24,15 @@ const getCarById = async (req, res) => {
   }
 };
 
+const bucket = require('../firebase');
+
 const addCar = async (req, res) => {
   try {
     const ownerId = req.user && req.user._id;
     if (!ownerId) return res.status(401).json({ error: 'Unauthorized' });
 
-    // Handle uploaded images
-    const images = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+    // Accept image URLs from frontend (already uploaded to Firebase)
+    const images = Array.isArray(req.body.images) ? req.body.images : [];
 
     const payload = {
       owner: ownerId,
@@ -39,7 +41,7 @@ const addCar = async (req, res) => {
       year: req.body.year,
       category: req.body.category,
       pricePerDay: req.body.pricePerDay,
-      images: images,
+      images,
       location: req.body.location,
       city: req.body.city,
       engineCapacity: req.body.engineCapacity,
@@ -47,7 +49,7 @@ const addCar = async (req, res) => {
       transmission: req.body.transmission,
       mileage: req.body.mileage,
       seating: req.body.seating,
-      features: req.body.features ? JSON.parse(req.body.features) : [],
+      features: Array.isArray(req.body.features) ? req.body.features : (req.body.features ? JSON.parse(req.body.features) : []),
       description: req.body.description
     };
 

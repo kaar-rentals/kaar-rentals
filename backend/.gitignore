@@ -1,0 +1,5 @@
+# Firebase service account keys
+config/firebase-service-account.json
+
+# Local uploads if any remain
+uploads/

@@ -1,23 +1,28 @@
 Backend environment variables (copy into Vercel):
 
-# Express
+# Express (local dev)
 PORT=8080
-FRONTEND_URL=https://kaar.rentals
-BASE_URL=https://api.kaar.rentals
+FRONTEND_URL=http://localhost:8083
+BASE_URL=http://localhost:8080
 
-# MongoDB
-MONGO_URI=mongodb+srv://user:pass@cluster0.example.mongodb.net/kaarDB
+# MongoDB (choose ONE MONGO_URI)
+# Local
+# MONGO_URI=mongodb://localhost:27017/kaarDB
+# Atlas
+MONGO_URI=mongodb+srv://kaarrentals_db-user:Jhb9eGKbmCzARTpq@kaar-rentalscluster.vmeqg24.mongodb.net/kaarDB
 MONGO_DBNAME=kaarDB
-JWT_SECRET=replace_with_strong_secret
 
-# Safepay
-SAFE_PAY_KEY=your_safepay_public_key
-SAFE_PAY_SECRET=your_safepay_secret
+# JWT
+JWT_SECRET=8f0a92c5d7b14836b1d2f4e9c7a3f0e4!KaarRentals@2025#Secure
 
-# Firebase Admin (one of the two options)
-# Option A: Service account JSON (stringified)
-# IMPORTANT: Paste your actual service account JSON here as a single line
-FIREBASE_SERVICE_ACCOUNT={"type":"service_account","project_id":"kaar-rentals-c6312","private_key_id":"REDACTED","private_key":"REDACTED","client_email":"firebase-adminsdk-fbsvc@kaar-rentals-c6312.iam.gserviceaccount.com","client_id":"105279528454533909062","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_x509_cert_url":"REDACTED","universe_domain":"googleapis.com"}
+# Safepay (names aligned with code)
+SAFE_PAY_KEY=sec_167c5fcd-b873-4980-bfd9-5a80fbff8589
+SAFE_PAY_SECRET=44dcd730dc85766e8dfae69d08a5744654420b6b29e70b7d866df1711b9c830a
+SAFE_ENV=sandbox
+
+# Firebase Admin (use ONE of the options)
+# Option A: Service account JSON (stringified on one line)
+# FIREBASE_SERVICE_ACCOUNT={"type":"service_account","project_id":"kaar-rentals-c6312","private_key_id":"REDACTED","private_key":"REDACTED","client_email":"firebase-adminsdk-fbsvc@kaar-rentals-c6312.iam.gserviceaccount.com","client_id":"105279528454533909062","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_x509_cert_url":"REDACTED","universe_domain":"googleapis.com"}
 
 # Option B: Use ADC via GOOGLE_APPLICATION_CREDENTIALS (path on the server)
 # GOOGLE_APPLICATION_CREDENTIALS=/var/task/keys/firebase.json

@@ -3,11 +3,16 @@ Backend environment variables (copy into Vercel):
 # Express
 PORT=8080
 FRONTEND_URL=https://kaar.rentals
+BASE_URL=https://api.kaar.rentals
 
 # MongoDB
 MONGO_URI=mongodb+srv://user:pass@cluster0.example.mongodb.net/kaarDB
 MONGO_DBNAME=kaarDB
 JWT_SECRET=replace_with_strong_secret
+
+# Safepay
+SAFE_PAY_KEY=your_safepay_public_key
+SAFE_PAY_SECRET=your_safepay_secret
 
 # Firebase Admin (one of the two options)
 # Option A: Service account JSON (stringified)

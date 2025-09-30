@@ -112,6 +112,9 @@ const ListCar = () => {
     }
 
     try {
+      if (!storage) {
+        throw new Error('Storage is not configured. Please try again later.');
+      }
       // 1) Upload images to Firebase Storage
       const uploadedUrls: string[] = [];
       for (const file of images) {

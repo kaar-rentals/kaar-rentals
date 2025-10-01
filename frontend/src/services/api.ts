@@ -1,4 +1,8 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined'
+    ? `${window.location.origin.replace('://www.', '://api.')}/api`
+    : 'http://localhost:8080/api');
 
 interface Car {
   _id: string;

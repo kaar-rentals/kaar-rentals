@@ -3,6 +3,9 @@
   "buildCommand": "cd frontend && npm run build",
   "installCommand": "cd frontend && npm ci",
   "outputDirectory": "frontend/dist",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://api.kaar.rentals/api/:path*" }
+  ],
   "headers": [
     {
       "source": "/favicon.ico",

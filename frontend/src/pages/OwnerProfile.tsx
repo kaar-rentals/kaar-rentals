@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   Car as CarIcon, 
   Plus, 
@@ -20,7 +23,8 @@ import {
   Settings,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Save
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -28,6 +32,8 @@ const OwnerProfile = () => {
   const { user, token } = useAuth();
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingPrice, setEditingPrice] = useState<string | null>(null);
+  const [newPrice, setNewPrice] = useState<number>(0);
 
   useEffect(() => {
     if (user?.role !== 'owner' && user?.role !== 'admin') {
@@ -73,6 +79,26 @@ const OwnerProfile = () => {
     } catch (error) {
       console.error('Error deleting car:', error);
     }
+  };
+
+  const handleUpdatePrice = async (carId: string) => {
+    if (!token) return;
+    
+    try {
+      const updatedCar = await apiService.updateCarPrice(carId, newPrice, token);
+      setCars(prev => prev.map(car => 
+        car._id === carId ? updatedCar : car
+      ));
+      setEditingPrice(null);
+      setNewPrice(0);
+    } catch (error) {
+      console.error('Error updating price:', error);
+    }
+  };
+
+  const startEditingPrice = (carId: string, currentPrice: number) => {
+    setEditingPrice(carId);
+    setNewPrice(currentPrice);
   };
 
   if (user?.role !== 'owner' && user?.role !== 'admin') {
@@ -192,9 +218,42 @@ const OwnerProfile = () => {
                         </CardDescription>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-primary">
-                          PKR {car.pricePerDay.toLocaleString()}/day
-                        </div>
+                        {editingPrice === car._id ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              value={newPrice}
+                              onChange={(e) => setNewPrice(Number(e.target.value))}
+                              className="w-24"
+                              min="0"
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => handleUpdatePrice(car._id)}
+                            >
+                              <Save className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditingPrice(null)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="text-2xl font-bold text-primary">
+                            PKR {car.pricePerDay.toLocaleString()}/day
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => startEditingPrice(car._id, car.pricePerDay)}
+                              className="ml-2"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
                         <div className="flex gap-2 mt-2">
                           <Badge variant={car.isApproved ? 'default' : 'secondary'}>
                             {car.isApproved ? 'Approved' : 'Pending'}

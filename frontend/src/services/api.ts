@@ -148,6 +148,21 @@ class ApiService {
     }
   }
 
+  async updateCarPrice(id: string, pricePerDay: number, token: string): Promise<Car> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/cars/${id}`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(token),
+        body: JSON.stringify({ pricePerDay }),
+      });
+      if (!response.ok) throw new Error('Failed to update car price');
+      return await this.parseJsonResponse(response);
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  }
+
   async toggleCarRentalStatus(id: string, token: string): Promise<Car> {
     try {
       const response = await fetch(`${API_BASE_URL}/cars/${id}/toggle-rental`, {

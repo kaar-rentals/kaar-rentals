@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
-import { storage } from '@/firebase';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+// Firebase Storage is now handled by the backend to avoid CORS issues
 import { Upload, Car, DollarSign, MapPin, X, Image as ImageIcon } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -112,17 +111,26 @@ const ListCar = () => {
     }
 
     try {
-      if (!storage) {
-        throw new Error('Storage is not configured. Please try again later.');
-      }
-      // 1) Upload images to Firebase Storage
+      // 1) Upload images via backend (to avoid CORS issues in development)
       const uploadedUrls: string[] = [];
       for (const file of images) {
-        const path = `cars/${Date.now()}-${file.name}`;
-        const fileRef = storageRef(storage, path);
-        await uploadBytes(fileRef, file, { contentType: file.type });
-        const url = await getDownloadURL(fileRef);
-        uploadedUrls.push(url);
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const uploadResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/upload`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: formData,
+        });
+        
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload image');
+        }
+        
+        const uploadData = await uploadResponse.json();
+        uploadedUrls.push(uploadData.imageUrl);
       }
 
       console.log('Submitting car listing...', { brand: formData.brand, model: formData.model, images: uploadedUrls.length });

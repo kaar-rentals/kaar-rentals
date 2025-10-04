@@ -82,39 +82,28 @@ const Auth = () => {
           </div>
 
           <Card>
-            <CardHeader>
+            <CardContent className="p-6">
               <Tabs defaultValue="login" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="login">Login</TabsTrigger>
                   <TabsTrigger value="register">Register</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="login">
-                  <CardTitle className="text-2xl text-center">Sign In</CardTitle>
-                  <CardDescription className="text-center">
-                    Enter your credentials to access your account
-                  </CardDescription>
-                  <div className="mt-4 p-3 bg-muted rounded-lg">
-                    <p className="text-sm font-medium text-foreground mb-2">Test Credentials:</p>
-                    <p className="text-xs text-muted-foreground">
-                      <strong>Admin:</strong> admin@kaar.rentals / admin123<br/>
-                      <strong>Owner:</strong> owner@kaar.rentals / owner123
-                    </p>
+                <TabsContent value="login" className="mt-6">
+                  <div className="text-center mb-6">
+                    <CardTitle className="text-2xl">Sign In</CardTitle>
+                    <CardDescription>
+                      Enter your credentials to access your account
+                    </CardDescription>
+                    <div className="mt-4 p-3 bg-muted rounded-lg">
+                      <p className="text-sm font-medium text-foreground mb-2">Test Credentials:</p>
+                      <p className="text-xs text-muted-foreground">
+                        <strong>Admin:</strong> admin@kaar.rentals / admin123<br/>
+                        <strong>Owner:</strong> owner@kaar.rentals / owner123
+                      </p>
+                    </div>
                   </div>
-                </TabsContent>
 
-                <TabsContent value="register">
-                  <CardTitle className="text-2xl text-center">Create Account</CardTitle>
-                  <CardDescription className="text-center">
-                    Join Kaar.Rentals to start listing or renting cars
-                  </CardDescription>
-                </TabsContent>
-              </Tabs>
-            </CardHeader>
-
-            <CardContent>
-              <Tabs defaultValue="login" className="w-full">
-                <TabsContent value="login">
                   <form onSubmit={handleLogin} className="space-y-4">
                     {error && (
                       <Alert variant="destructive">
@@ -159,7 +148,14 @@ const Auth = () => {
                   </form>
                 </TabsContent>
 
-                <TabsContent value="register">
+                <TabsContent value="register" className="mt-6">
+                  <div className="text-center mb-6">
+                    <CardTitle className="text-2xl">Create Account</CardTitle>
+                    <CardDescription>
+                      Join Kaar.Rentals to start listing or renting cars
+                    </CardDescription>
+                  </div>
+
                   <form onSubmit={handleRegister} className="space-y-4">
                     {error && (
                       <Alert variant="destructive">

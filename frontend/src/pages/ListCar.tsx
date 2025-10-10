@@ -134,7 +134,7 @@ const ListCar = () => {
             }
             
             const uploadData = await uploadResponse.json();
-            uploadedUrls.push(uploadData.imageUrl);
+            uploadedUrls.push(uploadData.url || uploadData.imageUrl);
           }
         } catch (uploadError) {
           console.warn('Image upload failed, using placeholder images:', uploadError);
@@ -145,7 +145,15 @@ const ListCar = () => {
 
       console.log('Submitting car listing...', { brand: formData.brand, model: formData.model, images: uploadedUrls.length });
 
-      // 2) Send only URLs and metadata to backend
+      // 2) Normalize fields to match backend schema and send metadata
+      const categoryMapped = (formData.category || '').toLowerCase() === 'suv' ? 'SUV'
+        : (formData.category || '').toLowerCase() === 'sedan' ? 'Sedan'
+        : (formData.category || '').toLowerCase() === 'hatchback' ? 'Hatchback'
+        : formData.category;
+
+      const cityRaw = (formData.location.split(',')[0] || formData.location || '').trim();
+      const cityTitle = cityRaw ? cityRaw.charAt(0).toUpperCase() + cityRaw.slice(1).toLowerCase() : '';
+
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/cars`, {
         method: 'POST',
         headers: {
@@ -155,18 +163,18 @@ const ListCar = () => {
         body: JSON.stringify({
           brand: formData.brand,
           model: formData.model,
-          category: formData.category,
-          year: formData.year,
-          pricePerDay: formData.price,
+          category: categoryMapped,
+          year: Number(formData.year),
+          pricePerDay: Number(formData.price),
           engineCapacity: formData.engineCapacity,
           fuelType: formData.fuelType,
           transmission: formData.transmission,
           mileage: formData.mileage,
-          seating: formData.seating,
+          seating: Number(formData.seating),
           description: formData.description,
           features: formData.features,
           location: formData.location,
-          city: formData.location.split(',')[0] || formData.location,
+          city: cityTitle,
           images: uploadedUrls,
         }),
       });
@@ -267,10 +275,9 @@ const ListCar = () => {
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="sedan">Sedan</SelectItem>
-                        <SelectItem value="suv">SUV</SelectItem>
-                         <SelectItem value="Truck">Truck</SelectItem>
-                        <SelectItem value="hatchback">Hatchback</SelectItem>
+                      <SelectItem value="sedan">Sedan</SelectItem>
+                      <SelectItem value="suv">SUV</SelectItem>
+                      <SelectItem value="hatchback">Hatchback</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

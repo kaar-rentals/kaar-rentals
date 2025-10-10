@@ -30,6 +30,10 @@ app.use(cors({
 app.use(express.json());
 app.use(morgan("dev"));
 
+// Optional auth middleware to attach req.user if JWT present
+const authMiddleware = require("./middleware/auth");
+app.use(authMiddleware);
+
 // Serve static files from uploads directory
 app.use('/uploads', express.static('uploads'));
 

@@ -44,7 +44,10 @@ app.use("/api/bookings", require("./routes/bookings"));
 app.use("/api/payments", require("./routes/payments"));
 app.use("/api/admin", require("./routes/admin"));
 app.use("/api/seed", require("./routes/seed"));
-app.use("/api", require("./routes/upload"));
+
+// Cloudinary upload route
+const uploadRoutes = require("./routes/upload");
+app.use("/api/upload", uploadRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) =>

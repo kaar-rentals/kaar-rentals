@@ -63,4 +63,64 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// POST /api/cars - Create a new car (requires auth)
+router.post("/", async (req, res) => {
+  try {
+    if (!req.user || !(req.user.id || req.user._id)) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const ownerId = req.user.id || req.user._id;
+    const {
+      brand,
+      model,
+      year,
+      category,
+      pricePerDay,
+      images = [],
+      location,
+      city,
+      engineCapacity,
+      fuelType,
+      transmission,
+      mileage,
+      seating,
+      features = [],
+      description = "",
+    } = req.body || {};
+
+    // Basic required validations aligned with schema
+    if (!brand || !model || !year || !category || !pricePerDay || !location || !city || !fuelType || !transmission || !mileage || !seating) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const car = await Car.create({
+      owner: ownerId,
+      brand,
+      model,
+      year,
+      category,
+      pricePerDay,
+      images,
+      location,
+      city,
+      engineCapacity,
+      fuelType,
+      transmission,
+      mileage,
+      seating,
+      features,
+      description,
+      isActive: true,
+      isApproved: false,
+      paymentStatus: 'PENDING',
+    });
+
+    return res.status(201).json(car);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;

@@ -120,6 +120,7 @@ kaar-rentals/
 3. **Create environment file**:
    ```bash
    echo "VITE_API_URL=http://localhost:8080/api" > .env
+   echo "VITE_SHOW_TEST_CREDENTIALS=true" >> .env # set to false in production
    ```
 
 4. **Start the development server**:
@@ -127,19 +128,13 @@ kaar-rentals/
    npm run dev
    ```
 
-## 🔐 Default Accounts
+## 🔐 Accounts & Test Credentials
 
-After seeding the database, you can use these accounts:
+After seeding the database, default accounts may be created (see `backend/routes/seed.js`).
 
-### Admin Account
-- **Email**: admin@kaar.rentals
-- **Password**: admin123
-- **Access**: Full admin panel
-
-### Owner Account
-- **Email**: owner@kaar.rentals
-- **Password**: owner123
-- **Access**: Car listing and management
+- Do not expose test credentials publicly in production builds.
+- Frontend displays any dev test credentials only when `VITE_SHOW_TEST_CREDENTIALS==="true"`.
+- Set `VITE_SHOW_TEST_CREDENTIALS=false` for production deployments.
 
 ## 📱 API Endpoints
 
@@ -253,6 +248,7 @@ For support, email kaar.rentals@gmail.com or contact us via WhatsApp at +9230900
 - [ ] Insurance integration
 - [ ] GPS tracking
 - [ ] Driver verification system
+
 
 
 

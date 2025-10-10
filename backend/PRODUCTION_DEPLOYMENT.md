@@ -59,8 +59,7 @@ After deploying the backend, update the frontend API URL:
 ❌ Frontend API URL needs updating
 
 ## Test Credentials
-- Admin: `admin@kaar.rentals` / `admin123`
-- Owner: `owner@kaar.rentals` / `owner123`
+- Do not display test credentials in production. Ensure the frontend env var `VITE_SHOW_TEST_CREDENTIALS=false`.
 
 
 

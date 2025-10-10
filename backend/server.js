@@ -11,9 +11,8 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "*",
-  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization"]
+  origin: ["https://www.kaar.rentals", "https://kaar-rentals.vercel.app"],
+  credentials: true,
 }));
 app.use(morgan("dev"));
 

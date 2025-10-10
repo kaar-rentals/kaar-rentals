@@ -95,13 +95,13 @@ const Auth = () => {
                     <CardDescription>
                       Enter your credentials to access your account
                     </CardDescription>
-                    <div className="mt-4 p-3 bg-muted rounded-lg">
-                      <p className="text-sm font-medium text-foreground mb-2">Test Credentials:</p>
-                      <p className="text-xs text-muted-foreground">
-                        <strong>Admin:</strong> admin@kaar.rentals / admin123<br/>
-                        <strong>Owner:</strong> owner@kaar.rentals / owner123
-                      </p>
-                    </div>
+                    {import.meta.env.VITE_SHOW_TEST_CREDENTIALS === "true" ? (
+                      <div className="mt-4 p-3 bg-muted rounded-lg test-creds">
+                        <p><strong>Dev test credentials</strong></p>
+                        <p>email: test@example.com</p>
+                        <p>password: 123456</p>
+                      </div>
+                    ) : null}
                   </div>
 
                   <form onSubmit={handleLogin} className="space-y-4">

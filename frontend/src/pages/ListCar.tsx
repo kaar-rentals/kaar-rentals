@@ -121,7 +121,7 @@ const ListCar = () => {
             const formData = new FormData();
             formData.append('image', file);
             
-            const uploadResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/upload`, {
+            const uploadResponse = await fetch(`${import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com'}/upload`, {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`,

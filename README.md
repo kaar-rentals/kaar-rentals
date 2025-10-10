@@ -120,6 +120,7 @@ kaar-rentals/
 3. **Create environment file**:
    ```bash
    echo "VITE_API_URL=http://localhost:8080/api" > .env
+   echo "VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name" >> .env
    echo "VITE_SHOW_TEST_CREDENTIALS=true" >> .env # set to false in production
    ```
 

@@ -9,25 +9,12 @@ dotenv.config();
 const app = express();
 
 // Middleware
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:8080", 
-  "http://localhost:8081",
-  "http://localhost:8082",
-  "http://localhost:8083",
-  "https://www.kaar.rentals",
-  "https://kaar.rentals",
-  process.env.FRONTEND_URL
-].filter(Boolean);
-
-app.use(cors({ 
-  origin: allowedOrigins,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-// CORS is already configured above, no need for explicit options handler
 app.use(express.json());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "*",
+  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"]
+}));
 app.use(morgan("dev"));
 
 // Optional auth middleware to attach req.user if JWT present
@@ -39,6 +26,7 @@ app.use('/uploads', express.static('uploads'));
 
 // Routes
 app.use("/api/auth", require("./routes/auth"));
+app.use("/api/upload", require("./routes/upload"));
 app.use("/api/cars", require("./routes/cars"));
 app.use("/api/bookings", require("./routes/bookings"));
 app.use("/api/payments", require("./routes/payments"));

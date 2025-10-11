@@ -22,15 +22,51 @@ export default function CarsPage() {
   }, [query, page, token]);
 
   return (
-    <div>
+    <div style={{ padding: "1rem", maxWidth: "1200px", margin: "0 auto" }}>
       <FilterBar onApply={q=>{ setQuery(q); setPage(1); }} />
-      <div className="listing-grid">
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+        gap: "1rem",
+        marginTop: "2rem"
+      }}>
         {cars.map(c => <ListingCard key={c._id} car={c} isAuthenticated={isAuthenticated} />)}
       </div>
-      <div className="pagination">
-        <button disabled={page===1} onClick={()=>setPage(p=>p-1)}>Prev</button>
-        <span>Page {page}</span>
-        <button onClick={()=>setPage(p=>p+1)}>Next</button>
+      <div style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: "1rem",
+        marginTop: "2rem"
+      }}>
+        <button 
+          disabled={page===1} 
+          onClick={()=>setPage(p=>p-1)}
+          style={{
+            padding: "0.5rem 1rem",
+            backgroundColor: page === 1 ? "#e5e7eb" : "#3b82f6",
+            color: page === 1 ? "#9ca3af" : "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: page === 1 ? "not-allowed" : "pointer"
+          }}
+        >
+          Prev
+        </button>
+        <span style={{ fontSize: "1rem", fontWeight: "500" }}>Page {page}</span>
+        <button 
+          onClick={()=>setPage(p=>p+1)}
+          style={{
+            padding: "0.5rem 1rem",
+            backgroundColor: "#3b82f6",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer"
+          }}
+        >
+          Next
+        </button>
       </div>
     </div>
   );

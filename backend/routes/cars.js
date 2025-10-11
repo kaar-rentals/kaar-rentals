@@ -66,6 +66,9 @@ router.get("/:id", async (req, res) => {
 // POST /api/cars - Create a new car (requires auth)
 router.post("/", async (req, res) => {
   try {
+    console.log('POST /api/cars - Request body:', JSON.stringify(req.body, null, 2));
+    console.log('POST /api/cars - User:', req.user);
+
     if (!req.user || !(req.user.id || req.user._id)) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -90,9 +93,49 @@ router.post("/", async (req, res) => {
     } = req.body || {};
 
     // Basic required validations aligned with schema
-    if (!brand || !model || !year || !category || !pricePerDay || !location || !city || !fuelType || !transmission || !mileage || !seating) {
-      return res.status(400).json({ message: "Missing required fields" });
+    const missingFields = [];
+    if (!brand) missingFields.push('brand');
+    if (!model) missingFields.push('model');
+    if (!year) missingFields.push('year');
+    if (!category) missingFields.push('category');
+    if (!pricePerDay) missingFields.push('pricePerDay');
+    if (!location) missingFields.push('location');
+    if (!city) missingFields.push('city');
+    if (!engineCapacity) missingFields.push('engineCapacity');
+    if (!fuelType) missingFields.push('fuelType');
+    if (!transmission) missingFields.push('transmission');
+    if (!mileage) missingFields.push('mileage');
+    if (!seating) missingFields.push('seating');
+    if (!description) missingFields.push('description');
+
+    if (missingFields.length > 0) {
+      console.log('Missing required fields:', missingFields);
+      return res.status(400).json({ 
+        message: "Missing required fields", 
+        missingFields: missingFields 
+      });
     }
+
+    // Validate category enum
+    const validCategories = ['Sedan', 'SUV', 'Hatchback'];
+    if (!validCategories.includes(category)) {
+      console.log('Invalid category:', category);
+      return res.status(400).json({ 
+        message: "Invalid category. Must be one of: " + validCategories.join(', '),
+        received: category
+      });
+    }
+
+    console.log('Creating car with data:', {
+      owner: ownerId,
+      brand,
+      model,
+      year,
+      category,
+      pricePerDay,
+      city,
+      location
+    });
 
     const car = await Car.create({
       owner: ownerId,
@@ -116,9 +159,12 @@ router.post("/", async (req, res) => {
       paymentStatus: 'PENDING',
     });
 
+    console.log('Car created successfully:', car._id);
     return res.status(201).json(car);
   } catch (err) {
-    console.error(err);
+    console.error('Error creating car:', err);
+    console.error('Error details:', err.message);
+    console.error('Error stack:', err.stack);
     return res.status(500).json({ message: "Server error" });
   }
 });

@@ -25,3 +25,4 @@ dist-ssr
 .vercel
 # Ignore Bun lockfile
 bun.lockb
+*.zip

@@ -100,6 +100,19 @@ export default function ListingCard({ car, isAuthenticated }) {
               {car.category}
             </Badge>
           </div>
+
+          {/* Availability Status Badge - Bottom Left */}
+          <div className="absolute bottom-4 left-4">
+            <Badge 
+              className={`px-3 py-1.5 text-sm font-semibold backdrop-blur-sm ${
+                car.isRented 
+                  ? 'bg-red-500/90 text-white' 
+                  : 'bg-green-500/90 text-white'
+              }`}
+            >
+              {car.isRented ? 'Rented' : 'Available'}
+            </Badge>
+          </div>
         </div>
 
         {/* Content Section - Premium Typography */}

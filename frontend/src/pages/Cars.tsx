@@ -1,218 +1,110 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Grid, List, ArrowRight } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import CarCard from '@/components/cars/CarCard';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { apiService, Car } from '@/services/api';
+import ListingCard from '@/components/ListingCard';
+import FilterBar from '@/components/FilterBar';
+import { Car } from '@/services/api';
 
 const Cars = () => {
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [priceRange, setPriceRange] = useState('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [query, setQuery] = useState({});
+  const [page, setPage] = useState(1);
+  const token = localStorage.getItem("token");
+  const isAuthenticated = !!token;
 
   useEffect(() => {
     loadCars();
-  }, []);
+  }, [query, page, token]);
 
   const loadCars = async () => {
     try {
       setLoading(true);
-      const carsData = await apiService.getCars();
-      setCars(carsData);
+      const qs = new URLSearchParams({ ...query, page, limit: 12 }).toString();
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/cars?${qs}`, { headers });
+      const json = await res.json();
+      setCars(json.cars || []);
     } catch (error) {
       console.error('Error loading cars:', error);
-      // Fallback to empty array if API is not available
       setCars([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredCars = cars.filter(car => {
-    const matchesSearch = car.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         car.model.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || car.category.toLowerCase() === selectedCategory;
-    const matchesPrice = priceRange === 'all' || 
-                        (priceRange === 'budget' && car.pricePerDay < 30000) ||
-                        (priceRange === 'mid' && car.pricePerDay >= 30000 && car.pricePerDay < 50000) ||
-                        (priceRange === 'luxury' && car.pricePerDay >= 50000);
-    
-    return matchesSearch && matchesCategory && matchesPrice;
-  });
-
   return (
     <div className="min-h-screen">
       <Header />
       <main className="pt-16">
-        {/* Hero Section */}
-        <section className="py-20 bg-muted/30">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-4xl font-bold text-foreground mb-4">
-              Our <span className="text-gradient">Fleet</span>
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Discover our handpicked selection of premium vehicles, each offering 
-              the perfect blend of luxury, performance, and reliability.
-            </p>
-          </div>
-        </section>
-
-        {/* Filters Section */}
-        <section className="py-8 bg-muted/30 border-b border-border">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-              {/* Search */}
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by brand or model..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-
-              {/* Filters */}
-              <div className="flex flex-wrap gap-4 items-center">
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    <SelectItem value="sedan">Sedans</SelectItem>
-                    <SelectItem value="suv">SUVs</SelectItem>
-                    <SelectItem value="hatchback">Hatchbacks</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={priceRange} onValueChange={setPriceRange}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Price Range" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Prices</SelectItem>
-                    <SelectItem value="budget">Under PKR 30,000</SelectItem>
-                    <SelectItem value="mid">PKR 30,000 - 50,000</SelectItem>
-                    <SelectItem value="luxury">PKR 50,000+</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {/* View Toggle */}
-                <div className="flex border border-border rounded-md">
-                  <Button
-                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('grid')}
-                    className="rounded-r-none"
-                  >
-                    <Grid className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === 'list' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('list')}
-                    className="rounded-l-none border-l border-border"
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </div>
+        <div style={{ padding: "1rem", maxWidth: "1200px", margin: "0 auto" }}>
+          <FilterBar onApply={q => { setQuery(q); setPage(1); }} />
+          
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading cars...</p>
+            </div>
+          ) : cars.length === 0 ? (
+            <div className="text-center py-20">
+              <div className="text-muted-foreground mb-4">
+                <Filter className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                <h3 className="text-xl font-semibold mb-2">No vehicles found</h3>
+                <p>Try adjusting your search criteria or filters</p>
               </div>
             </div>
-
-            {/* Active Filters */}
-            <div className="flex gap-2 mt-4">
-              {selectedCategory !== 'all' && (
-                <Badge variant="secondary" className="capitalize">
-                  {selectedCategory}
-                  <button 
-                    onClick={() => setSelectedCategory('all')}
-                    className="ml-2 hover:text-destructive"
-                  >
-                    ×
-                  </button>
-                </Badge>
-              )}
-              {priceRange !== 'all' && (
-                <Badge variant="secondary">
-                  {priceRange === 'budget' ? 'Under PKR 30,000' : 
-                   priceRange === 'mid' ? 'PKR 30,000-50,000' : 'PKR 50,000+'}
-                  <button 
-                    onClick={() => setPriceRange('all')}
-                    className="ml-2 hover:text-destructive"
-                  >
-                    ×
-                  </button>
-                </Badge>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* Results Section */}
-        <section className="py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-semibold">
-                {loading ? 'Loading...' : `${filteredCars.length} Vehicle${filteredCars.length !== 1 ? 's' : ''} Available`}
-              </h2>
-            </div>
-
-            {loading ? (
-              <div className="text-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Loading cars...</p>
+          ) : (
+            <>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+                gap: "1rem",
+                marginTop: "2rem"
+              }}>
+                {cars.map(c => <ListingCard key={c._id} car={c} isAuthenticated={isAuthenticated} />)}
               </div>
-            ) : filteredCars.length === 0 ? (
-              <div className="text-center py-20">
-                <div className="text-muted-foreground mb-4">
-                  <Filter className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-                  <h3 className="text-xl font-semibold mb-2">No vehicles found</h3>
-                  <p>Try adjusting your search criteria or filters</p>
-                </div>
-                <Button onClick={() => {
-                  setSearchTerm('');
-                  setSelectedCategory('all');
-                  setPriceRange('all');
-                }}>
-                  Clear All Filters
-                </Button>
+              
+              <div style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: "1rem",
+                marginTop: "2rem"
+              }}>
+                <button 
+                  disabled={page === 1} 
+                  onClick={() => setPage(p => p - 1)}
+                  style={{
+                    padding: "0.5rem 1rem",
+                    backgroundColor: page === 1 ? "#e5e7eb" : "#3b82f6",
+                    color: page === 1 ? "#9ca3af" : "white",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: page === 1 ? "not-allowed" : "pointer"
+                  }}
+                >
+                  Prev
+                </button>
+                <span style={{ fontSize: "1rem", fontWeight: "500" }}>Page {page}</span>
+                <button 
+                  onClick={() => setPage(p => p + 1)}
+                  style={{
+                    padding: "0.5rem 1rem",
+                    backgroundColor: "#3b82f6",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer"
+                  }}
+                >
+                  Next
+                </button>
               </div>
-            ) : (
-              <>
-                <div className={`grid gap-8 mb-12 ${
-                  viewMode === 'grid' 
-                    ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-                    : 'grid-cols-1'
-                }`}>
-                  {filteredCars.map((car) => (
-                    <CarCard key={car._id} car={car} />
-                  ))}
-                </div>
-                
-                {/* View All Cars Button - only show if there are more cars than displayed */}
-                {filteredCars.length > 0 && (
-                  <div className="text-center fade-in">
-                    <Button 
-                      size="lg" 
-                      className="bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary"
-                    >
-                      View All Cars
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </section>
+            </>
+          )}
+        </div>
       </main>
       <Footer />
     </div>

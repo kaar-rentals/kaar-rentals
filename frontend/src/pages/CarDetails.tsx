@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Star, User, Fuel, Settings, MapPin, Phone, MessageCircle, Mail } from 'lucide-react';
+import { ArrowLeft, Star, User, Fuel, Settings, MapPin, Phone, MessageCircle, Mail, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ const CarDetails = () => {
   const { id } = useParams();
   const [car, setCar] = useState<Car | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isFavorited, setIsFavorited] = useState(false);
   const dealer = dealers[0]; // For demo, using first dealer
 
   useEffect(() => {
@@ -42,6 +44,26 @@ const CarDetails = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const nextImage = () => {
+    if (car && car.images) {
+      setCurrentImageIndex((prev) => (prev + 1) % car.images.length);
+    }
+  };
+
+  const prevImage = () => {
+    if (car && car.images) {
+      setCurrentImageIndex((prev) => (prev - 1 + car.images.length) % car.images.length);
+    }
+  };
+
+  const getCurrentImage = () => {
+    if (!car) return '/placeholder-car.jpg';
+    if (car.images && car.images.length > 0) {
+      return car.images[currentImageIndex];
+    }
+    return car.image || '/placeholder-car.jpg';
   };
 
   if (loading) {
@@ -88,23 +110,74 @@ const CarDetails = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               {/* Image Gallery */}
               <div className="space-y-4">
-                <div className="relative">
+                <div className="relative group">
                   <img 
-                    src={car.images?.[0] || car.image || '/placeholder-car.jpg'} 
+                    src={getCurrentImage()} 
                     alt={`${car.brand} ${car.model}`}
                     className="w-full h-96 object-cover rounded-xl"
                   />
+                  
+                  {/* Navigation Arrows */}
+                  {car.images && car.images.length > 1 && (
+                    <>
+                      <button
+                        onClick={prevImage}
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <ChevronLeft className="h-6 w-6 text-gray-800" />
+                      </button>
+                      <button
+                        onClick={nextImage}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <ChevronRight className="h-6 w-6 text-gray-800" />
+                      </button>
+                    </>
+                  )}
+
+                  {/* Image Counter */}
+                  {car.images && car.images.length > 1 && (
+                    <div className="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                      {currentImageIndex + 1} / {car.images.length}
+                    </div>
+                  )}
+
+                  {/* Brand Badge */}
                   <div className="absolute top-4 left-4">
-                    <Badge variant="secondary" className="bg-primary text-primary-foreground">
-                      {car.category}
+                    <Badge className="bg-gray-900 text-white px-3 py-1 text-sm font-medium">
+                      {car.brand}
                     </Badge>
                   </div>
-                  <div className="absolute top-4 right-4">
-                    <div className="bg-white/90 backdrop-blur-sm rounded-lg p-2">
-                      <span className="text-sm font-bold text-primary">{car.brand}</span>
-                    </div>
-                  </div>
+
+                  {/* Heart Icon */}
+                  <button 
+                    onClick={() => setIsFavorited(!isFavorited)}
+                    className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm rounded-full p-2 hover:bg-white/30 transition-colors"
+                  >
+                    <Heart className={`h-4 w-4 ${isFavorited ? 'text-red-500 fill-current' : 'text-white'}`} />
+                  </button>
                 </div>
+
+                {/* Thumbnail Gallery */}
+                {car.images && car.images.length > 1 && (
+                  <div className="flex space-x-2 overflow-x-auto pb-2">
+                    {car.images.map((image, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentImageIndex(index)}
+                        className={`flex-shrink-0 w-20 h-16 rounded-lg overflow-hidden border-2 ${
+                          index === currentImageIndex ? 'border-primary' : 'border-gray-200'
+                        }`}
+                      >
+                        <img
+                          src={image}
+                          alt={`${car.brand} ${car.model} view ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Car Information */}
@@ -225,47 +298,60 @@ const CarDetails = () => {
                 </div>
               </div>
 
-              {/* Dealer Information */}
+              {/* Owner Information */}
               <div className="space-y-6">
                 <div className="premium-card p-6">
-                  <h3 className="text-xl font-semibold mb-4">Dealership Details</h3>
+                  <h3 className="text-xl font-semibold mb-4">Owner Details</h3>
                   <div className="space-y-4">
                     <div>
-                      <h4 className="font-semibold text-lg">{dealer.name}</h4>
+                      <h4 className="font-semibold text-lg">{car.owner?.name || dealer.name}</h4>
                       <div className="flex items-center space-x-1 mt-1">
                         <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                        <span className="text-sm">{dealer.rating}/5.0</span>
+                        <span className="text-sm">4.8/5.0 (24 reviews)</span>
                       </div>
                     </div>
                     
-                    <p className="text-muted-foreground text-sm">{dealer.description}</p>
+                    <p className="text-muted-foreground text-sm">
+                      {car.owner?.name ? 'Verified car owner' : dealer.description}
+                    </p>
                     
                     <div className="space-y-3">
                       <div className="flex items-center space-x-3">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{dealer.location}</span>
+                        <span className="text-sm">{car.location || dealer.location}</span>
                       </div>
                       <div className="flex items-center space-x-3">
                         <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{dealer.phone}</span>
+                        <span className="text-sm">{car.owner?.phone || dealer.phone}</span>
                       </div>
                       <div className="flex items-center space-x-3">
                         <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{dealer.email}</span>
+                        <span className="text-sm">{car.owner?.email || dealer.email}</span>
                       </div>
                     </div>
 
                     <div className="pt-4 space-y-2">
                       <Button 
                         className="w-full bg-green-600 hover:bg-green-700"
-                        onClick={() => window.open(`https://wa.me/${dealer.whatsapp.replace(/[^0-9]/g, '')}`, '_blank')}
+                        onClick={() => {
+                          const phone = car.owner?.phone || dealer.phone;
+                          const whatsapp = phone.replace(/[^0-9]/g, '');
+                          window.open(`https://wa.me/${whatsapp}`, '_blank');
+                        }}
                       >
                         <MessageCircle className="h-4 w-4 mr-2" />
-                        WhatsApp
+                        WhatsApp Owner
                       </Button>
-                      <Button variant="outline" className="w-full">
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => {
+                          const phone = car.owner?.phone || dealer.phone;
+                          window.open(`tel:${phone}`, '_self');
+                        }}
+                      >
                         <Phone className="h-4 w-4 mr-2" />
-                        Call Now
+                        Call Owner
                       </Button>
                     </div>
                   </div>

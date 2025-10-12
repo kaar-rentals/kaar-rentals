@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import CarCard from '@/components/cars/CarCard';
+import FeaturedCarCard from '@/components/cars/FeaturedCarCard';
 import { apiService, Car } from '@/services/api';
 import { cars as staticCars } from '@/data/cars';
 
@@ -61,7 +61,7 @@ const FeaturedCars = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12 slide-up">
             {featuredCars.map((car, index) => (
               <div key={car._id || car.id} style={{ animationDelay: `${index * 0.1}s` }}>
-                <CarCard car={car} />
+                <FeaturedCarCard car={car} />
               </div>
             ))}
           </div>

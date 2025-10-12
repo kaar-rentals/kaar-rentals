@@ -140,7 +140,20 @@ class ApiService {
         headers: this.getAuthHeaders(token),
         body: JSON.stringify(carData),
       });
-      if (!response.ok) throw new Error('Failed to update car');
+      
+      if (response.status === 401) {
+        throw new Error('You must be logged in to update car details');
+      }
+      
+      if (response.status === 403) {
+        throw new Error('You must be the listing owner to update car details');
+      }
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to update car: ${errorText || response.statusText}`);
+      }
+      
       return await this.parseJsonResponse(response);
     } catch (error) {
       console.error('API Error:', error);
@@ -170,6 +183,34 @@ class ApiService {
         headers: this.getAuthHeaders(token),
       });
       if (!response.ok) throw new Error('Failed to toggle car rental status');
+      return await this.parseJsonResponse(response);
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  }
+
+  async updateCarRentalStatus(id: string, isRented: boolean, token: string): Promise<Car> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/cars/${id}`, {
+        method: 'PATCH',
+        headers: this.getAuthHeaders(token),
+        body: JSON.stringify({ isRented }),
+      });
+      
+      if (response.status === 401) {
+        throw new Error('You must be logged in to update car status');
+      }
+      
+      if (response.status === 403) {
+        throw new Error('You must be the listing owner to update status');
+      }
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to update car status: ${errorText || response.statusText}`);
+      }
+      
       return await this.parseJsonResponse(response);
     } catch (error) {
       console.error('API Error:', error);

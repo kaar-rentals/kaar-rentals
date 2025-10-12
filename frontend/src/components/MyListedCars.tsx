@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Car } from '@/services/api';
+import { useToast } from '@/hooks/use-toast';
+import { Car, apiService } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 
@@ -14,6 +15,7 @@ interface MyListedCarsProps {
 
 const MyListedCars = ({ userId }: MyListedCarsProps) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,33 +37,31 @@ const MyListedCars = ({ userId }: MyListedCarsProps) => {
         return;
       }
 
-      // Try to get user's cars from API
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/cars`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch cars');
+      try {
+        // Try to get user's cars from dedicated endpoint
+        const myCars = await apiService.getOwnerCars(token);
+        setCars(myCars);
+      } catch (apiError) {
+        console.warn('Owner cars endpoint failed, falling back to filtering all cars:', apiError);
+        
+        // Fallback: Get all cars and filter by owner
+        const allCars = await apiService.getCars();
+        const currentUserId = userId || user?.id || user?._id;
+        const myCars = allCars.filter((car: Car) => 
+          car.owner?._id === currentUserId || 
+          car.owner?.id === currentUserId ||
+          car.ownerId === currentUserId
+        );
+        setCars(myCars);
       }
-
-      const data = await response.json();
-      const allCars = data.cars || data || [];
-      
-      // Filter cars owned by current user
-      const currentUserId = userId || user?.id || user?._id;
-      const myCars = allCars.filter((car: Car) => 
-        car.owner?._id === currentUserId || 
-        car.owner?.id === currentUserId ||
-        car.ownerId === currentUserId
-      );
-
-      setCars(myCars);
     } catch (err) {
       console.error('Error loading my cars:', err);
       setError('Failed to load your listed cars. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to load your listed cars. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -75,6 +75,11 @@ const MyListedCars = ({ userId }: MyListedCarsProps) => {
       const token = localStorage.getItem('token');
       if (!token) {
         setError('Please log in to update car status');
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to update car status",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -86,24 +91,30 @@ const MyListedCars = ({ userId }: MyListedCarsProps) => {
       );
 
       // API call to update car status
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/cars/${carId}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ isRented: newStatus })
+      await apiService.updateCarRentalStatus(carId, newStatus, token);
+
+      // Show success toast
+      toast({
+        title: "Status Updated",
+        description: `Car has been marked as ${newStatus ? 'rented' : 'available'}`,
+        variant: "default",
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update car status');
-      }
-
-      // Reload to get updated data
+      // Reload to get updated data from server
       await loadMyCars();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating car status:', err);
-      setError('Failed to update car status. Please try again.');
+      
+      // Show specific error message
+      const errorMessage = err.message || 'Failed to update car status. Please try again.';
+      setError(errorMessage);
+      
+      toast({
+        title: "Update Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
       // Revert optimistic update
       await loadMyCars();
     } finally {

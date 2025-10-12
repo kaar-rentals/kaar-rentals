@@ -1,102 +1,110 @@
 import React from "react";
-import CarImage from "./CarImage";
+import { Heart, Star, User, Fuel, Settings } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default function ListingCard({ car, isAuthenticated }) {
   return (
-    <div className="card" style={{
-      border: "1px solid #e5e7eb",
-      borderRadius: "8px",
-      overflow: "hidden",
-      boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
-      backgroundColor: "white",
-      marginBottom: "1rem"
-    }}>
-      <div style={{ width: "100%", height: "200px", overflow: "hidden" }}>
-        {car.images?.[0] ? (
-          <CarImage srcUrl={car.images[0]} />
-        ) : (
-          <div style={{
-            width: "100%",
-            height: "100%",
-            backgroundColor: "#f3f4f6",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#6b7280",
-            fontSize: "14px"
-          }}>
-            No Image Available
-          </div>
-        )}
-      </div>
-      <div className="card-body" style={{ padding: "1rem" }}>
-        <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "1.25rem", fontWeight: "600" }}>
-          {car.brand} {car.model} • {car.year}
-        </h3>
-        <p style={{ margin: "0 0 0.5rem 0", color: "#6b7280", fontSize: "0.875rem" }}>
-          {car.category} • {car.transmission} • {car.fuelType}
-        </p>
-        <p style={{ margin: "0 0 0.5rem 0", color: "#6b7280", fontSize: "0.875rem" }}>
-          Seats: {car.seating} • Mileage: {car.mileage}
-        </p>
-        <p style={{ margin: "0 0 0.5rem 0", fontSize: "1.125rem", fontWeight: "600", color: "#059669" }}>
-          PKR {Number(car.pricePerDay).toLocaleString()} / day
-        </p>
-        <p style={{ margin: "0 0 1rem 0", color: "#4b5563", fontSize: "0.875rem", lineHeight: "1.4" }}>
-          {car.description?.slice(0,120)}...
-        </p>
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden group hover:shadow-xl transition-shadow duration-300">
+      {/* Image Section */}
+      <div className="relative">
+        <img 
+          src={car.images?.[0] || '/placeholder-car.jpg'} 
+          alt={`${car.brand} ${car.model}`}
+          className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+        
+        {/* Brand Badge - Top Left */}
+        <div className="absolute top-4 left-4">
+          <Badge className="bg-gray-900 text-white px-3 py-1 text-sm font-medium">
+            {car.brand}
+          </Badge>
+        </div>
 
-        {isAuthenticated ? (
-          <>
-            <p style={{ margin: "0 0 0.25rem 0", fontSize: "0.875rem", color: "#6b7280" }}>
-              Location: {car.location}
-            </p>
-            <p style={{ margin: "0 0 1rem 0", fontSize: "0.875rem", color: "#6b7280" }}>
-              Owner contact: {car.renterPhone || "N/A"}
-            </p>
-            <a 
-              href={`/cars/${car._id}`} 
-              className="btn"
-              style={{
-                display: "inline-block",
-                backgroundColor: "#3b82f6",
-                color: "white",
-                padding: "0.5rem 1rem",
-                borderRadius: "6px",
-                textDecoration: "none",
-                fontSize: "0.875rem",
-                fontWeight: "500"
-              }}
-            >
-              View & Book
+        {/* Heart Icon and Category - Top Right */}
+        <div className="absolute top-4 right-4 flex gap-2">
+          <button className="bg-white/20 backdrop-blur-sm rounded-full p-2 hover:bg-white/30 transition-colors">
+            <Heart className="h-4 w-4 text-white" />
+          </button>
+          <Badge className="bg-gray-900 text-white px-3 py-1 text-sm font-medium">
+            {car.category}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Content Section */}
+      <div className="p-6 space-y-4">
+        {/* Header */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-gray-900">
+              {car.brand} {car.model}
+            </h3>
+            <div className="flex items-center space-x-1">
+              <Star className="h-4 w-4 text-yellow-400 fill-current" />
+              <span className="text-sm text-gray-600 font-medium">4.8</span>
+            </div>
+          </div>
+          <p className="text-gray-600 text-sm">{car.year || 'N/A'} • {car.engineCapacity || 'N/A'}</p>
+        </div>
+
+        {/* Specifications */}
+        <div className="grid grid-cols-3 gap-4 text-sm text-gray-600">
+          <div className="flex items-center space-x-1">
+            <User className="h-4 w-4" />
+            <span>{car.seating || 'N/A'}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <Fuel className="h-4 w-4" />
+            <span>{car.mileage || 'N/A'}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <Settings className="h-4 w-4" />
+            <span>{(car.transmission || 'N/A').slice(0, 4)}</span>
+          </div>
+        </div>
+
+        {/* Key Features */}
+        <div className="flex flex-wrap gap-2">
+          {(car.features || []).slice(0, 3).map((feature, index) => (
+            <Badge key={index} variant="outline" className="text-xs bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100">
+              {feature}
+            </Badge>
+          ))}
+          {car.features && car.features.length > 3 && (
+            <Badge variant="outline" className="text-xs bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100">
+              +{car.features.length - 3} more
+            </Badge>
+          )}
+        </div>
+
+        {/* Price and Actions */}
+        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+          <div className="space-y-1">
+            <div className="text-2xl font-bold text-gray-900">
+              PKR {Number(car.pricePerDay || car.price || 0).toLocaleString()}
+              <span className="text-sm text-gray-600 font-normal">/day</span>
+            </div>
+          </div>
+          
+          <div className="flex space-x-2">
+            <a href={`/car/${car._id}/details`}>
+              <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50">
+                Details
+              </Button>
             </a>
-          </>
-        ) : (
-          <>
-            <p style={{ margin: "0 0 0.25rem 0", fontSize: "0.875rem", color: "#6b7280" }}>
-              Location: {car.city}
-            </p>
-            <button 
-              className="btn" 
-              onClick={() => window.location.href = "/login"}
-              style={{
-                backgroundColor: "#6b7280",
-                color: "white",
-                padding: "0.5rem 1rem",
-                borderRadius: "6px",
-                border: "none",
-                fontSize: "0.875rem",
-                fontWeight: "500",
-                cursor: "pointer"
-              }}
-            >
-              Login to view contact & location
-            </button>
-          </>
-        )}
+            <a href={`/car/${car._id}/book`}>
+              <Button 
+                size="sm" 
+                className="bg-gray-900 text-white hover:bg-gray-800"
+                disabled={car.isRented}
+              >
+                {car.isRented ? 'Rented' : 'Book Now'}
+              </Button>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-
-

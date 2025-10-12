@@ -40,33 +40,74 @@ const Cars = () => {
     <div className="min-h-screen">
       <Header />
       <main className="pt-16">
-        {/* Hero Section */}
-        <section className="py-20 bg-muted/30">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-4xl font-bold text-foreground mb-4">
-              Our <span className="text-gradient">Fleet</span>
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Discover our handpicked selection of premium vehicles, each offering 
-              the perfect blend of luxury, performance, and reliability.
-            </p>
-          </div>
-        </section>
+            {/* Hero Section - Premium Styling */}
+            <section className="relative py-24 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 overflow-hidden">
+              {/* Background Pattern */}
+              <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10" />
+              
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
+                <div className="mb-6">
+                  <span className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-blue-800 text-sm font-medium mb-4">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></span>
+                    Premium Fleet Collection
+                  </span>
+                </div>
+                
+                <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">
+                  Discover Your
+                  <span className="block bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                    Perfect Ride
+                  </span>
+                </h1>
+                
+                <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed mb-8">
+                  Handpicked premium vehicles from verified owners. Each car is carefully selected 
+                  for quality, performance, and reliability to ensure an exceptional rental experience.
+                </p>
+                
+                {/* Trust Indicators */}
+                <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-slate-500">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    </div>
+                    <span>Verified Owners</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    </div>
+                    <span>Premium Quality</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center">
+                      <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                    </div>
+                    <span>24/7 Support</span>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-        {/* Filters Section */}
-        <section className="py-8 bg-muted/30 border-b border-border">
+        {/* Filters Section - Minimal Design */}
+        <section className="py-6 bg-white/80 backdrop-blur-sm border-b border-slate-200/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <FilterBar onApply={q => { setQuery(q); setPage(1); }} />
           </div>
         </section>
 
-        {/* Results Section */}
-        <section className="py-12">
+        {/* Results Section - Photography Focus */}
+        <section className="py-16 bg-gradient-to-b from-white to-slate-50/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-semibold">
-                {loading ? 'Loading...' : `${cars.length} Vehicle${cars.length !== 1 ? 's' : ''} Available`}
-              </h2>
+            <div className="flex justify-between items-center mb-12">
+              <div>
+                <h2 className="text-3xl font-bold text-slate-900 mb-2">
+                  {loading ? 'Discovering Premium Vehicles...' : `${cars.length} Premium Vehicle${cars.length !== 1 ? 's' : ''}`}
+                </h2>
+                <p className="text-slate-600">
+                  {loading ? 'Please wait while we load our curated collection' : 'Carefully selected for quality and performance'}
+                </p>
+              </div>
             </div>
 
             {loading ? (

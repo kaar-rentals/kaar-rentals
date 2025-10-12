@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Edit, ToggleLeft, ToggleRight, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { Edit, ToggleLeft, ToggleRight, AlertCircle, CheckCircle, X, TrendingUp, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -169,6 +169,36 @@ const MyListedCars = ({ userId }: MyListedCarsProps) => {
         </Link>
       </div>
 
+      {/* Premium Promotion Banner */}
+      <Card className="bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 border-amber-200">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full flex items-center justify-center">
+                <Star className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-amber-900">Boost Your Listings</h3>
+                <p className="text-sm text-amber-700">Get 3x more views with Premium promotion</p>
+              </div>
+            </div>
+            <Button 
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+              onClick={() => {
+                toast({
+                  title: "Premium Promotion",
+                  description: "Contact us at premium@kaar-rentals.com to learn about our promotion packages!",
+                  variant: "default",
+                });
+              }}
+            >
+              <TrendingUp className="h-4 w-4 mr-2" />
+              Learn More
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {cars.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
@@ -213,6 +243,23 @@ const MyListedCars = ({ userId }: MyListedCarsProps) => {
                         Edit
                       </Button>
                     </Link>
+                    
+                    {/* Promote Listing Button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 text-amber-700 hover:from-amber-100 hover:to-orange-100 hover:border-amber-300"
+                      onClick={() => {
+                        toast({
+                          title: "Promote Listing",
+                          description: "Premium promotion feature coming soon! Contact us to learn more.",
+                          variant: "default",
+                        });
+                      }}
+                    >
+                      <TrendingUp className="h-4 w-4 mr-1" />
+                      Promote
+                    </Button>
                     
                     <Button
                       variant="outline"

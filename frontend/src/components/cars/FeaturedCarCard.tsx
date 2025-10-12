@@ -1,4 +1,4 @@
-import { Heart, Star, User, Fuel, Settings, ChevronLeft, ChevronRight, Shield, Crown } from 'lucide-react';
+import { Heart, Star, User, Fuel, Settings, ChevronLeft, ChevronRight, Shield, Crown, CheckCircle, Camera, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Car } from '@/services/api';
@@ -104,6 +104,16 @@ const FeaturedCarCard = ({ car }: FeaturedCarCardProps) => {
             </Badge>
           </div>
 
+          {/* Photo Verification Marker */}
+          {car.images && car.images.length > 0 && (
+            <div className="absolute top-4 left-20">
+              <div className="bg-green-500/90 text-white px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm flex items-center gap-1">
+                <Camera className="h-3 w-3" />
+                <span>Verified Photos</span>
+              </div>
+            </div>
+          )}
+
           {/* Heart Icon and Category - Top Right */}
           <div className="absolute top-4 right-4 flex gap-2">
             <button 
@@ -148,24 +158,37 @@ const FeaturedCarCard = ({ car }: FeaturedCarCardProps) => {
                 </h3>
                 <p className="text-sm text-slate-600 mt-1">{car.year || 'N/A'} • {car.engineCapacity || 'N/A'}</p>
               </div>
-              <div className="flex items-center space-x-1 bg-amber-50 px-2 py-1 rounded-full">
-                <Star className="h-4 w-4 text-amber-500 fill-current" />
-                <span className="text-sm text-amber-700 font-semibold">4.8</span>
+              <div className="flex items-center space-x-1 bg-amber-50 px-3 py-1.5 rounded-full">
+                <div className="flex items-center">
+                  <Star className="h-4 w-4 text-amber-500 fill-current" />
+                  <Star className="h-4 w-4 text-amber-500 fill-current" />
+                  <Star className="h-4 w-4 text-amber-500 fill-current" />
+                  <Star className="h-4 w-4 text-amber-500 fill-current" />
+                  <Star className="h-4 w-4 text-amber-500 fill-current" />
+                </div>
+                <span className="text-sm text-amber-700 font-semibold ml-1">4.8</span>
+                <span className="text-xs text-amber-600">(24)</span>
               </div>
             </div>
             
-            {/* Badges */}
+            {/* Credibility Badges */}
             <div className="flex flex-wrap gap-2">
               {car.verified && (
                 <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                  <Shield className="h-3 w-3 mr-1" />
-                  Verified
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Verified Owner
                 </Badge>
               )}
               {car.featured && (
                 <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
-                  <Crown className="h-3 w-3 mr-1" />
-                  Premium
+                  <Award className="h-3 w-3 mr-1" />
+                  Premium Listing
+                </Badge>
+              )}
+              {car.owner && (
+                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                  <Shield className="h-3 w-3 mr-1" />
+                  Trusted Seller
                 </Badge>
               )}
             </div>

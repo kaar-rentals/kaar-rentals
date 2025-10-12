@@ -24,6 +24,8 @@ interface Car {
   isActive: boolean;
   isRented: boolean;
   isApproved: boolean;
+  featured?: boolean;
+  verified?: boolean;
   paymentStatus: 'PENDING' | 'PAID' | 'FAILED';
   owner: {
     _id: string;

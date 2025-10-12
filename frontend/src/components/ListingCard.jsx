@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Heart, Star, User, Fuel, Settings, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, Star, User, Fuel, Settings, ChevronLeft, ChevronRight, Shield, Crown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -31,16 +31,30 @@ export default function ListingCard({ car, isAuthenticated }) {
     <Link 
       to={`/car/${car._id}/details`}
       className="block group"
-      aria-label={`View details for ${car.brand} ${car.model}`}
+      aria-label={`View details for ${car.brand} ${car.model} - ${car.year} ${car.category}`}
     >
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden group-hover:shadow-2xl group-hover:scale-[1.02] group-hover:-translate-y-1 transition-all duration-200 ease-out">
+      <div className={`bg-white rounded-xl shadow-sm border overflow-hidden group-hover:shadow-2xl group-hover:scale-[1.02] group-hover:-translate-y-1 transition-all duration-200 ease-out relative ${
+        car.featured 
+          ? 'border-amber-200 ring-1 ring-amber-100' 
+          : 'border-gray-100'
+      }`}>
+        {/* Featured Ribbon */}
+        {car.featured && (
+          <div className="absolute top-0 right-0 z-10">
+            <div className="bg-gradient-to-r from-amber-400 to-amber-500 text-white px-3 py-1 text-xs font-semibold rounded-bl-lg shadow-lg">
+              <Crown className="h-3 w-3 inline mr-1" />
+              Featured
+            </div>
+          </div>
+        )}
         {/* Image Section - 16:9 Aspect Ratio */}
         <div className="relative aspect-[16/9] overflow-hidden">
           <img 
             src={getCurrentImage()} 
-            alt={`${car.brand} ${car.model}`}
+            alt={`${car.brand} ${car.model} ${car.year} - ${car.category} car for rent`}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
+            role="img"
           />
           
           {/* Image Carousel Navigation */}
@@ -116,12 +130,12 @@ export default function ListingCard({ car, isAuthenticated }) {
         </div>
 
         {/* Content Section - Premium Typography */}
-        <div className="p-6 space-y-5">
+        <div className="p-6 space-y-4">
           {/* Header */}
           <div className="space-y-3">
             <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-slate-900 leading-tight">
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-slate-900 leading-tight">
                   {car.brand} {car.model}
                 </h3>
                 <p className="text-sm text-slate-600 mt-1">{car.year || 'N/A'} • {car.engineCapacity || 'N/A'}</p>
@@ -131,38 +145,48 @@ export default function ListingCard({ car, isAuthenticated }) {
                 <span className="text-sm text-amber-700 font-semibold">4.8</span>
               </div>
             </div>
+            
+            {/* Badges */}
+            <div className="flex flex-wrap gap-2">
+              {car.verified && (
+                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                  <Shield className="h-3 w-3 mr-1" />
+                  Verified
+                </Badge>
+              )}
+              {car.featured && (
+                <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+                  <Crown className="h-3 w-3 mr-1" />
+                  Premium
+                </Badge>
+        )}
+      </div>
+    </div>
+
+          {/* Primary Specifications */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center">
+              <div className="text-sm font-semibold text-slate-900">{car.seating || 'N/A'}</div>
+              <div className="text-xs text-slate-500">Seats</div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm font-semibold text-slate-900">{(car.transmission || 'N/A').slice(0, 4)}</div>
+              <div className="text-xs text-slate-500">Trans</div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm font-semibold text-slate-900">{car.mileage || 'N/A'}</div>
+              <div className="text-xs text-slate-500">Mileage</div>
+            </div>
           </div>
 
-          {/* Specifications */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="flex items-center space-x-2 text-slate-600">
-              <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                <User className="h-4 w-4 text-blue-600" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-slate-900">{car.seating || 'N/A'}</div>
-                <div className="text-xs text-slate-500">Seats</div>
-              </div>
+          {/* Description */}
+          {car.description && (
+            <div className="text-sm text-slate-600 leading-relaxed">
+              <p className="line-clamp-2">
+                {car.description}
+              </p>
             </div>
-            <div className="flex items-center space-x-2 text-slate-600">
-              <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
-                <Fuel className="h-4 w-4 text-green-600" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-slate-900">{car.mileage || 'N/A'}</div>
-                <div className="text-xs text-slate-500">Mileage</div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 text-slate-600">
-              <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center">
-                <Settings className="h-4 w-4 text-purple-600" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-slate-900">{(car.transmission || 'N/A').slice(0, 4)}</div>
-                <div className="text-xs text-slate-500">Trans</div>
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Key Features */}
           <div className="flex flex-wrap gap-2">
@@ -178,22 +202,19 @@ export default function ListingCard({ car, isAuthenticated }) {
             )}
           </div>
 
-          {/* Price and Location */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+          {/* Price and Status */}
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
             <div>
-              <div className="text-2xl font-bold text-slate-900">
+              <div className="text-xl font-bold text-slate-900">
                 PKR {Number(car.pricePerDay || car.price || 0).toLocaleString()}
                 <span className="text-sm text-slate-600 font-normal">/day</span>
               </div>
-              <p className="text-xs text-slate-500 mt-1">{car.location || 'Location not specified'}</p>
+              <p className="text-xs text-slate-500">{car.location || 'Location not specified'}</p>
             </div>
             
             <div className="text-right">
-              <div className="text-sm font-semibold text-slate-900">
-                {car.isRented ? 'Currently Rented' : 'Available Now'}
-              </div>
-              <div className={`text-xs ${car.isRented ? 'text-red-600' : 'text-green-600'}`}>
-                {car.isRented ? 'Check back later' : 'Ready to book'}
+              <div className={`text-xs font-semibold ${car.isRented ? 'text-red-600' : 'text-green-600'}`}>
+                {car.isRented ? 'Rented' : 'Available'}
               </div>
             </div>
           </div>

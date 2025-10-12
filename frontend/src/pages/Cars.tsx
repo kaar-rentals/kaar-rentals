@@ -82,13 +82,20 @@ const Cars = () => {
                   <p>Try adjusting your search criteria or filters</p>
                 </div>
               </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-                  {cars.map((car) => (
-                    <FeaturedCarCard key={car._id} car={car} />
-                  ))}
-                </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+                      {cars
+                        .sort((a, b) => {
+                          // Sort featured cars to the top
+                          if (a.featured && !b.featured) return -1;
+                          if (!a.featured && b.featured) return 1;
+                          return 0;
+                        })
+                        .map((car) => (
+                          <FeaturedCarCard key={car._id} car={car} />
+                        ))}
+                    </div>
                 
                 {/* Pagination */}
                 <div className="flex justify-center items-center gap-4">

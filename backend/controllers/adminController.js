@@ -3,6 +3,7 @@ const Car = require('../models/Car');
 const User = require('../models/User');
 const Payment = require('../models/Payment');
 const Booking = require('../models/Booking');
+const ListingDraft = require('../models/ListingDraft');
 
 const getDashboardStats = async (req, res) => {
   try {
@@ -14,7 +15,7 @@ const getDashboardStats = async (req, res) => {
     const totalBookings = await Booking.countDocuments();
     const totalRevenue = await Payment.aggregate([
       { $match: { status: 'SUCCEEDED' } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
+      { $group: { _id: null, total: { $sum: '$settledAmountInPaise' } } }
     ]);
 
     res.json({
@@ -123,6 +124,105 @@ const getRecentBookings = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/admin/payments
+ * Get all payments with audit trail
+ */
+const getAllPayments = async (req, res) => {
+  try {
+    const payments = await Payment.find()
+      .populate('user', 'name email phone')
+      .populate('listingDraftId')
+      .sort({ createdAt: -1 })
+      .limit(100); // Limit for performance
+
+    const paymentsWithDetails = payments.map(payment => ({
+      _id: payment._id,
+      user: payment.user,
+      type: payment.type,
+      status: payment.status,
+      requestedAmountInPaise: payment.requestedAmountInPaise,
+      settledAmountInPaise: payment.settledAmountInPaise,
+      gatewayFeesInPaise: payment.gatewayFeesInPaise,
+      netAmountInPaise: payment.settledAmountInPaise && payment.gatewayFeesInPaise 
+        ? payment.settledAmountInPaise - payment.gatewayFeesInPaise 
+        : null,
+      providerRef: payment.providerRef,
+      listingDraft: payment.listingDraftId,
+      createdAt: payment.createdAt,
+      paidAt: payment.paidAt,
+      failedAt: payment.failedAt,
+      webhookReceived: payment.webhookReceived
+    }));
+
+    res.json({ payments: paymentsWithDetails });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * GET /api/admin/payments/stats
+ * Get payment statistics for admin dashboard
+ */
+const getPaymentStats = async (req, res) => {
+  try {
+    const stats = await Payment.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+          totalRequested: { $sum: '$requestedAmountInPaise' },
+          totalSettled: { $sum: '$settledAmountInPaise' },
+          totalFees: { $sum: '$gatewayFeesInPaise' }
+        }
+      }
+    ]);
+
+    const totalStats = await Payment.aggregate([
+      { $match: { status: 'SUCCEEDED' } },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: '$settledAmountInPaise' },
+          totalFees: { $sum: '$gatewayFeesInPaise' },
+          netRevenue: { 
+            $sum: { 
+              $subtract: ['$settledAmountInPaise', { $ifNull: ['$gatewayFeesInPaise', 0] }] 
+            } 
+          },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    res.json({
+      statusBreakdown: stats,
+      totalStats: totalStats[0] || { totalRevenue: 0, totalFees: 0, netRevenue: 0, count: 0 }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * GET /api/admin/listing-drafts
+ * Get all listing drafts for audit
+ */
+const getListingDrafts = async (req, res) => {
+  try {
+    const drafts = await ListingDraft.find()
+      .populate('ownerId', 'name email phone')
+      .populate('publishedListingId')
+      .sort({ createdAt: -1 })
+      .limit(100);
+
+    res.json({ drafts });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 module.exports = {
   getDashboardStats,
   getPendingCars,
@@ -131,6 +231,9 @@ module.exports = {
   getAllUsers,
   updateUserRole,
   getAllCars,
-  getRecentBookings
+  getRecentBookings,
+  getAllPayments,
+  getPaymentStats,
+  getListingDrafts
 };
 

@@ -10,7 +10,10 @@ const {
   getAllUsers,
   updateUserRole,
   getAllCars,
-  getRecentBookings
+  getRecentBookings,
+  getAllPayments,
+  getPaymentStats,
+  getListingDrafts
 } = require('../controllers/adminController');
 
 // All admin routes require admin role
@@ -31,6 +34,13 @@ router.patch('/users/:id/role', updateUserRole);
 
 // Bookings
 router.get('/bookings', getRecentBookings);
+
+// Payment audit
+router.get('/payments', getAllPayments);
+router.get('/payments/stats', getPaymentStats);
+
+// Listing drafts audit
+router.get('/listing-drafts', getListingDrafts);
 
 module.exports = router;
 

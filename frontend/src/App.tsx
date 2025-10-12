@@ -15,6 +15,8 @@ import OwnerProfile from "./pages/OwnerProfile";
 import ListCar from "./pages/ListCar";
 import BookCar from "./pages/BookCar";
 import CarDetails from "./pages/CarDetails";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentFailed from "./pages/PaymentFailed";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
@@ -41,6 +43,8 @@ const App = () => (
             <Route path="/car/:id" element={<CarDetails />} />
             <Route path="/car/:id/book" element={<BookCar />} />
             <Route path="/car/:id/details" element={<CarDetails />} />
+            <Route path="/payments/success" element={<PaymentSuccess />} />
+            <Route path="/payments/failed" element={<PaymentFailed />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

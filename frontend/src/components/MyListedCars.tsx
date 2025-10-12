@@ -24,6 +24,7 @@ const MyListedCars = ({ userId }: MyListedCarsProps) => {
 
   useEffect(() => {
     loadMyCars();
+    loadPendingListings();
   }, [userId, user]);
 
   const loadMyCars = async () => {
@@ -64,6 +65,19 @@ const MyListedCars = ({ userId }: MyListedCarsProps) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPendingListings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const result = await apiService.getPendingListings(token);
+      // You can add pending listings to state if needed
+      console.log('Pending listings:', result);
+    } catch (error) {
+      console.error('Error loading pending listings:', error);
     }
   };
 

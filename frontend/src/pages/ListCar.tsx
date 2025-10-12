@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
-// Firebase Storage is now handled by the backend to avoid CORS issues
-import { Upload, Car, DollarSign, MapPin, X, Image as ImageIcon } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Upload, Car, DollarSign, MapPin, X, Image as ImageIcon, Star, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -9,16 +9,28 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/api';
+import { useToast } from '@/hooks/use-toast';
 
 const ListCar = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [featureAddon, setFeatureAddon] = useState(false);
+  const [pricing, setPricing] = useState<{
+    isFirstListing: boolean;
+    baseListingCost: number;
+    featureCost: number;
+    totalCost: number;
+  } | null>(null);
   
   const [formData, setFormData] = useState({
     brand: '',
@@ -99,22 +111,62 @@ const ListCar = () => {
     fileInputRef.current?.click();
   };
 
+  // Calculate pricing when form data changes
+  useEffect(() => {
+    const calculatePricing = async () => {
+      if (!user || !token) return;
+      
+      try {
+        // For now, we'll calculate client-side based on existing listings
+        // In a real implementation, this would be done server-side
+        const userCars = await apiService.getOwnerCars(token);
+        const isFirstListing = userCars.length === 0;
+        const baseListingCost = isFirstListing ? 0 : 100;
+        const featureCost = featureAddon ? 200 : 0;
+        const totalCost = baseListingCost + featureCost;
+        
+        setPricing({
+          isFirstListing,
+          baseListingCost,
+          featureCost,
+          totalCost
+        });
+      } catch (error) {
+        console.error('Error calculating pricing:', error);
+        // Default to paid listing if we can't determine
+        setPricing({
+          isFirstListing: false,
+          baseListingCost: 100,
+          featureCost: featureAddon ? 200 : 0,
+          totalCost: 100 + (featureAddon ? 200 : 0)
+        });
+      }
+    };
+
+    calculatePricing();
+  }, [user, token, featureAddon]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    if (!user) {
+    if (!user || !token) {
       setError('Please log in to list a car');
       setLoading(false);
       return;
     }
 
+    if (!pricing) {
+      setError('Please wait while we calculate pricing');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // 1) Upload images via backend (to avoid CORS issues in development)
+      // 1) Upload images via backend
       const uploadedUrls: string[] = [];
       
-      // For development, use placeholder images if upload fails
       if (images.length > 0) {
         try {
           for (const file of images) {
@@ -124,7 +176,7 @@ const ListCar = () => {
             const uploadResponse = await fetch(`${import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api'}/upload`, {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Authorization': `Bearer ${token}`,
               },
               body: formData,
             });
@@ -138,14 +190,11 @@ const ListCar = () => {
           }
         } catch (uploadError) {
           console.warn('Image upload failed, using placeholder images:', uploadError);
-          // Use placeholder images for development
           uploadedUrls.push('/assets/bmw-sedan.jpg', '/assets/mercedes-suv.jpg', '/assets/audi-hatchback.jpg');
         }
       }
 
-      console.log('Submitting car listing...', { brand: formData.brand, model: formData.model, images: uploadedUrls.length });
-
-      // 2) Normalize fields to match backend schema and send metadata
+      // 2) Prepare listing draft data
       const categoryMapped = (formData.category || '').toLowerCase() === 'suv' ? 'SUV'
         : (formData.category || '').toLowerCase() === 'sedan' ? 'Sedan'
         : (formData.category || '').toLowerCase() === 'hatchback' ? 'Hatchback'
@@ -154,67 +203,58 @@ const ListCar = () => {
       const cityRaw = (formData.location.split(',')[0] || formData.location || '').trim();
       const cityTitle = cityRaw ? cityRaw.charAt(0).toUpperCase() + cityRaw.slice(1).toLowerCase() : '';
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api'}/cars`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          brand: formData.brand,
-          model: formData.model,
-          category: categoryMapped,
-          year: Number(formData.year),
-          pricePerDay: Number(formData.price),
-          engineCapacity: formData.engineCapacity,
-          fuelType: formData.fuelType,
-          transmission: formData.transmission,
-          mileage: formData.mileage,
-          seating: Number(formData.seating),
-          description: formData.description,
-          features: formData.features,
-          location: formData.location,
-          city: cityTitle,
-          images: uploadedUrls,
-        }),
-      });
+      const listingDraft = {
+        brand: formData.brand,
+        model: formData.model,
+        category: categoryMapped,
+        year: Number(formData.year),
+        pricePerDay: Number(formData.price),
+        engineCapacity: formData.engineCapacity,
+        fuelType: formData.fuelType,
+        transmission: formData.transmission,
+        mileage: formData.mileage,
+        seating: Number(formData.seating),
+        description: formData.description,
+        features: formData.features,
+        location: formData.location,
+        city: cityTitle,
+        images: uploadedUrls,
+      };
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit car listing');
+      // 3) Create payment or publish directly
+      const paymentResult = await apiService.createListingPayment(listingDraft, featureAddon, token);
+
+      if (paymentResult.freeListing) {
+        // Free listing - published immediately
+        toast({
+          title: "Listing Published!",
+          description: paymentResult.message,
+          variant: "default",
+        });
+        
+        // Navigate to the published car
+        navigate(`/car/${paymentResult.carId}`);
+      } else {
+        // Paid listing - redirect to payment
+        toast({
+          title: "Redirecting to Payment",
+          description: "Please complete payment to publish your listing",
+          variant: "default",
+        });
+        
+        // Redirect to Safepay checkout
+        window.location.href = paymentResult.checkout_url;
       }
-
-      const result = await response.json();
-      console.log('Car listing submitted successfully:', result);
-      
-      alert('Car listing submitted successfully! We will review and contact you soon.');
-      
-      // Reset form
-      setFormData({
-        brand: '',
-        model: '',
-        category: '',
-        year: '',
-        price: '',
-        engineCapacity: '',
-        fuelType: '',
-        transmission: '',
-        mileage: '',
-        seating: '',
-        description: '',
-        features: [],
-        dealerName: '',
-        whatsapp: '',
-        location: '',
-        email: '',
-        phone: ''
-      });
-      setImages([]);
-      setImagePreviews([]);
       
     } catch (err: any) {
       console.error('Error submitting car listing:', err);
       setError(err.message || 'Failed to submit car listing');
+      
+      toast({
+        title: "Submission Failed",
+        description: err.message || 'Failed to submit car listing',
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -544,18 +584,95 @@ const ListCar = () => {
                 />
               </div>
 
+              {/* Pricing Summary */}
+              {pricing && (
+                <Card className="border-2 border-blue-200 bg-blue-50/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5 text-blue-600" />
+                      Pricing Summary
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Base Listing Cost */}
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-700">
+                        {pricing.isFirstListing ? 'First Listing (Free)' : 'Listing Fee'}
+                      </span>
+                      <span className="font-semibold">
+                        PKR {pricing.baseListingCost}
+                      </span>
+                    </div>
+
+                    {/* Feature Addon */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="feature-addon"
+                          checked={featureAddon}
+                          onCheckedChange={setFeatureAddon}
+                        />
+                        <Label htmlFor="feature-addon" className="text-gray-700 cursor-pointer">
+                          <div className="flex items-center gap-2">
+                            <Star className="h-4 w-4 text-amber-500" />
+                            Feature my car (+PKR 200)
+                          </div>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Get premium placement and 3x more views
+                          </p>
+                        </Label>
+                      </div>
+                      <span className="font-semibold">
+                        PKR {pricing.featureCost}
+                      </span>
+                    </div>
+
+                    {/* Total */}
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-semibold text-gray-900">Total</span>
+                        <span className="text-2xl font-bold text-blue-600">
+                          PKR {pricing.totalCost}
+                        </span>
+                      </div>
+                      {pricing.isFirstListing && (
+                        <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
+                          <CheckCircle className="h-4 w-4" />
+                          Your first listing is free!
+                        </p>
+                      )}
+                      {pricing.totalCost > 0 && (
+                        <p className="text-sm text-gray-500 mt-2">
+                          Payment required to publish listing
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Submit */}
               <div className="text-center">
                 <Button 
                   type="submit" 
                   size="lg"
                   className="bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary px-12"
-                  disabled={loading}
+                  disabled={loading || !pricing}
                 >
-                  {loading ? 'Submitting...' : 'Submit Listing'}
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {pricing?.totalCost === 0 ? 'Publishing...' : 'Creating Payment...'}
+                    </>
+                  ) : (
+                    pricing?.totalCost === 0 ? 'Publish Free Listing' : 'Proceed to Payment'
+                  )}
                 </Button>
                 <p className="text-sm text-muted-foreground mt-4">
-                  Your listing will be reviewed within 24 hours. We'll contact you once approved.
+                  {pricing?.totalCost === 0 
+                    ? 'Your listing will be published immediately for free!'
+                    : 'Complete payment to publish your listing instantly.'
+                  }
                 </p>
               </div>
             </form>

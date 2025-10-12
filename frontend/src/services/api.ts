@@ -331,6 +331,85 @@ class ApiService {
       throw error;
     }
   }
+
+  // Payment operations for listing
+  async createListingPayment(listingDraft: any, feature: boolean, token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/payments/create-listing-payment`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(token),
+        body: JSON.stringify({ listingDraft, feature }),
+      });
+      
+      if (response.status === 401) {
+        throw new Error('You must be logged in to create a listing payment');
+      }
+      
+      if (response.status === 403) {
+        throw new Error('You must be the listing owner to create payment');
+      }
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to create listing payment: ${errorText || response.statusText}`);
+      }
+      
+      return await this.parseJsonResponse(response);
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  }
+
+  async verifyPayment(paymentId: string, token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/payments/verify?paymentId=${paymentId}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(token),
+      });
+      
+      if (response.status === 401) {
+        throw new Error('You must be logged in to verify payment');
+      }
+      
+      if (response.status === 403) {
+        throw new Error('You must be the payment owner to verify this payment');
+      }
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to verify payment: ${errorText || response.statusText}`);
+      }
+      
+      return await this.parseJsonResponse(response);
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  }
+
+  async getPendingListings(token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/payments/pending-listings`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(token),
+      });
+      
+      if (response.status === 401) {
+        throw new Error('You must be logged in to view pending listings');
+      }
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch pending listings: ${errorText || response.statusText}`);
+      }
+      
+      return await this.parseJsonResponse(response);
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  }
 }
 
 export const apiService = new ApiService();

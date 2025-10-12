@@ -81,10 +81,10 @@ const Footer = () => {
             © 2024 Kaar.Rentals. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <Link to="/privacy" className="text-sm text-muted-foreground hover:text-accent transition-colors">
+            <Link to="/privacy-policy" className="text-sm text-muted-foreground hover:text-accent transition-colors">
               Privacy Policy
             </Link>
-            <Link to="/terms" className="text-sm text-muted-foreground hover:text-accent transition-colors">
+            <Link to="/terms-of-service" className="text-sm text-muted-foreground hover:text-accent transition-colors">
               Terms of Service
             </Link>
           </div>

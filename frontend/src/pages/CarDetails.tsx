@@ -1,16 +1,59 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Star, User, Fuel, Settings, MapPin, Phone, MessageCircle, Mail } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { apiService, Car } from '@/services/api';
 import { cars, dealers } from '@/data/cars';
 
 const CarDetails = () => {
   const { id } = useParams();
-  const car = cars.find(c => c.id === id);
+  const [car, setCar] = useState<Car | null>(null);
+  const [loading, setLoading] = useState(true);
   const dealer = dealers[0]; // For demo, using first dealer
+
+  useEffect(() => {
+    loadCar();
+  }, [id]);
+
+  const loadCar = async () => {
+    try {
+      setLoading(true);
+      const carsData = await apiService.getCars();
+      const foundCar = carsData.find(c => c._id === id || c.id === id);
+      if (foundCar) {
+        setCar(foundCar);
+      } else {
+        // Fallback to static data
+        const staticCar = cars.find(c => c.id === id);
+        if (staticCar) {
+          setCar(staticCar as any);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading car:', error);
+      // Fallback to static data
+      const staticCar = cars.find(c => c.id === id);
+      if (staticCar) {
+        setCar(staticCar as any);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading car details...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!car) {
     return (
@@ -47,7 +90,7 @@ const CarDetails = () => {
               <div className="space-y-4">
                 <div className="relative">
                   <img 
-                    src={car.image} 
+                    src={car.images?.[0] || car.image || '/placeholder-car.jpg'} 
                     alt={`${car.brand} ${car.model}`}
                     className="w-full h-96 object-cover rounded-xl"
                   />
@@ -58,11 +101,7 @@ const CarDetails = () => {
                   </div>
                   <div className="absolute top-4 right-4">
                     <div className="bg-white/90 backdrop-blur-sm rounded-lg p-2">
-                      <img 
-                        src={car.logo} 
-                        alt={car.brand}
-                        className="h-8 w-8 object-contain"
-                      />
+                      <span className="text-sm font-bold text-primary">{car.brand}</span>
                     </div>
                   </div>
                 </div>
@@ -90,7 +129,7 @@ const CarDetails = () => {
                 {/* Price */}
                 <div className="bg-gradient-card p-6 rounded-xl">
                   <div className="text-3xl font-bold text-primary mb-2">
-                    PKR {car.price.toLocaleString()}
+                    PKR {(car.pricePerDay || car.price || 0).toLocaleString()}
                     <span className="text-lg text-muted-foreground font-normal">/day</span>
                   </div>
                   <p className="text-muted-foreground">Best price guaranteed</p>
@@ -114,7 +153,7 @@ const CarDetails = () => {
 
                 {/* Action Buttons */}
                 <div className="flex space-x-4">
-                  <Link to={`/car/${car.id}/book`} className="flex-1">
+                  <Link to={`/car/${car._id || car.id}/book`} className="flex-1">
                     <Button 
                       size="lg" 
                       className="w-full bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary"

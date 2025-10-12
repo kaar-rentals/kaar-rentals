@@ -10,7 +10,7 @@ interface CarCardProps {
 
 const CarCard = ({ car }: CarCardProps) => {
   return (
-    <div className="premium-card p-0 overflow-hidden car-card-hover group">
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden group hover:shadow-xl transition-shadow duration-300">
       {/* Image Section */}
       <div className="relative">
         <img 
@@ -19,23 +19,23 @@ const CarCard = ({ car }: CarCardProps) => {
           className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
         />
         
-        {/* Brand Logo Overlay */}
+        {/* Brand Badge - Top Left */}
         <div className="absolute top-4 left-4">
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg p-2">
-            <span className="text-sm font-bold text-primary">{car.brand}</span>
-          </div>
+          <Badge className="bg-gray-900 text-white px-3 py-1 text-sm font-medium">
+            {car.brand}
+          </Badge>
         </div>
 
-        {/* Category Badge */}
+        {/* Category Badge - Top Right */}
         <div className="absolute top-4 right-4">
-          <Badge variant="secondary" className="bg-primary text-primary-foreground">
+          <Badge className="bg-gray-900 text-white px-3 py-1 text-sm font-medium">
             {car.category}
           </Badge>
         </div>
 
-        {/* Heart Icon */}
-        <button className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors">
-          <Heart className="h-4 w-4 text-muted-foreground hover:text-red-500 transition-colors" />
+        {/* Heart Icon - Top Right inside image */}
+        <button className="absolute top-4 right-16 bg-white/20 backdrop-blur-sm rounded-full p-2 hover:bg-white/30 transition-colors">
+          <Heart className="h-4 w-4 text-white" />
         </button>
       </div>
 
@@ -44,19 +44,19 @@ const CarCard = ({ car }: CarCardProps) => {
         {/* Header */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-foreground">
+            <h3 className="text-xl font-bold text-gray-900">
               {car.brand} {car.model}
             </h3>
             <div className="flex items-center space-x-1">
               <Star className="h-4 w-4 text-yellow-400 fill-current" />
-              <span className="text-sm text-muted-foreground">4.8</span>
+              <span className="text-sm text-gray-600 font-medium">4.8</span>
             </div>
           </div>
-          <p className="text-muted-foreground text-sm">{car.year || 'N/A'} • {car.engineCapacity || 'N/A'}</p>
+          <p className="text-gray-600 text-sm">{car.year || 'N/A'} • {car.engineCapacity || 'N/A'}</p>
         </div>
 
-        {/* Features */}
-        <div className="grid grid-cols-3 gap-4 text-sm text-muted-foreground">
+        {/* Specifications */}
+        <div className="grid grid-cols-3 gap-4 text-sm text-gray-600">
           <div className="flex items-center space-x-1">
             <User className="h-4 w-4" />
             <span>{car.seating || 'N/A'}</span>
@@ -72,38 +72,38 @@ const CarCard = ({ car }: CarCardProps) => {
         </div>
 
         {/* Key Features */}
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-2">
           {(car.features || []).slice(0, 3).map((feature, index) => (
-            <Badge key={index} variant="outline" className="text-xs">
+            <Badge key={index} variant="outline" className="text-xs bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100">
               {feature}
             </Badge>
           ))}
           {car.features && car.features.length > 3 && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100">
               +{car.features.length - 3} more
             </Badge>
           )}
         </div>
 
         {/* Price and Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-border">
+        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
           <div className="space-y-1">
-            <div className="text-2xl font-bold text-primary">
+            <div className="text-2xl font-bold text-gray-900">
               PKR {(car.pricePerDay || car.price || 0).toLocaleString()}
-              <span className="text-sm text-muted-foreground font-normal">/day</span>
+              <span className="text-sm text-gray-600 font-normal">/day</span>
             </div>
           </div>
           
           <div className="flex space-x-2">
             <Link to={`/car/${car._id || car.id}/details`}>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50">
                 Details
               </Button>
             </Link>
             <Link to={`/car/${car._id || car.id}/book`}>
               <Button 
                 size="sm" 
-                className="bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary"
+                className="bg-gray-900 text-white hover:bg-gray-800"
                 disabled={car.isRented}
               >
                 {car.isRented ? 'Rented' : 'Book Now'}

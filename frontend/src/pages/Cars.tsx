@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Grid, List } from 'lucide-react';
+import { Search, Filter, Grid, List, ArrowRight } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import CarCard from '@/components/cars/CarCard';
@@ -52,11 +52,14 @@ const Cars = () => {
       <Header />
       <main className="pt-16">
         {/* Hero Section */}
-        <section className="bg-gradient-to-r from-primary via-primary-dark to-accent py-20">
+        <section className="py-20 bg-muted/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-5xl font-bold text-white mb-4">Our Fleet</h1>
-            <p className="text-xl text-white/90 max-w-2xl mx-auto">
-              Explore our extensive collection of premium vehicles
+            <h1 className="text-4xl font-bold text-foreground mb-4">
+              Our <span className="text-gradient">Fleet</span>
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Discover our handpicked selection of premium vehicles, each offering 
+              the perfect blend of luxury, performance, and reliability.
             </p>
           </div>
         </section>
@@ -183,15 +186,30 @@ const Cars = () => {
                 </Button>
               </div>
             ) : (
-              <div className={`grid gap-8 ${
-                viewMode === 'grid' 
-                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-                  : 'grid-cols-1'
-              }`}>
-                {filteredCars.map((car) => (
-                  <CarCard key={car._id} car={car} />
-                ))}
-              </div>
+              <>
+                <div className={`grid gap-8 mb-12 ${
+                  viewMode === 'grid' 
+                    ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
+                    : 'grid-cols-1'
+                }`}>
+                  {filteredCars.map((car) => (
+                    <CarCard key={car._id} car={car} />
+                  ))}
+                </div>
+                
+                {/* View All Cars Button - only show if there are more cars than displayed */}
+                {filteredCars.length > 0 && (
+                  <div className="text-center fade-in">
+                    <Button 
+                      size="lg" 
+                      className="bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary"
+                    >
+                      View All Cars
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </section>

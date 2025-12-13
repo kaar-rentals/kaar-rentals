@@ -76,9 +76,9 @@ const StatusBadge = ({
         return {
           label: 'Premium',
           variant: 'outline' as const,
-          className: 'bg-purple-100 text-purple-800 border-purple-200',
+          className: 'bg-accent-light text-accent-foreground border-accent',
           icon: Crown,
-          iconColor: 'text-purple-600'
+          iconColor: 'text-accent'
         };
       default:
         return {

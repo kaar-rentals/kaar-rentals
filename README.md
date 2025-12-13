@@ -87,10 +87,21 @@ kaar-rentals/
 
 4. **Configure environment variables**:
    ```env
-   MONGO_URI=mongodb://localhost:27017/kaar-rentals
-   JWT_SECRET=your-jwt-secret
-   SAFE_PAY_KEY=your-safepay-key
-   SAFE_PAY_SECRET=your-safepay-secret
+   # Database
+   MONGODB_URI=mongodb://localhost:27017/kaar-rentals
+   
+   # JWT
+   JWT_SECRET=your-super-secret-jwt-key
+   
+   # SafePay Configuration
+   SAFEPAY_KEY=your-safepay-api-key
+   SAFEPAY_SECRET=your-safepay-secret
+   SAFEPAY_SANDBOX=true
+   SAFEPAY_WEBHOOK_SECRET=your-webhook-secret
+   
+   # Server
+   PORT=5000
+   NODE_ENV=development
    BASE_URL=http://localhost:8080
    FRONTEND_URL=http://localhost:3000
    ```

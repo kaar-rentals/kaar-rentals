@@ -8,7 +8,7 @@ const Car = require('../models/Car');
 
 const SAFE_PAY_KEY = process.env.SAFE_PAY_KEY || '';
 const SAFE_PAY_SECRET = process.env.SAFE_PAY_SECRET || '';
-const BASE_URL = process.env.BASE_URL || 'http://localhost:8080';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:8081';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 // plan durations (days)
@@ -47,14 +47,14 @@ async function createMembershipCheckout(req, res, next) {
     await payment.save();
 
     // Build safepay payload for frontend (adjust field names to match Safepay docs)
-    const payload = {
+      const payload = {
       merchant_key: SAFE_PAY_KEY,
       order_id: orderId,
       amount: payment.amount,
       item_name: `Kaar Membership: ${plan}`,
       currency: payment.currency,
-      return_url: `${FRONTEND_URL}/membership/callback`,
-      notify_url: `${BASE_URL}/api/payments/webhook`,
+        return_url: `${FRONTEND_URL}/membership/callback`,
+        notify_url: `${BASE_URL}/api/safepay/webhook`,
       customer_name: req.user.name || '',
       customer_email: req.user.email || '',
       metadata: { paymentId: payment._id.toString(), plan }
@@ -73,6 +73,8 @@ async function createMembershipCheckout(req, res, next) {
  * Safepay will POST here on payment events. We validate signature if provided.
  */
 async function webhook(req, res, next) {
+  console.log("📦 SafePay Webhook Received:", JSON.stringify(req.body, null, 2));
+  console.log("→ Raw headers:", JSON.stringify(req.headers, null, 2));
   try {
     // raw body expected via express.raw() in route
     const raw = req.rawBody || JSON.stringify(req.body);
@@ -200,7 +202,7 @@ async function createCarListingPayment(req, res, next) {
       item_name: `Car Listing: ${car.brand} ${car.model}`,
       currency: payment.currency,
       return_url: `${FRONTEND_URL}/payment/callback`,
-      notify_url: `${BASE_URL}/api/payments/webhook`,
+      notify_url: `${BASE_URL}/api/safepay/webhook`,
       customer_name: req.user.name || '',
       customer_email: req.user.email || '',
       metadata: { paymentId: payment._id.toString(), carId }
@@ -421,7 +423,7 @@ async function createListingPayment(req, res, next) {
         item_name: `Car Listing: ${listingDraft.brand} ${listingDraft.model}${feature ? ' (Featured)' : ''}`,
         currency: 'PKR',
         return_url: `${FRONTEND_URL}/payments/success?paymentId=${payment._id}`,
-        notify_url: `${BASE_URL}/api/payments/webhook`,
+        notify_url: `${BASE_URL}/api/safepay/webhook`,
         customer_name: req.user.name || '',
         customer_email: req.user.email || '',
         metadata: { 
@@ -432,8 +434,8 @@ async function createListingPayment(req, res, next) {
       };
 
       // TODO: Replace with actual Safepay API call
-      // For now, we'll simulate the response
-      const checkout_url = `https://sandbox.safepay.com/checkout/${draft.paymentRef}`;
+      // For development, redirect to frontend success so DNS errors don't occur
+      const checkout_url = `${FRONTEND_URL}/payments/success?paymentId=${payment._id}`;
       
       // Store checkout URL in payment metadata
       payment.metadata = { checkout_url, safepayPayload };
@@ -488,9 +490,15 @@ async function verifyPayment(req, res, next) {
       return res.status(404).json({ error: 'Payment not found' });
     }
 
-    // Check if user owns this payment
-    if (payment.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: 'You must be the payment owner to verify this payment' });
+    // If user is authenticated, enforce ownership; otherwise allow public verification
+    if (req.user && payment.user) {
+      const paymentUserId = typeof payment.user.toString === 'function' ? payment.user.toString() : String(payment.user);
+      const requesterId = (req.user._id && req.user._id.toString && req.user._id.toString())
+        || (req.user.id && req.user.id.toString && req.user.id.toString())
+        || (req.user.id ? String(req.user.id) : undefined);
+      if (requesterId && paymentUserId && requesterId !== paymentUserId) {
+        return res.status(403).json({ error: 'You must be the payment owner to verify this payment' });
+      }
     }
 
     // TODO: Verify with Safepay API if needed

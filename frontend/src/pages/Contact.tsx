@@ -5,29 +5,30 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { contactConfig } from '@/config/contact';
 
 const Contact = () => {
   const contactInfo = [
     {
       icon: Phone,
       title: 'Call Us',
-      details: ['03090017510', 'Available 24/7', 'Direct line to our team']
+      details: [contactConfig.phone, contactConfig.businessHours, 'Direct line to our team']
     },
     {
       icon: Mail,
       title: 'Email Us',
-      details: ['kaar.rentals@gmail.com', 'Quick response guaranteed', 'Support & inquiries']
+      details: [contactConfig.email, contactConfig.responseTime, 'Support & inquiries']
     },
     {
       icon: MessageCircle,
       title: 'WhatsApp',
-      details: ['+923090017510', 'Instant messaging', 'Quick booking support']
+      details: [contactConfig.whatsapp, 'Instant messaging', 'Quick booking support']
     },
-    {
+    ...(contactConfig.showAddresses ? [{
       icon: MapPin,
       title: 'Visit Us',
-      details: ['DHA Phase 5, Karachi', 'Gulberg, Lahore', 'Islamabad & Rawalpindi']
-    }
+      details: contactConfig.addresses
+    }] : [])
   ];
 
   return (

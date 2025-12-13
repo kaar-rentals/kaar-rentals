@@ -24,7 +24,7 @@ const Categories = () => {
       icon: Zap,
       description: 'Compact and efficient for city driving',
       count: '100+ vehicles',
-      color: 'from-purple-500 to-purple-600',
+      color: 'from-accent to-primary',
       href: '/cars?category=hatchback'
     }
   ];

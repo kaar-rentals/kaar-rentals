@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Star, User, Fuel, Settings, MapPin, Phone, MessageCircle, Mail, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
+import { ArrowLeft, Star, User, Fuel, Settings, MapPin, Phone, MessageCircle, Mail, ChevronLeft, ChevronRight, Heart, AlertCircle } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ const CarDetails = () => {
   const { id } = useParams();
   const [car, setCar] = useState<Car | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
   const dealer = dealers[0]; // For demo, using first dealer
@@ -23,24 +24,46 @@ const CarDetails = () => {
   const loadCar = async () => {
     try {
       setLoading(true);
-      const carsData = await apiService.getCars();
-      const foundCar = carsData.find(c => c._id === id || c.id === id);
-      if (foundCar) {
-        setCar(foundCar);
-      } else {
-        // Fallback to static data
-        const staticCar = cars.find(c => c.id === id);
-        if (staticCar) {
-          setCar(staticCar as any);
+      setError(null);
+
+      // Prefer fetching a single car by id from the API
+      if (id) {
+        try {
+          const apiCar = await apiService.getCarById(id);
+          if (apiCar) {
+            setCar(apiCar);
+            return;
+          }
+        } catch (e) {
+          // Continue to fallback paths below
         }
       }
-    } catch (error) {
-      console.error('Error loading car:', error);
-      // Fallback to static data
+
+      // Fallback: load all cars and try to find it when endpoint not available
+      try {
+        const maybeCars = await apiService.getCars();
+        const carsArray = Array.isArray(maybeCars)
+          ? maybeCars
+          : (Array.isArray((maybeCars as any)?.data) ? (maybeCars as any).data : []);
+        const foundCar = carsArray.find((c: any) => c?._id === id || c?.id === id);
+        if (foundCar) {
+          setCar(foundCar);
+          return;
+        }
+      } catch (e) {
+        // Ignore and proceed to static fallback
+      }
+
+      // Static data fallback
       const staticCar = cars.find(c => c.id === id);
       if (staticCar) {
         setCar(staticCar as any);
+      } else {
+        setError('Listing not found');
       }
+    } catch (error) {
+      console.error('Error loading car:', error);
+      setError('Failed to load listing. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -77,14 +100,32 @@ const CarDetails = () => {
     );
   }
 
-  if (!car) {
+  if (error || !car) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Car not found</h1>
-          <Link to="/cars">
-            <Button>Browse Cars</Button>
-          </Link>
+          <div className="mb-6">
+            <div className="mx-auto w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="h-12 w-12 text-red-600" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2 text-gray-900">
+              {error || 'Listing not found'}
+            </h1>
+            <p className="text-gray-600 mb-6">
+              {error === 'Listing not found' 
+                ? 'The car listing you\'re looking for doesn\'t exist or may have been removed.'
+                : 'Something went wrong while loading the listing details.'
+              }
+            </p>
+          </div>
+          <div className="space-x-4">
+            <Link to="/cars">
+              <Button>Browse All Cars</Button>
+            </Link>
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -297,7 +338,7 @@ const CarDetails = () => {
                     <div className="text-sm text-gray-600">Fuel Economy</div>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <Settings className="h-8 w-8 mx-auto mb-2 text-purple-600" />
+                    <Settings className="h-8 w-8 mx-auto mb-2 text-accent" />
                     <div className="font-semibold text-gray-900">{car.transmission}</div>
                     <div className="text-sm text-gray-600">Transmission</div>
                   </div>
@@ -312,49 +353,50 @@ const CarDetails = () => {
 
                 {/* Features & Specifications */}
                 <div className="space-y-8">
-                {/* Features */}
-                <div className="premium-card p-8">
-                  <h2 className="text-2xl font-bold mb-6">Features & Equipment</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {car.features.map((feature, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-accent rounded-full"></div>
-                        <span className="text-sm">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Specifications */}
-                <div className="premium-card p-8">
-                  <h2 className="text-2xl font-bold mb-6">Specifications</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Engine</span>
-                        <span className="font-semibold">{car.engineCapacity}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Fuel Type</span>
-                        <span className="font-semibold">{car.fuelType}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Transmission</span>
-                        <span className="font-semibold">{car.transmission}</span>
-                      </div>
+                  {/* Features */}
+                  <div className="premium-card p-8">
+                    <h2 className="text-2xl font-bold mb-6">Features & Equipment</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {car.features.map((feature, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-accent rounded-full"></div>
+                          <span className="text-sm">{feature}</span>
+                        </div>
+                      ))}
                     </div>
-                    <div className="space-y-4">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Year</span>
-                        <span className="font-semibold">{car.year}</span>
+                  </div>
+
+                  {/* Specifications */}
+                  <div className="premium-card p-8">
+                    <h2 className="text-2xl font-bold mb-6">Specifications</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Engine</span>
+                          <span className="font-semibold">{car.engineCapacity}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Fuel Type</span>
+                          <span className="font-semibold">{car.fuelType}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Transmission</span>
+                          <span className="font-semibold">{car.transmission}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Mileage</span>
-                        <span className="font-semibold">{car.mileage}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Seating</span>
-                        <span className="font-semibold">{car.seating} persons</span>
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Year</span>
+                          <span className="font-semibold">{car.year}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Mileage</span>
+                          <span className="font-semibold">{car.mileage}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Seating</span>
+                          <span className="font-semibold">{car.seating} persons</span>
+                        </div>
                       </div>
                     </div>
                   </div>

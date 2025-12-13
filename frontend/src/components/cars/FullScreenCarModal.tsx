@@ -208,7 +208,7 @@ const FullScreenCarModal = ({ car, isOpen, onClose, initialImageIndex = 0 }: Ful
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Settings className="h-5 w-5 text-purple-600" />
+                  <Settings className="h-5 w-5 text-accent" />
                   <div>
                     <div className="text-sm font-medium">{car.transmission}</div>
                     <div className="text-xs text-gray-500">Transmission</div>

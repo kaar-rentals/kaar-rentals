@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Car = require("../models/Car");
+const auth = require("../middleware/authMiddleware");
 
 // GET /api/cars
 router.get("/", async (req, res) => {
@@ -165,6 +166,24 @@ router.post("/", async (req, res) => {
     console.error('Error creating car:', err);
     console.error('Error details:', err.message);
     console.error('Error stack:', err.stack);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// GET /api/cars/owner/my-cars - Get cars for the logged-in owner
+// Requires a valid JWT; allow roles owner/admin/user
+router.get("/owner/my-cars", auth(["owner", "admin", "user"]), async (req, res) => {
+  try {
+    const ownerId = req.user && req.user._id;
+    if (!ownerId) return res.status(401).json({ message: "Unauthorized" });
+
+    const cars = await Car.find({ owner: ownerId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.json(cars);
+  } catch (err) {
+    console.error(err);
     return res.status(500).json({ message: "Server error" });
   }
 });

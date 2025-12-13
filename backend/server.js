@@ -10,10 +10,52 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors({
-  origin: ["https://www.kaar.rentals", "https://kaar-rentals.vercel.app"],
-  credentials: true,
-}));
+
+// CORS
+const allowedOrigins = [
+  "https://www.kaar.rentals",
+  "https://kaar-rentals.vercel.app",
+  // Local/dev origins
+  "http://localhost:8080",
+  "http://localhost:8081",
+  "http://localhost:8082",
+  "http://localhost:5173",
+  "http://127.0.0.1:8080",
+  "http://127.0.0.1:8081",
+  "http://127.0.0.1:8082",
+  "http://127.0.0.1:5173",
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // allow requests with no origin (like mobile apps, curl, SSR)
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes(origin) ||
+        /^http:\/\/(localhost|127\.0\.0\.1)(:\\d+)?$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+    allowedHeaders: "Content-Type,Authorization",
+  })
+);
+
+// Enable preflight across-the-board (Express 5 safe)
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    return res.sendStatus(204);
+  }
+  return next();
+});
 app.use(morgan("dev"));
 
 // Optional auth middleware to attach req.user if JWT present
@@ -31,6 +73,9 @@ app.use("/api/bookings", require("./routes/bookings"));
 app.use("/api/payments", require("./routes/payments"));
 app.use("/api/admin", require("./routes/admin"));
 app.use("/api/seed", require("./routes/seed"));
+
+// Alias: support Safepay webhook at /api/safepay/webhook as requested by provider config
+app.post("/api/safepay/webhook", express.raw({ type: 'application/json' }), require("./controllers/paymentController").webhook);
 
 // Cloudinary upload route
 const uploadRoutes = require("./routes/upload");

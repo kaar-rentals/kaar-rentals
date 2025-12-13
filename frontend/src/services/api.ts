@@ -1,8 +1,6 @@
+// Prefer explicit backend URL in dev to avoid cross-port inference issues
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  (typeof window !== 'undefined'
-    ? `${window.location.origin.replace('://www.', '://api.')}/api`
-    : 'http://localhost:8080/api');
+  import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 interface Car {
   _id: string;
@@ -77,9 +75,24 @@ class ApiService {
   }
 
   // Car operations
-  async getCars(): Promise<Car[]> {
+  async getCars(queryParams?: { featured?: boolean; category?: string; [key: string]: any }): Promise<Car[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/cars`);
+      let url = `${API_BASE_URL}/cars`;
+      
+      // Add query parameters if provided
+      if (queryParams) {
+        const params = new URLSearchParams();
+        Object.entries(queryParams).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            params.append(key, value.toString());
+          }
+        });
+        if (params.toString()) {
+          url += `?${params.toString()}`;
+        }
+      }
+      
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }

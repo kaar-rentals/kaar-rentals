@@ -55,7 +55,7 @@ const Cars = () => {
                 
                 <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">
                   Discover Your
-                  <span className="block bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                  <span className="block bg-gradient-to-r from-accent via-primary to-accent bg-clip-text text-transparent">
                     Perfect Ride
                   </span>
                 </h1>
@@ -80,8 +80,8 @@ const Cars = () => {
                     <span>Premium Quality</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center">
-                      <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                    <div className="w-5 h-5 bg-accent-light rounded-full flex items-center justify-center">
+                      <span className="w-2 h-2 bg-accent rounded-full"></span>
                     </div>
                     <span>24/7 Support</span>
                   </div>

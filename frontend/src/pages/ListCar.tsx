@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Car, DollarSign, MapPin, X, Image as ImageIcon, Star, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, Car, DollarSign, MapPin, X, Image as ImageIcon, Star, CheckCircle, AlertCircle, Loader2, Settings } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import BrandAutocomplete from '@/components/ui/BrandAutocomplete';
+import CityAutocomplete from '@/components/ui/CityAutocomplete';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
@@ -49,8 +51,10 @@ const ListCar = () => {
     whatsapp: '',
     location: '',
     email: '',
-    phone: ''
+    phone: '',
+    isDealership: false
   });
+  const [showAdvancedFields, setShowAdvancedFields] = useState(false);
 
   const availableFeatures = [
     'Leather Seats', 'Navigation System', 'Bluetooth', 'Sunroof', 'Heated Seats',
@@ -58,6 +62,19 @@ const ListCar = () => {
     'Virtual Cockpit', 'Wireless Charging', 'LED Headlights', 'Safety Sense',
     'Hands-Free Tailgate', 'Tri-Zone Climate Control'
   ];
+
+  // Prefill user data when user is available
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        email: user.email || '',
+        phone: user.phone || '',
+        whatsapp: user.phone || '',
+        dealerName: user.name || ''
+      }));
+    }
+  }, [user]);
 
   const handleFeatureChange = (feature: string, checked: boolean) => {
     if (checked) {
@@ -209,11 +226,12 @@ const ListCar = () => {
         category: categoryMapped,
         year: Number(formData.year),
         pricePerDay: Number(formData.price),
-        engineCapacity: formData.engineCapacity,
-        fuelType: formData.fuelType,
-        transmission: formData.transmission,
-        mileage: formData.mileage,
-        seating: Number(formData.seating),
+        // Provide safe defaults to satisfy backend ListingDraft schema requirements
+        engineCapacity: formData.engineCapacity || '2.0L',
+        fuelType: formData.fuelType || 'gasoline',
+        transmission: formData.transmission || 'automatic',
+        mileage: formData.mileage || 'N/A',
+        seating: Math.max(1, Number(formData.seating) || 1),
         description: formData.description,
         features: formData.features,
         location: formData.location,
@@ -289,13 +307,12 @@ const ListCar = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="brand">Brand *</Label>
-                    <Input 
-                      id="brand" 
-                      placeholder="e.g., BMW, Mercedes-Benz"
+                    <BrandAutocomplete
                       value={formData.brand}
-                      onChange={(e) => setFormData(prev => ({...prev, brand: e.target.value}))}
-                      required 
+                      onChange={(value) => setFormData(prev => ({...prev, brand: value}))}
+                      placeholder="e.g., BMW, Mercedes-Benz"
+                      label="Brand"
+                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -332,64 +349,78 @@ const ListCar = () => {
                       required 
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="engineCapacity">Engine Capacity *</Label>
-                    <Input 
-                      id="engineCapacity" 
-                      placeholder="e.g., 2.0L Turbo"
-                      value={formData.engineCapacity}
-                      onChange={(e) => setFormData(prev => ({...prev, engineCapacity: e.target.value}))}
-                      required 
-                    />
+                  {/* Advanced Details Toggle */}
+                  <div className="md:col-span-2 mb-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowAdvancedFields(!showAdvancedFields)}
+                      className="flex items-center gap-2"
+                    >
+                      {showAdvancedFields ? 'Hide' : 'Show'} Advanced Details
+                      <Settings className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="fuelType">Fuel Type *</Label>
-                    <Select value={formData.fuelType} onValueChange={(value) => setFormData(prev => ({...prev, fuelType: value}))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select fuel type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="gasoline">Gasoline</SelectItem>
-                        <SelectItem value="diesel">Diesel</SelectItem>
-                        <SelectItem value="hybrid">Hybrid</SelectItem>
-                        <SelectItem value="electric">Electric</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="transmission">Transmission *</Label>
-                    <Select value={formData.transmission} onValueChange={(value) => setFormData(prev => ({...prev, transmission: value}))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select transmission" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="automatic">Automatic</SelectItem>
-                        <SelectItem value="manual">Manual</SelectItem>
-                        <SelectItem value="cvt">CVT</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="mileage">Mileage *</Label>
-                    <Input 
-                      id="mileage" 
-                      placeholder="e.g., 10 KM/L"
-                      value={formData.mileage}
-                      onChange={(e) => setFormData(prev => ({...prev, mileage: e.target.value}))}
-                      required 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="seating">Seating Capacity *</Label>
-                    <Input 
-                      id="seating" 
-                      type="number" 
-                      placeholder="5"
-                      value={formData.seating}
-                      onChange={(e) => setFormData(prev => ({...prev, seating: e.target.value}))}
-                      required 
-                    />
-                  </div>
+
+                  {showAdvancedFields && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="engineCapacity">Engine Capacity</Label>
+                        <Input 
+                          id="engineCapacity" 
+                          placeholder="e.g., 2.0L Turbo"
+                          value={formData.engineCapacity}
+                          onChange={(e) => setFormData(prev => ({...prev, engineCapacity: e.target.value}))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="fuelType">Fuel Type</Label>
+                        <Select value={formData.fuelType} onValueChange={(value) => setFormData(prev => ({...prev, fuelType: value}))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select fuel type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="gasoline">Gasoline</SelectItem>
+                            <SelectItem value="diesel">Diesel</SelectItem>
+                            <SelectItem value="hybrid">Hybrid</SelectItem>
+                            <SelectItem value="electric">Electric</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="transmission">Transmission</Label>
+                        <Select value={formData.transmission} onValueChange={(value) => setFormData(prev => ({...prev, transmission: value}))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select transmission" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="automatic">Automatic</SelectItem>
+                            <SelectItem value="manual">Manual</SelectItem>
+                            <SelectItem value="cvt">CVT</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="mileage">Mileage</Label>
+                        <Input 
+                          id="mileage" 
+                          placeholder="e.g., 10 KM/L"
+                          value={formData.mileage}
+                          onChange={(e) => setFormData(prev => ({...prev, mileage: e.target.value}))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="seating">Seating Capacity</Label>
+                        <Input 
+                          id="seating" 
+                          type="number" 
+                          placeholder="5"
+                          value={formData.seating}
+                          onChange={(e) => setFormData(prev => ({...prev, seating: e.target.value}))}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="mt-6 space-y-2">
@@ -452,28 +483,46 @@ const ListCar = () => {
                   <div className="bg-secondary/10 p-2 rounded-lg">
                     <MapPin className="h-6 w-6 text-secondary" />
                   </div>
-                  <h2 className="text-2xl font-bold">Dealership Information</h2>
+                  <h2 className="text-2xl font-bold">Contact Information</h2>
+                </div>
+
+                {/* Dealership Checkbox */}
+                <div className="mb-6">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="isDealership"
+                      checked={formData.isDealership}
+                      onCheckedChange={(checked) => setFormData(prev => ({...prev, isDealership: checked as boolean}))}
+                    />
+                    <Label htmlFor="isDealership" className="text-sm font-medium cursor-pointer">
+                      I represent a dealership
+                    </Label>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Check this if you're listing on behalf of a dealership
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {formData.isDealership && (
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="dealerName">Dealership Name *</Label>
+                      <Input 
+                        id="dealerName" 
+                        placeholder="Premium Auto Dealership"
+                        value={formData.dealerName}
+                        onChange={(e) => setFormData(prev => ({...prev, dealerName: e.target.value}))}
+                        required={formData.isDealership}
+                      />
+                    </div>
+                  )}
                   <div className="space-y-2">
-                    <Label htmlFor="dealerName">Dealership Name *</Label>
-                    <Input 
-                      id="dealerName" 
-                      placeholder="Premium Auto Dealership"
-                      value={formData.dealerName}
-                      onChange={(e) => setFormData(prev => ({...prev, dealerName: e.target.value}))}
-                      required 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Location *</Label>
-                    <Input 
-                      id="location" 
-                      placeholder="lahore, Pakistan"
+                    <CityAutocomplete
                       value={formData.location}
-                      onChange={(e) => setFormData(prev => ({...prev, location: e.target.value}))}
-                      required 
+                      onChange={(value) => setFormData(prev => ({...prev, location: value}))}
+                      placeholder="Select city"
+                      label="Location"
+                      required
                     />
                   </div>
                   <div className="space-y-2">

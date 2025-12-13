@@ -17,9 +17,23 @@ const FeaturedCars = () => {
   const loadFeaturedCars = async () => {
     try {
       setLoading(true);
+      // First try to get featured cars specifically
+      const featuredData = await apiService.getCars({ featured: true });
+      if (featuredData && Array.isArray(featuredData) && featuredData.length > 0) {
+        setFeaturedCars(featuredData.slice(0, 3));
+        return;
+      }
+      
+      // Fallback: Get all cars and filter for featured ones
       const carsData = await apiService.getCars();
       if (carsData && Array.isArray(carsData)) {
-        setFeaturedCars(carsData.slice(0, 3));
+        const featuredCars = carsData.filter(car => car.featured === true);
+        if (featuredCars.length > 0) {
+          setFeaturedCars(featuredCars.slice(0, 3));
+        } else {
+          // If no featured cars, show first 3 cars
+          setFeaturedCars(carsData.slice(0, 3));
+        }
       } else {
         throw new Error('Invalid data format from API');
       }
@@ -27,7 +41,6 @@ const FeaturedCars = () => {
       console.error('Error loading featured cars:', error);
       // Fallback to static data if API is not available
       console.log('Using static data as fallback');
-      console.log('Static cars available:', staticCars.length);
       if (staticCars && staticCars.length > 0) {
         setFeaturedCars(staticCars.slice(0, 3));
       } else {

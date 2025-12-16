@@ -72,6 +72,7 @@ app.use("/api/cars", require("./routes/cars"));
 app.use("/api/bookings", require("./routes/bookings"));
 app.use("/api/payments", require("./routes/payments"));
 app.use("/api/admin", require("./routes/admin"));
+app.use("/api/user", require("./routes/user"));
 app.use("/api/seed", require("./routes/seed"));
 
 // Alias: support Safepay webhook at /api/safepay/webhook as requested by provider config

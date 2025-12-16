@@ -131,7 +131,7 @@ describe('MyListedCars', () => {
   });
 
   describe('Component Rendering', () => {
-    it('renders the component with title and list new car button', () => {
+    it('renders the component with title and list new car button', async () => {
       mockApiService.getOwnerCars.mockResolvedValue(mockCars);
       
       render(
@@ -141,10 +141,12 @@ describe('MyListedCars', () => {
       );
 
       expect(screen.getByText('My Listed Cars')).toBeInTheDocument();
-      expect(screen.getByText('List New Car')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('List New Car')).toBeInTheDocument();
+      });
     });
 
-    it('renders premium promotion banner', () => {
+    it('renders premium promotion banner', async () => {
       mockApiService.getOwnerCars.mockResolvedValue(mockCars);
       
       render(
@@ -153,8 +155,10 @@ describe('MyListedCars', () => {
         </TestWrapper>
       );
 
-      expect(screen.getByText('Boost Your Listings')).toBeInTheDocument();
-      expect(screen.getByText('Get 3x more views with Premium promotion')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Boost Your Listings')).toBeInTheDocument();
+        expect(screen.getByText('Get 3x more views with Premium promotion')).toBeInTheDocument();
+      });
     });
 
     it('displays loading state initially', () => {

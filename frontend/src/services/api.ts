@@ -423,6 +423,18 @@ class ApiService {
       throw error;
     }
   }
+
+  async getUserListings(token?: string) {
+    try {
+      const headers = token ? this.getAuthHeaders(token) : { 'Content-Type': 'application/json' };
+      const response = await fetch(`${API_BASE_URL}/user/listings`, { headers });
+      if (!response.ok) throw new Error('Failed to fetch user listings');
+      return await this.parseJsonResponse(response);
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  }
 }
 
 export const apiService = new ApiService();

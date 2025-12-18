@@ -9,6 +9,7 @@ const carSchema = new mongoose.Schema({
   category: { type: String, enum: ['Sedan', 'SUV', 'Hatchback'], required: true },
   pricePerDay: { type: Number, required: true },
   images: [String],
+  public_id: { type: String, default: null }, // Cloudinary public_id for main image
   location: { type: String, required: true },
   city: { type: String, required: true }, // Karachi, Lahore, Islamabad
   engineCapacity: { type: String, required: true },

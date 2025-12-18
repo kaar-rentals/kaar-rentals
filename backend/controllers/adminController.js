@@ -45,9 +45,19 @@ const getPendingCars = async (req, res) => {
 
 const approveCar = async (req, res) => {
   try {
+    const { featured } = req.body; // Admin can set featured status
+    const updateData = { 
+      isApproved: true,
+      paymentStatus: 'PAID' // Admin bypass: approve without payment
+    };
+    
+    if (featured !== undefined) {
+      updateData.featured = featured;
+    }
+    
     const car = await Car.findByIdAndUpdate(
       req.params.id,
-      { isApproved: true },
+      updateData,
       { new: true }
     ).populate('owner', 'name email');
     
@@ -95,6 +105,29 @@ const updateUserRole = async (req, res) => {
     
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * PATCH /api/admin/users/:id/toggle-owner
+ * Toggle user's owner status (user <-> owner)
+ */
+const toggleOwnerStatus = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    // Toggle between 'user' and 'owner'
+    const newRole = user.role === 'owner' ? 'user' : 'owner';
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      { role: newRole },
+      { new: true }
+    ).select('-password');
+    
+    res.json(updatedUser);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -230,6 +263,7 @@ module.exports = {
   rejectCar,
   getAllUsers,
   updateUserRole,
+  toggleOwnerStatus,
   getAllCars,
   getRecentBookings,
   getAllPayments,

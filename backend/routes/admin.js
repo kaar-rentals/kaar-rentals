@@ -9,6 +9,7 @@ const {
   rejectCar,
   getAllUsers,
   updateUserRole,
+  toggleOwnerStatus,
   getAllCars,
   getRecentBookings,
   getAllPayments,
@@ -31,6 +32,7 @@ router.patch('/cars/:id/reject', rejectCar);
 // User management
 router.get('/users', getAllUsers);
 router.patch('/users/:id/role', updateUserRole);
+router.patch('/users/:id/toggle-owner', toggleOwnerStatus);
 
 // Bookings
 router.get('/bookings', getRecentBookings);

@@ -188,4 +188,60 @@ router.get("/owner/my-cars", auth(["owner", "admin", "user"]), async (req, res) 
   }
 });
 
+// PATCH /api/cars/:id/status - Owner-only toggle for ad status (available/rented)
+router.patch("/:id/status", auth(["owner", "admin"]), async (req, res) => {
+  try {
+    const carId = req.params.id;
+    const { status } = req.body; // 'available' or 'rented'
+    const ownerId = req.user.id || req.user._id;
+
+    const car = await Car.findById(carId);
+    if (!car) return res.status(404).json({ message: "Car not found" });
+
+    // Verify ownership (unless admin)
+    if (req.user.role !== 'admin' && car.owner.toString() !== ownerId.toString()) {
+      return res.status(403).json({ message: "You can only update your own listings" });
+    }
+
+    // Update status
+    if (status === 'rented') {
+      car.isRented = true;
+      car.isActive = false;
+    } else if (status === 'available') {
+      car.isRented = false;
+      car.isActive = true;
+    } else {
+      return res.status(400).json({ message: "Invalid status. Use 'available' or 'rented'" });
+    }
+
+    await car.save();
+    return res.json(car);
+  } catch (err) {
+    console.error('Error updating car status:', err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// DELETE /api/cars/:id - Delete car (owner or admin)
+router.delete("/:id", auth(["owner", "admin"]), async (req, res) => {
+  try {
+    const carId = req.params.id;
+    const ownerId = req.user.id || req.user._id;
+
+    const car = await Car.findById(carId);
+    if (!car) return res.status(404).json({ message: "Car not found" });
+
+    // Verify ownership (unless admin)
+    if (req.user.role !== 'admin' && car.owner.toString() !== ownerId.toString()) {
+      return res.status(403).json({ message: "You can only delete your own listings" });
+    }
+
+    await Car.findByIdAndDelete(carId);
+    return res.json({ message: "Car deleted successfully" });
+  } catch (err) {
+    console.error('Error deleting car:', err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;

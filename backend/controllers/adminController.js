@@ -256,6 +256,69 @@ const getListingDrafts = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/admin/cars
+ * Admin bypass: Create ad without payment requirement
+ */
+const createCarAsAdmin = async (req, res) => {
+  try {
+    const {
+      brand, model, year, category, pricePerDay, images = [],
+      location, city, engineCapacity, fuelType, transmission,
+      mileage, seating, features = [], description = "",
+      owner, featured = false
+    } = req.body;
+
+    // Validate required fields
+    if (!brand || !model || !year || !category || !pricePerDay || !location || !city) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Generate public_id for ad (A-xxxx format)
+    const generatePublicId = () => {
+      const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+      return `A-${random}`;
+    };
+
+    let publicId = generatePublicId();
+    // Ensure uniqueness
+    while (await Car.findOne({ public_id: publicId })) {
+      publicId = generatePublicId();
+    }
+
+    const car = await Car.create({
+      owner: owner || req.user._id, // Use provided owner or admin's ID
+      brand,
+      model,
+      year,
+      category,
+      pricePerDay,
+      images,
+      location,
+      city,
+      engineCapacity,
+      fuelType,
+      transmission,
+      mileage,
+      seating,
+      features,
+      description,
+      public_id: publicId,
+      isActive: true,
+      isApproved: true,
+      isRented: false,
+      featured: featured,
+      paymentStatus: 'PAID', // Admin bypass
+      createdByAdmin: true
+    });
+
+    res.status(201).json(car);
+  } catch (err) {
+    console.error('Error creating car as admin:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 module.exports = {
   getDashboardStats,
   getPendingCars,
@@ -268,6 +331,7 @@ module.exports = {
   getRecentBookings,
   getAllPayments,
   getPaymentStats,
-  getListingDrafts
+  getListingDrafts,
+  createCarAsAdmin
 };
 

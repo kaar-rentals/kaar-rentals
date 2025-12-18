@@ -52,23 +52,14 @@ const Profile = () => {
       const response = await fetch(url, {
         method: 'GET',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: { 'Content-Type': 'application/json' }
       });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          navigate("/auth");
-          return;
-        }
-        throw new Error("Failed to fetch profile");
-      }
-
       const data = await response.json();
-      if (data.user) {
-        setUser(data.user);
+      const user = data.user ?? null;
+      
+      if (user) {
+        setUser(user);
       } else {
         // User not authenticated
         navigate("/auth");
@@ -115,6 +106,9 @@ const Profile = () => {
         <div className="max-w-6xl mx-auto px-4 py-6 md:py-10 space-y-6">
           <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
+              {user?.public_id && (
+                <p className="text-sm font-bold mb-1">ID: {user.public_id}</p>
+              )}
               <h1 className="text-3xl font-bold leading-tight">Profile</h1>
               <p className="text-sm text-muted-foreground" aria-live="polite">
                 Your account information and listing performance

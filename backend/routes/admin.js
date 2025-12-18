@@ -14,7 +14,8 @@ const {
   getRecentBookings,
   getAllPayments,
   getPaymentStats,
-  getListingDrafts
+  getListingDrafts,
+  createCarAsAdmin
 } = require('../controllers/adminController');
 
 // All admin routes require admin role
@@ -28,6 +29,7 @@ router.get('/cars', getAllCars);
 router.get('/cars/pending', getPendingCars);
 router.patch('/cars/:id/approve', approveCar);
 router.patch('/cars/:id/reject', rejectCar);
+router.post('/cars', createCarAsAdmin); // Admin bypass: create ad without payment
 
 // User management
 router.get('/users', getAllUsers);

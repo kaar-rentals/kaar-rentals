@@ -21,6 +21,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 import UserListingsPage from "./components/UserListingsPage";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/payments/success" element={<PaymentSuccess />} />
             <Route path="/payments/failed" element={<PaymentFailed />} />
             <Route path="/dashboard/listings" element={<UserListingsPage />} />
+            <Route path="/dashboard/profile" element={<Profile />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -8,13 +8,22 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout } = useAuth();
 
-  const navigation = [
+  const baseNavigation = [
     { name: 'Home', href: '/' },
     { name: 'Cars', href: '/cars' },
-    { name: 'Your Listings', href: '/dashboard/listings' },
     { name: 'About', href: '/about' },
     { name: 'Contact', href: '/contact' },
   ];
+
+  // Add authenticated-only navigation items
+  const authenticatedNav = user
+    ? [
+        { name: 'Your Listings', href: '/dashboard/listings' },
+        { name: 'Profile', href: '/dashboard/profile' },
+      ]
+    : [];
+
+  const navigation = [...baseNavigation, ...authenticatedNav];
 
   return (
     <header className="fixed top-0 w-full bg-background/95 backdrop-blur-sm border-b border-border z-50">

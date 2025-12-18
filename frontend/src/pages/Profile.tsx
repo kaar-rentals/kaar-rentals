@@ -107,19 +107,14 @@ const Profile = () => {
                 Your account information and listing performance
               </p>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleRefresh} disabled={loading}>
-                {loading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                )}
-                Refresh
-              </Button>
-              <Link to="/dashboard/listings">
-                <Button variant="outline">View Listings</Button>
-              </Link>
-            </div>
+            <Button variant="outline" onClick={handleRefresh} disabled={loading}>
+              {loading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Refresh
+            </Button>
           </header>
 
           {error && (

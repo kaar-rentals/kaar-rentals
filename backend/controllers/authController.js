@@ -74,9 +74,15 @@ const getUserProfile = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json(user);
+    // If user is authenticated (req.user set by optional auth middleware)
+    if (req.user && req.user.id) {
+      const user = await User.findById(req.user.id).select('-password');
+      if (user) {
+        return res.json({ user });
+      }
+    }
+    // Return null user when not authenticated
+    return res.json({ user: null });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

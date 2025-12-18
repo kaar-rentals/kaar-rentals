@@ -50,7 +50,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Verify token is still valid by making a test request
           try {
             const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+              method: 'GET',
+              credentials: 'include',
               headers: {
+                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${storedToken}`,
               },
             });
@@ -87,6 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Attempting login with:', { email, password: '***' });
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -130,6 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -172,7 +177,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+        method: 'GET',
+        credentials: 'include',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
       });

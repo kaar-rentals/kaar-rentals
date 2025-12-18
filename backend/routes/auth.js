@@ -7,6 +7,7 @@ const router = express.Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/profile", auth(['user', 'owner', 'admin']), getUserProfile);
-router.get("/me", auth(['user', 'owner', 'admin']), getMe);
+// /me endpoint uses optional auth - returns { user: null } if not authenticated
+router.get("/me", getMe);
 
 module.exports = router;

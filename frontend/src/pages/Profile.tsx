@@ -46,8 +46,11 @@ const Profile = () => {
       }
 
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth/me`, {
+        method: 'GET',
+        credentials: 'include',
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
 
@@ -59,8 +62,14 @@ const Profile = () => {
         throw new Error("Failed to fetch profile");
       }
 
-      const userData = await response.json();
-      setUser(userData);
+      const data = await response.json();
+      if (data.user) {
+        setUser(data.user);
+      } else {
+        // User not authenticated
+        navigate("/auth");
+        return;
+      }
     } catch (err: any) {
       console.error("Error fetching profile:", err);
       setError(err?.message || "Failed to load profile");

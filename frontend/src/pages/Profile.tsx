@@ -39,12 +39,6 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        navigate("/auth");
-        return;
-      }
-
       const url = import.meta.env.VITE_API_URL 
         ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/auth/me` 
         : '/api/auth/me';
@@ -68,6 +62,7 @@ const Profile = () => {
     } catch (err: any) {
       console.error("Error fetching profile:", err);
       setError(err?.message || "Failed to load profile");
+      navigate("/auth");
     }
   };
 

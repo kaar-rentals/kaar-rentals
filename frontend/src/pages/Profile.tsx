@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { User, Mail, Calendar, Eye, Phone, Repeat2, Loader2, RefreshCw } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
+import { User, Mail, Calendar, Eye, Phone, Repeat2, Loader2, RefreshCw, Copy, Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,75 +12,87 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
 const Profile = () => {
+  const { unique_id } = useParams<{ unique_id?: string }>();
   const { user: authUser, token } = useAuth();
-  const navigate = useNavigate();
   const { toast } = useToast();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (!authUser || !token) {
-      navigate("/auth");
-      return;
-    }
     fetchProfile();
     fetchListings();
-
-    // Poll every 5 seconds
-    const interval = setInterval(() => {
-      fetchListings();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [authUser, token, navigate]);
+  }, [unique_id, authUser]);
 
   const fetchProfile = async () => {
     try {
-      const url = import.meta.env.VITE_API_URL 
-        ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/auth/me` 
-        : '/api/auth/me';
+      setLoading(true);
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
       
-      const response = await fetch(url, {
-        method: 'GET',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      const data = await response.json();
-      const user = data.user ?? null;
-      
-      if (user) {
-        setUser(user);
+      // If unique_id is provided, fetch that user's profile (public)
+      // Otherwise, fetch the authenticated user's profile
+      if (unique_id) {
+        // Fetch user by unique_id (public profile)
+        const response = await fetch(`${API_BASE_URL}/user/profile/${unique_id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        } else {
+          setError('User not found');
+        }
+      } else if (authUser) {
+        // Fetch authenticated user's own profile
+        const response = await fetch(`${API_BASE_URL}/auth/me`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        }
       } else {
-        // User not authenticated
-        navigate("/auth");
-        return;
+        // No auth and no unique_id - show error or redirect to auth for own profile
+        setError('Please sign in to view your profile, or provide a user unique ID');
       }
     } catch (err: any) {
       console.error("Error fetching profile:", err);
       setError(err?.message || "Failed to load profile");
-      navigate("/auth");
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchListings = async () => {
     try {
-      setError("");
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const data = await apiService.getUserListings(token);
-      setListings(data?.listings || []);
-      setLastUpdated(new Date());
+      if (!user) return;
+      
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
+      
+      // Fetch listings by owner unique_id or user_id
+      const ownerId = user.unique_id || user._id;
+      const response = await fetch(`${API_BASE_URL}/cars?owner_unique_id=${ownerId}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setListings(data.cars || []);
+      }
     } catch (err: any) {
-      const message = err?.message || "Failed to load listings";
-      setError(message);
       console.error("Error fetching listings:", err);
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const copyUniqueId = () => {
+    if (user?.unique_id) {
+      navigator.clipboard.writeText(user.unique_id);
+      setCopied(true);
+      toast({
+        title: "Copied!",
+        description: "Unique ID copied to clipboard",
+      });
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -90,10 +102,6 @@ const Profile = () => {
     fetchListings();
   };
 
-  if (!authUser) {
-    return null; // Will redirect
-  }
-
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -101,22 +109,43 @@ const Profile = () => {
         <div className="max-w-6xl mx-auto px-4 py-6 md:py-10 space-y-6">
           <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              {user?.public_id && (
-                <p className="text-sm font-bold mb-1">ID: {user.public_id}</p>
+              {/* Display unique_id prominently at top */}
+              {user?.unique_id && (
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-sm font-mono font-bold bg-muted px-3 py-1 rounded">
+                    Unique ID: {user.unique_id}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={copyUniqueId}
+                    className="h-7"
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
               )}
-              <h1 className="text-3xl font-bold leading-tight">Profile</h1>
+              <h1 className="text-3xl font-bold leading-tight">
+                {unique_id ? 'User Profile' : 'My Profile'}
+              </h1>
               <p className="text-sm text-muted-foreground" aria-live="polite">
-                Your account information and listing performance
+                {unique_id ? 'Public profile' : 'Your account information and listings'}
               </p>
             </div>
-            <Button variant="outline" onClick={handleRefresh} disabled={loading}>
-              {loading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
-              )}
-              Refresh
-            </Button>
+            {authUser && !unique_id && (
+              <Button variant="outline" onClick={handleRefresh} disabled={loading}>
+                {loading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                Refresh
+              </Button>
+            )}
           </header>
 
           {error && (
@@ -172,93 +201,51 @@ const Profile = () => {
             </CardContent>
           </Card>
 
-          {/* Listings Performance */}
+          {/* User's Listings */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Eye className="h-5 w-5" />
-                Your Listings Performance
+                {unique_id ? 'User Listings' : 'Your Listings'}
               </CardTitle>
-              <CardDescription>
-                {lastUpdated && (
-                  <span>Last updated: {lastUpdated.toLocaleTimeString()}</span>
-                )}
-              </CardDescription>
             </CardHeader>
             <CardContent>
               {loading && listings.length === 0 ? (
-                <div className="grid gap-4 md:grid-cols-2" role="status" aria-live="polite">
-                  {[1, 2].map((skeleton) => (
-                    <Card key={skeleton} className="border-dashed">
-                      <CardContent className="p-6 space-y-4">
-                        <div className="h-4 w-32 bg-muted animate-pulse rounded" />
-                        <div className="h-3 w-48 bg-muted animate-pulse rounded" />
-                        <div className="grid grid-cols-3 gap-3">
-                          {[1, 2, 3].map((item) => (
-                            <div key={item} className="h-3 bg-muted animate-pulse rounded" />
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                <div className="text-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                  <p className="text-muted-foreground">Loading listings...</p>
                 </div>
               ) : listings.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground mb-4">No listings yet</p>
-                  <Link to="/list-car">
-                    <Button>List your first car</Button>
-                  </Link>
+                  {authUser && !unique_id && (
+                    <Link to="/list-car">
+                      <Button>List your first car</Button>
+                    </Link>
+                  )}
                 </div>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {listings.map((listing) => (
-                    <Card key={listing.id} className="overflow-hidden">
-                      <div className="flex">
-                        <div className="w-32 h-28 bg-muted shrink-0 overflow-hidden">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {listings.map((listing: any) => (
+                    <Card key={listing._id} className="overflow-hidden">
+                      <Link to={`/car/${listing._id}`}>
+                        <div className="w-full h-48 bg-muted shrink-0 overflow-hidden">
                           <img
-                            src={listing.image_url || "/placeholder-car.png"}
-                            alt={listing.title || "Listed car"}
+                            src={listing.images?.[0] || "/placeholder-car.png"}
+                            alt={`${listing.brand} ${listing.model}`}
                             className="h-full w-full object-cover"
                             loading="lazy"
                           />
                         </div>
-                        <div className="flex-1">
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-lg">{listing.title}</CardTitle>
-                          </CardHeader>
-                          <CardContent className="pt-0 space-y-3">
-                            <div className="grid grid-cols-3 gap-3 text-sm">
-                              <div className="flex items-center gap-2">
-                                <Eye className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                  <p className="text-xs text-muted-foreground">Views</p>
-                                  <p className="font-semibold">{listing.views ?? 0}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Repeat2 className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                  <p className="text-xs text-muted-foreground">Rented</p>
-                                  <p className="font-semibold">{listing.rented_count ?? 0}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Phone className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                  <p className="text-xs text-muted-foreground">Contacts</p>
-                                  <p className="font-semibold">{listing.contact_count ?? 0}</p>
-                                </div>
-                              </div>
-                            </div>
-                            <Link
-                              to={listing.ad_url || "/cars"}
-                              className="inline-flex items-center text-sm font-medium text-primary hover:underline"
-                            >
-                              View ad →
-                            </Link>
-                          </CardContent>
-                        </div>
-                      </div>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg">
+                            {listing.brand} {listing.model} ({listing.year})
+                          </CardTitle>
+                          <CardDescription>
+                            PKR {listing.pricePerDay?.toLocaleString()}/day
+                          </CardDescription>
+                        </CardHeader>
+                      </Link>
                     </Card>
                   ))}
                 </div>

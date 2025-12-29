@@ -140,10 +140,6 @@ export default function ListingCard({ car, isAuthenticated }) {
                 </h3>
                 <p className="text-sm text-slate-600 mt-1">{car.year || 'N/A'} • {car.engineCapacity || 'N/A'}</p>
               </div>
-              <div className="flex items-center space-x-1 bg-amber-50 px-2 py-1 rounded-full">
-                <Star className="h-4 w-4 text-amber-500 fill-current" />
-                <span className="text-sm text-amber-700 font-semibold">4.8</span>
-              </div>
             </div>
             
             {/* Badges */}

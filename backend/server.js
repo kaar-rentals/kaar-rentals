@@ -3,10 +3,14 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 const dotenv = require("dotenv");
+const compression = require("compression");
 const { connectDB } = require("./config/db");
 
 dotenv.config();
 const app = express();
+
+// Compression middleware
+app.use(compression());
 
 // Middleware
 app.use(express.json());
@@ -74,6 +78,7 @@ app.use("/api/payments", require("./routes/payments"));
 app.use("/api/admin", require("./routes/admin"));
 app.use("/api/user", require("./routes/user"));
 app.use("/api/seed", require("./routes/seed"));
+app.use("/api/site-settings", require("./routes/siteSettings"));
 
 // Alias: support Safepay webhook at /api/safepay/webhook as requested by provider config
 app.post("/api/safepay/webhook", express.raw({ type: 'application/json' }), require("./controllers/paymentController").webhook);

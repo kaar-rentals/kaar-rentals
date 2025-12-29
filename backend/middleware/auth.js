@@ -1,15 +1,38 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
-module.exports = function (req, res, next) {
+// Optional auth middleware - populates req.user if token is valid, otherwise req.user is null
+module.exports = async function (req, res, next) {
   const authHeader = req.headers.authorization || req.headers.Authorization;
-  if (!authHeader?.startsWith("Bearer ")) return next();
+  if (!authHeader?.startsWith("Bearer ")) {
+    req.user = null;
+    return next();
+  }
   const token = authHeader.split(" ")[1];
-  if (!token) return next();
+  if (!token) {
+    req.user = null;
+    return next();
+  }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    // Fetch full user from DB to get unique_id and is_admin
+    const user = await User.findById(decoded.id).select('_id name email role unique_id is_admin');
+    if (user) {
+      req.user = {
+        id: user._id,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        unique_id: user.unique_id,
+        is_admin: user.is_admin || user.role === 'admin'
+      };
+    } else {
+      req.user = null;
+    }
   } catch (err) {
-    // invalid token -> ignore
+    // invalid token -> set req.user to null
+    req.user = null;
   }
   next();
 };

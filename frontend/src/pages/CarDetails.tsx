@@ -1,20 +1,27 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Star, User, Fuel, Settings, MapPin, Phone, MessageCircle, Mail, ChevronLeft, ChevronRight, Heart, AlertCircle } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, User, Fuel, Settings, MapPin, Phone, MessageCircle, Mail, ChevronLeft, ChevronRight, Heart, AlertCircle, LogIn } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { apiService, Car } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { cars, dealers } from '@/data/cars';
 
 const CarDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user, token } = useAuth();
+  const { toast } = useToast();
   const [car, setCar] = useState<Car | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
   const dealer = dealers[0]; // For demo, using first dealer
 
   useEffect(() => {
@@ -156,6 +163,7 @@ const CarDetails = () => {
                     src={getCurrentImage()} 
                     alt={`${car.brand} ${car.model}`}
                     className="w-full h-[500px] object-cover rounded-xl cursor-pointer"
+                    loading="lazy"
                     onClick={() => {
                       // Open fullscreen image view
                       const newWindow = window.open(getCurrentImage(), '_blank');
@@ -227,6 +235,7 @@ const CarDetails = () => {
                         <img
                           src={image}
                           alt={`${car.brand} ${car.model} view ${index + 1}`}
+                          loading="lazy"
                           className="w-full h-full object-cover"
                         />
                       </button>
@@ -307,7 +316,7 @@ const CarDetails = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Main Car Info - 2/3 width */}
               <div className="lg:col-span-2 space-y-8">
-                {/* Car Title and Rating */}
+                {/* Car Title */}
                 <div>
                   <h1 className="text-4xl font-bold text-gray-900 mb-2">
                     {car.brand} {car.model}
@@ -316,11 +325,6 @@ const CarDetails = () => {
                     <span className="text-lg">{car.year}</span>
                     <span>•</span>
                     <span className="text-lg">{car.engineCapacity}</span>
-                    <span>•</span>
-                    <div className="flex items-center space-x-1">
-                      <Star className="h-5 w-5 text-yellow-400 fill-current" />
-                      <span className="font-medium">4.8 (124 reviews)</span>
-                    </div>
                   </div>
                   <p className="text-lg text-gray-700 leading-relaxed">{car.description}</p>
                 </div>
@@ -407,67 +411,179 @@ const CarDetails = () => {
               <div className="space-y-6">
                 <div className="bg-white rounded-xl shadow-lg border p-6">
                   <h3 className="text-xl font-semibold mb-4 text-gray-900">Owner Details</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-bold text-lg">
-                          {(car.owner?.name || dealer.name).charAt(0)}
-                        </span>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-lg text-gray-900">{car.owner?.name || dealer.name}</h4>
-                        <div className="flex items-center space-x-1">
-                          <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                          <span className="text-sm text-gray-600">4.8/5.0 (24 reviews)</span>
+                  {user ? (
+                    // Show owner contact for authenticated users
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-blue-600 font-bold text-lg">
+                            {(car.owner?.name || dealer.name || 'U').charAt(0)}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-lg text-gray-900">{car.owner?.name || dealer.name || 'Owner'}</h4>
                         </div>
                       </div>
-                    </div>
-                    
-                    <p className="text-gray-600 text-sm">
-                      {car.owner?.name ? 'Verified car owner' : 'Trusted dealership'}
-                    </p>
-                    
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-3">
-                        <MapPin className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm text-gray-700">{car.location || dealer.location}</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <Phone className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm text-gray-700">{car.owner?.phone || dealer.phone}</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <Mail className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm text-gray-700">{car.owner?.email || dealer.email}</span>
-                      </div>
-                    </div>
+                      
+                      <p className="text-gray-600 text-sm">
+                        {car.owner?.name ? 'Car owner' : 'Trusted dealership'}
+                      </p>
+                      
+                      {car.owner?.phone || car.owner?.email ? (
+                        <div className="space-y-3">
+                          {car.location && (
+                            <div className="flex items-center space-x-3">
+                              <MapPin className="h-4 w-4 text-gray-500" />
+                              <span className="text-sm text-gray-700">{car.location}</span>
+                            </div>
+                          )}
+                          {car.owner?.phone && (
+                            <div className="flex items-center space-x-3">
+                              <Phone className="h-4 w-4 text-gray-500" />
+                              <span className="text-sm text-gray-700">{car.owner.phone}</span>
+                            </div>
+                          )}
+                          {car.owner?.email && (
+                            <div className="flex items-center space-x-3">
+                              <Mail className="h-4 w-4 text-gray-500" />
+                              <span className="text-sm text-gray-700">{car.owner.email}</span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">Contact information not available</p>
+                      )}
 
-                    <div className="pt-4 space-y-2">
-                      <Button 
-                        className="w-full bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => {
-                          const phone = car.owner?.phone || dealer.phone;
-                          const whatsapp = phone.replace(/[^0-9]/g, '');
-                          window.open(`https://wa.me/${whatsapp}`, '_blank');
+                      {car.owner?.phone && (
+                        <div className="pt-4 space-y-2">
+                          <Button 
+                            className="w-full bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => {
+                              const phone = car.owner?.phone || '';
+                              const whatsapp = phone.replace(/[^0-9]/g, '');
+                              window.open(`https://wa.me/${whatsapp}`, '_blank');
+                            }}
+                          >
+                            <MessageCircle className="h-4 w-4 mr-2" />
+                            WhatsApp Owner
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
+                            onClick={() => {
+                              const phone = car.owner?.phone || '';
+                              window.open(`tel:${phone}`, '_self');
+                            }}
+                          >
+                            <Phone className="h-4 w-4 mr-2" />
+                            Call Owner
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    // Show login prompt for unauthenticated users
+                    <div className="space-y-4 text-center">
+                      <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto" />
+                      <p className="text-gray-600">
+                        Sign in to view owner contact details
+                      </p>
+                      <Dialog open={loginModalOpen} onOpenChange={setLoginModalOpen}>
+                        <DialogTrigger asChild>
+                          <Button className="w-full">
+                            <LogIn className="h-4 w-4 mr-2" />
+                            Sign in to view owner details
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Sign In Required</DialogTitle>
+                            <DialogDescription>
+                              Please sign in to view the owner's contact information.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="mt-4 space-y-2">
+                            <Button 
+                              className="w-full"
+                              onClick={() => {
+                                setLoginModalOpen(false);
+                                navigate('/auth?mode=login');
+                              }}
+                            >
+                              Go to Sign In
+                            </Button>
+                            <Button 
+                              variant="outline"
+                              className="w-full"
+                              onClick={() => setLoginModalOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  )}
+                </div>
+
+                {/* Status Toggle - Owner/Admin Only */}
+                {user && (user.is_admin || (car.owner && typeof car.owner === 'object' && car.owner._id === user._id)) && (
+                  <div className="bg-white rounded-xl shadow-lg border p-6">
+                    <h3 className="text-xl font-semibold mb-4 text-gray-900">Listing Status</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Current Status:</span>
+                        <Badge variant={car.status === 'rented' ? 'destructive' : 'default'}>
+                          {car.status === 'rented' ? 'Rented' : 'Available'}
+                        </Badge>
+                      </div>
+                      <Button
+                        variant={car.status === 'rented' ? 'default' : 'outline'}
+                        className="w-full"
+                        onClick={async () => {
+                          if (!token) {
+                            toast({
+                              title: "Authentication Required",
+                              description: "Please sign in to update listing status",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          try {
+                            const newStatus = car.status === 'rented' ? 'available' : 'rented';
+                            const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
+                            const response = await fetch(`${API_BASE_URL}/cars/${car._id}/status`, {
+                              method: 'PUT',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`,
+                              },
+                              body: JSON.stringify({ status: newStatus }),
+                            });
+                            if (response.ok) {
+                              const updatedCar = await response.json();
+                              setCar(updatedCar);
+                              toast({
+                                title: "Status Updated",
+                                description: `Listing marked as ${newStatus}`,
+                              });
+                            } else {
+                              throw new Error('Failed to update status');
+                            }
+                          } catch (err: any) {
+                            toast({
+                              title: "Update Failed",
+                              description: err.message || "Failed to update listing status",
+                              variant: "destructive",
+                            });
+                          }
                         }}
                       >
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        WhatsApp Owner
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
-                        onClick={() => {
-                          const phone = car.owner?.phone || dealer.phone;
-                          window.open(`tel:${phone}`, '_self');
-                        }}
-                      >
-                        <Phone className="h-4 w-4 mr-2" />
-                        Call Owner
+                        {car.status === 'rented' ? 'Mark as Available' : 'Mark as Rented'}
                       </Button>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Additional Services */}
                 <div className="premium-card p-6">

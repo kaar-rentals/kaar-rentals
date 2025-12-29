@@ -24,7 +24,15 @@ const carSchema = new mongoose.Schema({
   isRented: { type: Boolean, default: false },
   isApproved: { type: Boolean, default: false }, // Admin approval required
   paymentStatus: { type: String, enum: ['PENDING', 'PAID', 'FAILED'], default: 'PENDING' },
-  paymentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }
+  paymentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Payment' },
+  status: { type: String, enum: ['available', 'rented'], default: 'available' }, // Listing status
+  featured: { type: Boolean, default: false } // Featured listing flag
 }, { timestamps: true });
+
+// Indexes for performance
+carSchema.index({ createdAt: -1 });
+carSchema.index({ owner: 1 });
+carSchema.index({ featured: 1 });
+carSchema.index({ status: 1 });
 
 module.exports = mongoose.model('Car', carSchema);

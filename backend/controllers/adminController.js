@@ -13,10 +13,6 @@ const getDashboardStats = async (req, res) => {
     const totalUsers = await User.countDocuments();
     const totalOwners = await User.countDocuments({ role: 'owner' });
     const totalBookings = await Booking.countDocuments();
-    const totalRevenue = await Payment.aggregate([
-      { $match: { status: 'SUCCEEDED' } },
-      { $group: { _id: null, total: { $sum: '$settledAmountInPaise' } } }
-    ]);
 
     res.json({
       totalCars,
@@ -24,8 +20,7 @@ const getDashboardStats = async (req, res) => {
       pendingCars,
       totalUsers,
       totalOwners,
-      totalBookings,
-      totalRevenue: totalRevenue[0]?.total || 0
+      totalBookings
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -196,7 +191,7 @@ const getAllPayments = async (req, res) => {
 
 /**
  * GET /api/admin/payments/stats
- * Get payment statistics for admin dashboard
+ * Get payment statistics for admin dashboard (without revenue)
  */
 const getPaymentStats = async (req, res) => {
   try {
@@ -217,13 +212,7 @@ const getPaymentStats = async (req, res) => {
       {
         $group: {
           _id: null,
-          totalRevenue: { $sum: '$settledAmountInPaise' },
           totalFees: { $sum: '$gatewayFeesInPaise' },
-          netRevenue: { 
-            $sum: { 
-              $subtract: ['$settledAmountInPaise', { $ifNull: ['$gatewayFeesInPaise', 0] }] 
-            } 
-          },
           count: { $sum: 1 }
         }
       }
@@ -231,7 +220,7 @@ const getPaymentStats = async (req, res) => {
 
     res.json({
       statusBreakdown: stats,
-      totalStats: totalStats[0] || { totalRevenue: 0, totalFees: 0, netRevenue: 0, count: 0 }
+      totalStats: totalStats[0] || { totalFees: 0, count: 0 }
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

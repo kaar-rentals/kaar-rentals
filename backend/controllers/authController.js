@@ -2,6 +2,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const generateUniqueId = require("../utils/generateUniqueId");
 
 const registerUser = async (req, res) => {
   try {
@@ -12,11 +13,28 @@ const registerUser = async (req, res) => {
     if (existing) return res.status(400).json({ error: "User already exists" });
 
     const hashed = await bcrypt.hash(password, 10);
+    
+    // Generate unique_id with collision handling
+    let uniqueId;
+    let attempts = 0;
+    const maxAttempts = 10;
+    while (attempts < maxAttempts) {
+      uniqueId = generateUniqueId();
+      const existingWithId = await User.findOne({ unique_id: uniqueId });
+      if (!existingWithId) break;
+      attempts++;
+    }
+    if (attempts >= maxAttempts) {
+      return res.status(500).json({ error: "Failed to generate unique ID. Please try again." });
+    }
+
     const newUser = new User({
       name,
       email,
       password: hashed,
       role: "user",
+      unique_id: uniqueId,
+      is_admin: false,
       membershipActive: false
     });
     
@@ -26,6 +44,8 @@ const registerUser = async (req, res) => {
       name: newUser.name, 
       email: newUser.email, 
       role: newUser.role,
+      unique_id: newUser.unique_id,
+      is_admin: newUser.is_admin,
       membershipActive: newUser.membershipActive 
     });
   } catch (err) {
@@ -53,6 +73,8 @@ const loginUser = async (req, res) => {
         name: user.name, 
         email: user.email, 
         role: user.role,
+        unique_id: user.unique_id,
+        is_admin: user.is_admin || user.role === 'admin',
         membershipActive: user.membershipActive,
         membershipPlan: user.membershipPlan
       } 
@@ -78,7 +100,18 @@ const getMe = async (req, res) => {
     if (req.user && req.user.id) {
       const user = await User.findById(req.user.id).select('-password');
       if (user) {
-        return res.json({ user });
+        return res.json({ 
+          user: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            unique_id: user.unique_id,
+            is_admin: user.is_admin || user.role === 'admin',
+            membershipActive: user.membershipActive,
+            membershipPlan: user.membershipPlan
+          }
+        });
       }
     }
     // Return null user when not authenticated

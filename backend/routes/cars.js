@@ -1,14 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const Car = require("../models/Car");
+const User = require("../models/User");
 const auth = require("../middleware/authMiddleware");
+const { isAdmin } = require("../middleware/authMiddleware");
 
-// GET /api/cars
+// GET /api/cars - Support pagination, featured filter, hide owner contact for unauthenticated
 router.get("/", async (req, res) => {
   try {
     const {
       city, category, minPrice, maxPrice, transmission, fuelType, seats, search,
-      page = 1, limit = 12, sortBy = "createdAt", order = "desc"
+      page = 1, limit = 12, offset = 0, sortBy = "createdAt", order = "desc",
+      featured
     } = req.query;
 
     const filters = { isActive: true, isApproved: true };
@@ -17,6 +20,19 @@ router.get("/", async (req, res) => {
     if (transmission) filters.transmission = transmission;
     if (fuelType) filters.fuelType = fuelType;
     if (seats) filters.seating = parseInt(seats);
+    if (featured !== undefined) {
+      filters.featured = featured === 'true' || featured === true;
+    }
+    // Filter by owner_unique_id if provided
+    if (req.query.owner_unique_id) {
+      const owner = await User.findOne({ unique_id: req.query.owner_unique_id });
+      if (owner) {
+        filters.owner = owner._id;
+      } else {
+        // If owner not found, return empty results
+        return res.json({ total: 0, page: parseInt(page), limit: limitNum, offset: skip, cars: [] });
+      }
+    }
     if (minPrice || maxPrice) {
       filters.pricePerDay = {};
       if (minPrice) filters.pricePerDay.$gte = parseInt(minPrice);
@@ -30,51 +46,88 @@ router.get("/", async (req, res) => {
       ];
     }
 
-    const skip = (Math.max(1, parseInt(page)) - 1) * parseInt(limit);
-    const projectionPublic = { owner: 0, renterPhone: 0, exactLocation: 0 };
-    const projection = req.user ? {} : projectionPublic;
+    // Use offset if provided, otherwise calculate from page
+    const skip = offset ? parseInt(offset) : (Math.max(1, parseInt(page)) - 1) * parseInt(limit);
+    const limitNum = parseInt(limit) || 12;
 
     const total = await Car.countDocuments(filters);
-    const cars = await Car.find(filters, projection)
+    let cars = await Car.find(filters)
+      .populate('owner', req.user ? 'name email phone unique_id' : 'unique_id') // Only show contact if authenticated
       .sort({ [sortBy]: order === "desc" ? -1 : 1 })
       .skip(skip)
-      .limit(parseInt(limit))
+      .limit(limitNum)
       .lean();
 
-    res.json({ total, page: parseInt(page), limit: parseInt(limit), cars });
+    // Hide owner contact details for unauthenticated users
+    if (!req.user) {
+      cars = cars.map(car => {
+        if (car.owner && typeof car.owner === 'object') {
+          return {
+            ...car,
+            owner: {
+              unique_id: car.owner.unique_id || null,
+              contact: null // Hide email, phone, etc.
+            }
+          };
+        }
+        return car;
+      });
+    }
+
+    // Add caching headers
+    res.set('Cache-Control', 'public, max-age=30');
+    res.set('Vary', 'Authorization');
+
+    res.json({ 
+      total, 
+      page: parseInt(page), 
+      limit: limitNum, 
+      offset: skip,
+      cars 
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// GET /api/cars/:id
+// GET /api/cars/:id - Hide owner contact for unauthenticated users
 router.get("/:id", async (req, res) => {
   try {
-    const car = await Car.findById(req.params.id).lean();
+    let car = await Car.findById(req.params.id)
+      .populate('owner', req.user ? 'name email phone unique_id' : 'unique_id')
+      .lean();
     if (!car) return res.status(404).json({ message: "Car not found" });
+    
+    // Hide owner contact details for unauthenticated users
     if (!req.user) {
-      delete car.owner;
+      if (car.owner && typeof car.owner === 'object') {
+        car.owner = {
+          unique_id: car.owner.unique_id || null,
+          contact: null
+        };
+      }
       delete car.renterPhone;
       car.location = car.city;
     }
+
+    // Add caching headers
+    res.set('Cache-Control', 'public, max-age=30');
+    res.set('Vary', 'Authorization');
+
     res.json(car);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// POST /api/cars - Create a new car (requires auth)
-router.post("/", async (req, res) => {
+// POST /api/cars - Admin-only: Create a new car listing
+router.post("/", auth(['admin']), isAdmin, async (req, res) => {
   try {
-    console.log('POST /api/cars - Request body:', JSON.stringify(req.body, null, 2));
-    console.log('POST /api/cars - User:', req.user);
-
-    if (!req.user || !(req.user.id || req.user._id)) {
-      return res.status(401).json({ message: "Unauthorized" });
+    if (!req.user || !req.user.is_admin) {
+      return res.status(403).json({ message: "Admin access required" });
     }
 
-    const ownerId = req.user.id || req.user._id;
     const {
       brand,
       model,
@@ -91,9 +144,12 @@ router.post("/", async (req, res) => {
       seating,
       features = [],
       description = "",
+      owner_unique_id, // Admin supplies owner's unique_id
+      featured = false,
+      status = 'available'
     } = req.body || {};
 
-    // Basic required validations aligned with schema
+    // Basic required validations
     const missingFields = [];
     if (!brand) missingFields.push('brand');
     if (!model) missingFields.push('model');
@@ -108,9 +164,9 @@ router.post("/", async (req, res) => {
     if (!mileage) missingFields.push('mileage');
     if (!seating) missingFields.push('seating');
     if (!description) missingFields.push('description');
+    if (!owner_unique_id) missingFields.push('owner_unique_id');
 
     if (missingFields.length > 0) {
-      console.log('Missing required fields:', missingFields);
       return res.status(400).json({ 
         message: "Missing required fields", 
         missingFields: missingFields 
@@ -120,26 +176,23 @@ router.post("/", async (req, res) => {
     // Validate category enum
     const validCategories = ['Sedan', 'SUV', 'Hatchback'];
     if (!validCategories.includes(category)) {
-      console.log('Invalid category:', category);
       return res.status(400).json({ 
         message: "Invalid category. Must be one of: " + validCategories.join(', '),
         received: category
       });
     }
 
-    console.log('Creating car with data:', {
-      owner: ownerId,
-      brand,
-      model,
-      year,
-      category,
-      pricePerDay,
-      city,
-      location
-    });
+    // Resolve owner_unique_id to owner_id
+    const owner = await User.findOne({ unique_id: owner_unique_id });
+    if (!owner) {
+      return res.status(422).json({ 
+        message: "Owner not found with the provided unique_id",
+        owner_unique_id 
+      });
+    }
 
     const car = await Car.create({
-      owner: ownerId,
+      owner: owner._id,
       brand,
       model,
       year,
@@ -155,17 +208,18 @@ router.post("/", async (req, res) => {
       seating,
       features,
       description,
-      isActive: true,
-      isApproved: false,
-      paymentStatus: 'PENDING',
+      status: status === 'rented' ? 'rented' : 'available',
+      featured: featured === true || featured === 'true',
+      isActive: status === 'available',
+      isRented: status === 'rented',
+      isApproved: true, // Admin-created listings are auto-approved
+      paymentStatus: 'PAID', // Admin bypass: free for admins
+      createdByAdmin: true
     });
 
-    console.log('Car created successfully:', car._id);
     return res.status(201).json(car);
   } catch (err) {
     console.error('Error creating car:', err);
-    console.error('Error details:', err.message);
-    console.error('Error stack:', err.stack);
     return res.status(500).json({ message: "Server error" });
   }
 });
@@ -188,30 +242,68 @@ router.get("/owner/my-cars", auth(["owner", "admin", "user"]), async (req, res) 
   }
 });
 
-// PATCH /api/cars/:id/status - Owner-only toggle for ad status (available/rented)
-router.patch("/:id/status", auth(["owner", "admin"]), async (req, res) => {
+// PUT /api/cars/:id/status - Owner or admin can toggle listing status
+router.put("/:id/status", auth(["owner", "admin", "user"]), async (req, res) => {
   try {
     const carId = req.params.id;
     const { status } = req.body; // 'available' or 'rented'
-    const ownerId = req.user.id || req.user._id;
+    const userId = req.user.id || req.user._id;
+
+    if (!status || !['available', 'rented'].includes(status)) {
+      return res.status(400).json({ message: "Invalid status. Must be 'available' or 'rented'" });
+    }
 
     const car = await Car.findById(carId);
     if (!car) return res.status(404).json({ message: "Car not found" });
 
     // Verify ownership (unless admin)
-    if (req.user.role !== 'admin' && car.owner.toString() !== ownerId.toString()) {
+    if (!req.user.is_admin && car.owner.toString() !== userId.toString()) {
       return res.status(403).json({ message: "You can only update your own listings" });
     }
 
     // Update status
+    car.status = status;
     if (status === 'rented') {
       car.isRented = true;
       car.isActive = false;
-    } else if (status === 'available') {
+    } else {
       car.isRented = false;
       car.isActive = true;
+    }
+
+    await car.save();
+    return res.json(car);
+  } catch (err) {
+    console.error('Error updating car status:', err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Also support PATCH for backward compatibility
+router.patch("/:id/status", auth(["owner", "admin", "user"]), async (req, res) => {
+  try {
+    const carId = req.params.id;
+    const { status } = req.body;
+    const userId = req.user.id || req.user._id;
+
+    if (!status || !['available', 'rented'].includes(status)) {
+      return res.status(400).json({ message: "Invalid status. Must be 'available' or 'rented'" });
+    }
+
+    const car = await Car.findById(carId);
+    if (!car) return res.status(404).json({ message: "Car not found" });
+
+    if (!req.user.is_admin && car.owner.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "You can only update your own listings" });
+    }
+
+    car.status = status;
+    if (status === 'rented') {
+      car.isRented = true;
+      car.isActive = false;
     } else {
-      return res.status(400).json({ message: "Invalid status. Use 'available' or 'rented'" });
+      car.isRented = false;
+      car.isActive = true;
     }
 
     await car.save();

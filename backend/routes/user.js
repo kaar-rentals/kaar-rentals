@@ -1,9 +1,36 @@
 const express = require("express");
 const Car = require("../models/Car");
+const User = require("../models/User");
 const Booking = require("../models/Booking");
 const auth = require("../middleware/authMiddleware");
 
 const router = express.Router();
+
+// GET /api/user/profile/:unique_id - Get public user profile by unique_id
+router.get("/profile/:unique_id", async (req, res) => {
+  try {
+    const { unique_id } = req.params;
+    const user = await User.findOne({ unique_id }).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Return public profile (no sensitive data)
+    res.json({
+      user: {
+        _id: user._id,
+        name: user.name,
+        unique_id: user.unique_id,
+        role: user.role,
+        // Don't return email, phone, etc. for public profiles
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching user profile:', err);
+    return res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+});
 
 // GET /api/user/listings - returns listings for authenticated user only
 router.get("/listings", auth(['user', 'owner', 'admin']), async (req, res) => {

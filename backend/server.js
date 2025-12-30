@@ -79,6 +79,7 @@ app.use("/api/admin", require("./routes/admin"));
 app.use("/api/user", require("./routes/user"));
 app.use("/api/seed", require("./routes/seed"));
 app.use("/api/site-settings", require("./routes/siteSettings"));
+app.use("/api/stats", require("./routes/stats"));
 
 // Alias: support Safepay webhook at /api/safepay/webhook as requested by provider config
 app.post("/api/safepay/webhook", express.raw({ type: 'application/json' }), require("./controllers/paymentController").webhook);

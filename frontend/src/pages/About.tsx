@@ -1,8 +1,82 @@
+import { useEffect, useState, useRef } from 'react';
 import { Shield, Award, Users, MapPin } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { useAuth } from '@/contexts/AuthContext';
 
 const About = () => {
+  const { user } = useAuth();
+  const [stats, setStats] = useState({
+    users_count: 0,
+    listings_count: 0,
+    featured_count: 0
+  });
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const statsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Fetch stats from API
+    const fetchStats = async () => {
+      try {
+        const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
+        const response = await fetch(`${API_BASE_URL}/stats`);
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  // Count-up animation function
+  const animateCount = (el: HTMLElement, target: number) => {
+    let start = 0;
+    const duration = 1200; // ms
+    const startTime = performance.now();
+
+    function frame(now: number) {
+      const progress = Math.min((now - startTime) / duration, 1);
+      el.textContent = Math.floor(progress * target).toString();
+      if (progress < 1) {
+        requestAnimationFrame(frame);
+      }
+    }
+    requestAnimationFrame(frame);
+  };
+
+  // Intersection Observer for animation trigger
+  useEffect(() => {
+    if (hasAnimated || !statsRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasAnimated) {
+            setHasAnimated(true);
+            
+            // Animate each counter
+            const counters = entry.target.querySelectorAll('[data-counter]');
+            counters.forEach((counter, index) => {
+              const target = index === 0 ? stats.users_count : 
+                           index === 1 ? stats.listings_count : 
+                           stats.featured_count;
+              animateCount(counter as HTMLElement, target);
+            });
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(statsRef.current);
+
+    return () => observer.disconnect();
+  }, [stats, hasAnimated]);
+
   const values = [
     {
       icon: Shield,
@@ -24,13 +98,6 @@ const About = () => {
       title: 'Accessibility',
       description: 'Wide network of locations and flexible pickup/drop-off options for your convenience.'
     }
-  ];
-
-  const stats = [
-    { number: '10,000+', label: 'Happy Customers' },
-    { number: '500+', label: 'Premium Vehicles' },
-    { number: '50+', label: 'Locations' },
-    { number: '15+', label: 'Years Experience' }
   ];
 
   return (
@@ -98,13 +165,25 @@ const About = () => {
                 By the <span className="text-gradient">Numbers</span>
               </h2>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">{stat.number}</div>
-                  <div className="text-muted-foreground">{stat.label}</div>
+            <div ref={statsRef} className="grid grid-cols-2 md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="text-4xl font-bold text-primary mb-2" data-counter>
+                  {hasAnimated ? stats.users_count : 0}
                 </div>
-              ))}
+                <div className="text-muted-foreground">Users</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-bold text-primary mb-2" data-counter>
+                  {hasAnimated ? stats.listings_count : 0}
+                </div>
+                <div className="text-muted-foreground">Listings</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-bold text-primary mb-2" data-counter>
+                  {hasAnimated ? stats.featured_count : 0}
+                </div>
+                <div className="text-muted-foreground">Featured</div>
+              </div>
             </div>
           </div>
         </section>

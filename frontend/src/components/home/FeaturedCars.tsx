@@ -17,36 +17,40 @@ const FeaturedCars = () => {
   const loadFeaturedCars = async () => {
     try {
       setLoading(true);
-      // First try to get featured cars specifically
-      const featuredData = await apiService.getCars({ featured: true });
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
+      
+      // Fetch featured listings from API
+      const response = await fetch(`${API_BASE_URL}/cars?featured=true&limit=6`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.cars && Array.isArray(data.cars) && data.cars.length > 0) {
+          setFeaturedCars(data.cars.slice(0, 6));
+          return;
+        }
+      }
+      
+      // Fallback: Try via apiService
+      const featuredData = await apiService.getCars({ featured: 'true', limit: 6 });
       if (featuredData && Array.isArray(featuredData) && featuredData.length > 0) {
-        setFeaturedCars(featuredData.slice(0, 3));
+        setFeaturedCars(featuredData.slice(0, 6));
         return;
       }
       
-      // Fallback: Get all cars and filter for featured ones
+      // Final fallback: Get all cars and filter for featured
       const carsData = await apiService.getCars();
       if (carsData && Array.isArray(carsData)) {
         const featuredCars = carsData.filter(car => car.featured === true);
         if (featuredCars.length > 0) {
-          setFeaturedCars(featuredCars.slice(0, 3));
+          setFeaturedCars(featuredCars.slice(0, 6));
         } else {
-          // If no featured cars, show first 3 cars
-          setFeaturedCars(carsData.slice(0, 3));
+          setFeaturedCars([]);
         }
       } else {
-        throw new Error('Invalid data format from API');
+        setFeaturedCars([]);
       }
     } catch (error) {
       console.error('Error loading featured cars:', error);
-      // Fallback to static data if API is not available
-      console.log('Using static data as fallback');
-      if (staticCars && staticCars.length > 0) {
-        setFeaturedCars(staticCars.slice(0, 3));
-      } else {
-        console.error('No static cars available');
-        setFeaturedCars([]);
-      }
+      setFeaturedCars([]);
     } finally {
       setLoading(false);
     }

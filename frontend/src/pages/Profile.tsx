@@ -109,7 +109,13 @@ const Profile = () => {
         <div className="max-w-6xl mx-auto px-4 py-6 md:py-10 space-y-6">
           <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              {/* Display unique_id prominently at top */}
+              {/* Display user name at top */}
+              {user?.name && (
+                <h1 className="text-4xl font-bold leading-tight mb-2">
+                  {user.name}
+                </h1>
+              )}
+              {/* Display unique_id prominently */}
               {user?.unique_id && (
                 <div className="flex items-center gap-2 mb-2">
                   <p className="text-sm font-mono font-bold bg-muted px-3 py-1 rounded">
@@ -129,9 +135,11 @@ const Profile = () => {
                   </Button>
                 </div>
               )}
-              <h1 className="text-3xl font-bold leading-tight">
-                {unique_id ? 'User Profile' : 'My Profile'}
-              </h1>
+              {!user?.name && (
+                <h1 className="text-3xl font-bold leading-tight">
+                  {unique_id ? 'User Profile' : 'My Profile'}
+                </h1>
+              )}
               <p className="text-sm text-muted-foreground" aria-live="polite">
                 {unique_id ? 'Public profile' : 'Your account information and listings'}
               </p>

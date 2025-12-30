@@ -4,12 +4,14 @@ import { Badge } from '@/components/ui/badge';
 import { Car } from '@/services/api';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface FeaturedCarCardProps {
   car: Car;
 }
 
 const FeaturedCarCard = ({ car }: FeaturedCarCardProps) => {
+  const { user } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
 
@@ -232,6 +234,22 @@ const FeaturedCarCard = ({ car }: FeaturedCarCardProps) => {
               </Badge>
             )}
           </div>
+
+          {/* Owner Info - Show when authenticated */}
+          {user && car.owner && typeof car.owner === 'object' && car.owner.name && (
+            <div className="pt-2 border-t border-slate-100">
+              <div className="flex items-center gap-2 text-xs text-slate-600">
+                <User className="h-3 w-3" />
+                <span className="font-medium">{car.owner.name}</span>
+                {car.owner.location && (
+                  <>
+                    <span>•</span>
+                    <span>{car.owner.location}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Price and Status */}
           <div className="flex items-center justify-between pt-3 border-t border-slate-100">

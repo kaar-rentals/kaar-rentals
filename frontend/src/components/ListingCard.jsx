@@ -1,13 +1,14 @@
 import React, { useState } from "react";
-import { Heart, Star, User, Fuel, Settings, ChevronLeft, ChevronRight, Shield, Crown } from "lucide-react";
+import { Heart, Star, User, Fuel, Settings, ChevronLeft, ChevronRight, Shield, Crown, MapPin, LogIn } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
-export default function ListingCard({ car, isAuthenticated: isAuthenticatedProp }) {
+export default function ListingCard({ car }) {
   const { user } = useAuth();
-  const isAuthenticated = isAuthenticatedProp !== undefined ? isAuthenticatedProp : !!user;
+  const navigate = useNavigate();
+  const isAuthenticated = !!user;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
 
@@ -143,6 +144,10 @@ export default function ListingCard({ car, isAuthenticated: isAuthenticatedProp 
                 </h3>
                 <p className="text-sm text-slate-600 mt-1">{car.year || 'N/A'} • {car.engineCapacity || 'N/A'}</p>
               </div>
+              <div className="flex items-center space-x-1 bg-amber-50 px-2 py-1 rounded-full">
+                <Star className="h-4 w-4 text-amber-500 fill-current" />
+                <span className="text-sm text-amber-700 font-semibold">4.8</span>
+              </div>
             </div>
             
             {/* Badges */}
@@ -210,10 +215,28 @@ export default function ListingCard({ car, isAuthenticated: isAuthenticatedProp 
                 {car.owner.location && (
                   <>
                     <span>•</span>
+                    <MapPin className="h-3 w-3" />
                     <span>{car.owner.location}</span>
                   </>
                 )}
               </div>
+            </div>
+          )}
+          {!isAuthenticated && (
+            <div className="pt-2 border-t border-slate-100">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full text-xs"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigate('/auth?mode=login');
+                }}
+              >
+                <LogIn className="h-3 w-3 mr-1" />
+                Sign in to view owner details
+              </Button>
             </div>
           )}
 

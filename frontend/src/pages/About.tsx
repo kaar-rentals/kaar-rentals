@@ -2,80 +2,70 @@ import { useEffect, useState, useRef } from 'react';
 import { Shield, Award, Users, MapPin } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { useAuth } from '@/contexts/AuthContext';
+import { apiService } from '@/services/api';
 
 const About = () => {
-  const { user } = useAuth();
-  const [stats, setStats] = useState({
-    users_count: 0,
-    listings_count: 0,
-    featured_count: 0
-  });
-  const [hasAnimated, setHasAnimated] = useState(false);
+  const [stats, setStats] = useState({ users_count: 0, listings_count: 0, featured_count: 0 });
   const statsRef = useRef<HTMLDivElement>(null);
+  const animated = useRef(false);
 
-  useEffect(() => {
-    // Fetch stats from API
-    const fetchStats = async () => {
-      try {
-        const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
-        const response = await fetch(`${API_BASE_URL}/stats`);
-        if (response.ok) {
-          const data = await response.json();
-          setStats(data);
-        }
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-      }
-    };
-
-    fetchStats();
-  }, []);
-
-  // Count-up animation function
-  const animateCount = (el: HTMLElement, target: number) => {
+  const animateCount = (element: HTMLElement, target: number) => {
     let start = 0;
     const duration = 1200; // ms
     const startTime = performance.now();
 
     function frame(now: number) {
       const progress = Math.min((now - startTime) / duration, 1);
-      el.textContent = Math.floor(progress * target).toString();
-      if (progress < 1) {
-        requestAnimationFrame(frame);
-      }
+      element.textContent = Math.floor(progress * target).toLocaleString();
+      if (progress < 1) requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
   };
 
-  // Intersection Observer for animation trigger
   useEffect(() => {
-    if (hasAnimated || !statsRef.current) return;
+    const fetchStats = async () => {
+      try {
+        const data = await apiService.getStats();
+        setStats(data);
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && !hasAnimated) {
-            setHasAnimated(true);
-            
-            // Animate each counter
-            const counters = entry.target.querySelectorAll('[data-counter]');
-            counters.forEach((counter, index) => {
-              const target = index === 0 ? stats.users_count : 
-                           index === 1 ? stats.listings_count : 
-                           stats.featured_count;
-              animateCount(counter as HTMLElement, target);
-            });
+          if (entry.isIntersecting && !animated.current) {
+            fetchStats();
+            animated.current = true;
           }
         });
       },
       { threshold: 0.5 }
     );
 
-    observer.observe(statsRef.current);
+    if (statsRef.current) {
+      observer.observe(statsRef.current);
+    }
 
-    return () => observer.disconnect();
-  }, [stats, hasAnimated]);
+    return () => {
+      if (statsRef.current) {
+        observer.unobserve(statsRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (animated.current && stats.users_count > 0) {
+      const usersEl = document.getElementById('users-count');
+      const listingsEl = document.getElementById('listings-count');
+      const featuredEl = document.getElementById('featured-count');
+
+      if (usersEl) animateCount(usersEl, stats.users_count);
+      if (listingsEl) animateCount(listingsEl, stats.listings_count);
+      if (featuredEl) animateCount(featuredEl, stats.featured_count);
+    }
+  }, [stats]);
 
   const values = [
     {
@@ -165,24 +155,22 @@ const About = () => {
                 By the <span className="text-gradient">Numbers</span>
               </h2>
             </div>
-            <div ref={statsRef} className="grid grid-cols-2 md:grid-cols-3 gap-8">
+            <div ref={statsRef} className="grid grid-cols-2 md:grid-cols-4 gap-8">
               <div className="text-center">
-                <div className="text-4xl font-bold text-primary mb-2" data-counter>
-                  {hasAnimated ? stats.users_count : 0}
-                </div>
+                <div id="users-count" className="text-4xl font-bold text-primary mb-2">0</div>
                 <div className="text-muted-foreground">Users</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold text-primary mb-2" data-counter>
-                  {hasAnimated ? stats.listings_count : 0}
-                </div>
+                <div id="listings-count" className="text-4xl font-bold text-primary mb-2">0</div>
                 <div className="text-muted-foreground">Listings</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold text-primary mb-2" data-counter>
-                  {hasAnimated ? stats.featured_count : 0}
-                </div>
+                <div id="featured-count" className="text-4xl font-bold text-primary mb-2">0</div>
                 <div className="text-muted-foreground">Featured</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-bold text-primary mb-2">15+</div>
+                <div className="text-muted-foreground">Years Experience</div>
               </div>
             </div>
           </div>

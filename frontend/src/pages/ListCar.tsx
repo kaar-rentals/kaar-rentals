@@ -14,13 +14,11 @@ import { Badge } from '@/components/ui/badge';
 import BrandAutocomplete from '@/components/ui/BrandAutocomplete';
 import CityAutocomplete from '@/components/ui/CityAutocomplete';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 import { apiService } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 
 const ListCar = () => {
   const { user, token } = useAuth();
-  const { settings, loading: settingsLoading } = useSiteSettings();
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -171,22 +169,14 @@ const ListCar = () => {
     setLoading(true);
     setError('');
 
-    // Admin-only check
-    if (!user || !user.is_admin) {
-      setError('Only admins can create listings');
-      setLoading(false);
-      return;
-    }
-
-    if (!token) {
+    if (!user || !token) {
       setError('Please log in to list a car');
       setLoading(false);
       return;
     }
 
-    // Admin must provide owner_unique_id
-    if (!formData.owner_unique_id) {
-      setError('Please provide the owner unique ID');
+    if (!pricing) {
+      setError('Please wait while we calculate pricing');
       setLoading(false);
       return;
     }
@@ -198,15 +188,15 @@ const ListCar = () => {
       if (images.length > 0) {
         try {
           for (const file of images) {
-            const uploadFormData = new FormData();
-            uploadFormData.append('image', file);
+            const formData = new FormData();
+            formData.append('image', file);
             
             const uploadResponse = await fetch(`${import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api'}/upload`, {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${token}`,
               },
-              body: uploadFormData,
+              body: formData,
             });
             
             if (!uploadResponse.ok) {
@@ -222,7 +212,7 @@ const ListCar = () => {
         }
       }
 
-      // 2) Prepare listing data for admin endpoint
+      // 2) Prepare listing draft data
       const categoryMapped = (formData.category || '').toLowerCase() === 'suv' ? 'SUV'
         : (formData.category || '').toLowerCase() === 'sedan' ? 'Sedan'
         : (formData.category || '').toLowerCase() === 'hatchback' ? 'Hatchback'
@@ -231,53 +221,91 @@ const ListCar = () => {
       const cityRaw = (formData.location.split(',')[0] || formData.location || '').trim();
       const cityTitle = cityRaw ? cityRaw.charAt(0).toUpperCase() + cityRaw.slice(1).toLowerCase() : '';
 
-      const carData = {
+      const listingDraft = {
         brand: formData.brand,
         model: formData.model,
         category: categoryMapped,
         year: Number(formData.year),
         pricePerDay: Number(formData.price),
+        // Provide safe defaults to satisfy backend ListingDraft schema requirements
         engineCapacity: formData.engineCapacity || '2.0L',
         fuelType: formData.fuelType || 'gasoline',
         transmission: formData.transmission || 'automatic',
         mileage: formData.mileage || 'N/A',
-        seating: Math.max(1, Number(formData.seating) || 5),
+        seating: Math.max(1, Number(formData.seating) || 1),
         description: formData.description,
         features: formData.features,
         location: formData.location,
         city: cityTitle,
         images: uploadedUrls,
-        owner_unique_id: formData.owner_unique_id,
-        featured: featureAddon,
-        status: 'available'
       };
 
-      // 3) Create listing via admin endpoint (free for admins)
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
-      const response = await fetch(`${API_BASE_URL}/cars`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(carData),
-      });
+      // 3) Check if user is admin - use admin endpoint
+      const isAdmin = user?.is_admin || user?.role === 'admin';
+      
+      if (isAdmin) {
+        // Admin can create listings directly
+        if (!formData.owner_unique_id) {
+          throw new Error('Please provide the owner unique ID');
+        }
+        
+        const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
+        const adminListingData = {
+          ...listingDraft,
+          owner_unique_id: formData.owner_unique_id,
+          featured: featureAddon,
+          status: 'available'
+        };
+        
+        const response = await fetch(`${API_BASE_URL}/cars`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(adminListingData),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Failed to create listing' }));
+          throw new Error(errorData.message || 'Failed to create listing');
+        }
+        
+        const createdCar = await response.json();
+        
+        toast({
+          title: "Listing Published!",
+          description: "Your listing has been published successfully",
+          variant: "default",
+        });
+        
+        navigate(`/car/${createdCar._id}`);
+      } else {
+        // Regular user - use payment flow
+        const paymentResult = await apiService.createListingPayment(listingDraft, featureAddon, token);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Failed to create listing' }));
-        throw new Error(errorData.message || 'Failed to create listing');
+        if (paymentResult.freeListing) {
+          // Free listing - published immediately
+          toast({
+            title: "Listing Published!",
+            description: paymentResult.message,
+            variant: "default",
+          });
+          
+          // Navigate to the published car
+          navigate(`/car/${paymentResult.carId}`);
+        } else {
+          // Paid listing - redirect to payment
+          toast({
+            title: "Redirecting to Payment",
+            description: "Please complete payment to publish your listing",
+            variant: "default",
+          });
+          
+          // Redirect to Safepay checkout
+          window.location.href = paymentResult.checkout_url;
+        }
       }
-
-      const createdCar = await response.json();
-      
-      toast({
-        title: "Listing Published!",
-        description: "Your listing has been published successfully",
-        variant: "default",
-      });
-      
-      // Navigate to the published car
-      navigate(`/car/${createdCar._id}`);
       
     } catch (err: any) {
       console.error('Error submitting car listing:', err);
@@ -293,38 +321,6 @@ const ListCar = () => {
     }
   };
 
-  // Show disabled message for non-admins only (admins can always create)
-  const isAdminUser = user?.is_admin || user?.role === 'admin';
-
-  if (settingsLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  // Only show disabled message for non-admins
-  if (!isAdminUser) {
-    return (
-      <div className="min-h-screen">
-        <Header />
-        <main className="pt-16">
-          <section className="py-20">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h1 className="text-3xl font-bold mb-4">This feature is currently disabled</h1>
-              <p className="text-lg text-muted-foreground">
-                Listings are currently disabled for normal users. Only administrators can create listings.
-              </p>
-            </div>
-          </section>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen">
       <Header />
@@ -332,9 +328,9 @@ const ListCar = () => {
         {/* Hero Section */}
         <section className="bg-gradient-to-r from-primary via-primary-dark to-accent py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-5xl font-bold text-white mb-4">List Your Car (Admin)</h1>
+            <h1 className="text-5xl font-bold text-white mb-4">List Your Car</h1>
             <p className="text-xl text-white/90 max-w-2xl mx-auto">
-              Create a listing on behalf of a car owner
+              Join our premium network and start earning from your luxury vehicle
             </p>
           </div>
         </section>
@@ -343,28 +339,6 @@ const ListCar = () => {
         <section className="py-20">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <form onSubmit={handleSubmit} className="space-y-12">
-              {/* Owner Unique ID - Admin Only */}
-              <div className="premium-card p-8 border-2 border-blue-200 bg-blue-50/50">
-                <div className="flex items-center space-x-3 mb-6">
-                  <div className="bg-blue-500/10 p-2 rounded-lg">
-                    <Settings className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <h2 className="text-2xl font-bold">Owner Information</h2>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="owner_unique_id">Owner Unique ID *</Label>
-                  <Input 
-                    id="owner_unique_id" 
-                    placeholder="Enter the owner's unique ID (e.g., abc123xyz)"
-                    value={formData.owner_unique_id}
-                    onChange={(e) => setFormData(prev => ({...prev, owner_unique_id: e.target.value}))}
-                    required 
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Enter the unique ID of the user who owns this car. The listing will appear on their profile.
-                  </p>
-                </div>
-              </div>
               {/* Vehicle Information */}
               <div className="premium-card p-8">
                 <div className="flex items-center space-x-3 mb-6">
@@ -702,25 +676,115 @@ const ListCar = () => {
                 />
               </div>
 
-              {/* Featured Toggle - Admin Only */}
-              <div className="premium-card p-8">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="feature-addon"
-                    checked={featureAddon}
-                    onCheckedChange={setFeatureAddon}
-                  />
-                  <Label htmlFor="feature-addon" className="text-gray-700 cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <Star className="h-4 w-4 text-amber-500" />
-                      Feature this listing
+              {/* Admin Only Fields */}
+              {(user?.is_admin || user?.role === 'admin') && (
+                <div className="premium-card p-8 border-2 border-blue-200 bg-blue-50/50">
+                  <div className="flex items-center space-x-3 mb-6">
+                    <div className="bg-blue-500/10 p-2 rounded-lg">
+                      <Settings className="h-6 w-6 text-blue-600" />
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Get premium placement and 3x more views
-                    </p>
-                  </Label>
+                    <h2 className="text-2xl font-bold">Admin Settings</h2>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="owner_unique_id">Owner Unique ID *</Label>
+                      <Input 
+                        id="owner_unique_id" 
+                        placeholder="Enter the owner's unique ID (e.g., abc123xyz)"
+                        value={formData.owner_unique_id}
+                        onChange={(e) => setFormData(prev => ({...prev, owner_unique_id: e.target.value}))}
+                        required 
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Enter the unique ID of the user who owns this car. The listing will appear on their profile.
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="feature-addon-admin"
+                        checked={featureAddon}
+                        onCheckedChange={setFeatureAddon}
+                      />
+                      <Label htmlFor="feature-addon-admin" className="text-gray-700 cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-amber-500" />
+                          Feature this listing
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Get premium placement and 3x more views
+                        </p>
+                      </Label>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Pricing Summary */}
+              {pricing && !(user?.is_admin || user?.role === 'admin') && (
+                <Card className="border-2 border-blue-200 bg-blue-50/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5 text-blue-600" />
+                      Pricing Summary
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Base Listing Cost */}
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-700">
+                        {pricing.isFirstListing ? 'First Listing (Free)' : 'Listing Fee'}
+                      </span>
+                      <span className="font-semibold">
+                        PKR {pricing.baseListingCost}
+                      </span>
+                    </div>
+
+                    {/* Feature Addon */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="feature-addon"
+                          checked={featureAddon}
+                          onCheckedChange={setFeatureAddon}
+                        />
+                        <Label htmlFor="feature-addon" className="text-gray-700 cursor-pointer">
+                          <div className="flex items-center gap-2">
+                            <Star className="h-4 w-4 text-amber-500" />
+                            Feature my car (+PKR 200)
+                          </div>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Get premium placement and 3x more views
+                          </p>
+                        </Label>
+                      </div>
+                      <span className="font-semibold">
+                        PKR {pricing.featureCost}
+                      </span>
+                    </div>
+
+                    {/* Total */}
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-semibold text-gray-900">Total</span>
+                        <span className="text-2xl font-bold text-blue-600">
+                          PKR {pricing.totalCost}
+                        </span>
+                      </div>
+                      {pricing.isFirstListing && (
+                        <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
+                          <CheckCircle className="h-4 w-4" />
+                          Your first listing is free!
+                        </p>
+                      )}
+                      {pricing.totalCost > 0 && (
+                        <p className="text-sm text-gray-500 mt-2">
+                          Payment required to publish listing
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Submit */}
               <div className="text-center">
@@ -728,19 +792,22 @@ const ListCar = () => {
                   type="submit" 
                   size="lg"
                   className="bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary px-12"
-                  disabled={loading}
+                  disabled={loading || !pricing}
                 >
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Publishing...
+                      {pricing?.totalCost === 0 ? 'Publishing...' : 'Creating Payment...'}
                     </>
                   ) : (
-                    'Publish Listing (Free for Admin)'
+                    pricing?.totalCost === 0 ? 'Publish Free Listing' : 'Proceed to Payment'
                   )}
                 </Button>
                 <p className="text-sm text-muted-foreground mt-4">
-                  Admin listings are published immediately for free.
+                  {pricing?.totalCost === 0 
+                    ? 'Your listing will be published immediately for free!'
+                    : 'Complete payment to publish your listing instantly.'
+                  }
                 </p>
               </div>
             </form>

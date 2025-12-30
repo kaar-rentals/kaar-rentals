@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Fuel, Settings, MapPin, Phone, MessageCircle, Mail, ChevronLeft, ChevronRight, Heart, AlertCircle, LogIn } from 'lucide-react';
+import { ArrowLeft, Star, User, Fuel, Settings, MapPin, Phone, MessageCircle, Mail, ChevronLeft, ChevronRight, Heart, AlertCircle, LogIn, X } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { apiService, Car } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -22,6 +22,8 @@ const CarDetails = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [contactPhone, setContactPhone] = useState<string | null>(null);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
   const dealer = dealers[0]; // For demo, using first dealer
 
   useEffect(() => {
@@ -163,7 +165,6 @@ const CarDetails = () => {
                     src={getCurrentImage()} 
                     alt={`${car.brand} ${car.model}`}
                     className="w-full h-[500px] object-cover rounded-xl cursor-pointer"
-                    loading="lazy"
                     onClick={() => {
                       // Open fullscreen image view
                       const newWindow = window.open(getCurrentImage(), '_blank');
@@ -235,7 +236,6 @@ const CarDetails = () => {
                         <img
                           src={image}
                           alt={`${car.brand} ${car.model} view ${index + 1}`}
-                          loading="lazy"
                           className="w-full h-full object-cover"
                         />
                       </button>
@@ -258,50 +258,49 @@ const CarDetails = () => {
                       <p className="text-sm text-gray-600">Best price guaranteed</p>
                     </div>
 
-                    {/* Action Buttons */}
+                    {/* Contact Owner Button */}
                     <div className="space-y-3">
-                      <Link to={`/car/${car._id || car.id}/book`} className="block">
-                        <Button 
-                          size="lg" 
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3"
-                        >
-                          Book Now
-                        </Button>
-                      </Link>
-                      <Button size="lg" variant="outline" className="w-full">
+                      <Button 
+                        size="lg" 
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3"
+                        onClick={async () => {
+                          if (!user) {
+                            setLoginModalOpen(true);
+                            return;
+                          }
+                          
+                          try {
+                            const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
+                            const response = await fetch(`${API_BASE_URL}/cars/${car._id || car.id}/contact`, {
+                              headers: {
+                                'Authorization': `Bearer ${token}`,
+                              },
+                            });
+                            
+                            if (response.status === 401) {
+                              setLoginModalOpen(true);
+                              return;
+                            }
+                            
+                            if (!response.ok) {
+                              throw new Error('Failed to fetch contact');
+                            }
+                            
+                            const data = await response.json();
+                            setContactPhone(data.phone);
+                            setContactModalOpen(true);
+                          } catch (err: any) {
+                            toast({
+                              title: "Error",
+                              description: err.message || "Failed to fetch contact information",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
+                        <Phone className="h-4 w-4 mr-2" />
                         Contact Owner
                       </Button>
-                    </div>
-
-                    {/* Quick Contact */}
-                    <div className="pt-4 border-t border-gray-200">
-                      <p className="text-sm text-gray-600 mb-2">Quick Contact</p>
-                      <div className="flex space-x-2">
-                        <Button 
-                          size="sm" 
-                          className="flex-1 bg-green-600 hover:bg-green-700"
-                          onClick={() => {
-                            const phone = car.owner?.phone || '03090017510';
-                            const whatsapp = phone.replace(/[^0-9]/g, '');
-                            window.open(`https://wa.me/${whatsapp}`, '_blank');
-                          }}
-                        >
-                          <MessageCircle className="h-4 w-4 mr-1" />
-                          WhatsApp
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="flex-1"
-                          onClick={() => {
-                            const phone = car.owner?.phone || '03090017510';
-                            window.open(`tel:${phone}`, '_self');
-                          }}
-                        >
-                          <Phone className="h-4 w-4 mr-1" />
-                          Call
-                        </Button>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -316,7 +315,7 @@ const CarDetails = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Main Car Info - 2/3 width */}
               <div className="lg:col-span-2 space-y-8">
-                {/* Car Title */}
+                {/* Car Title and Rating */}
                 <div>
                   <h1 className="text-4xl font-bold text-gray-900 mb-2">
                     {car.brand} {car.model}
@@ -325,6 +324,11 @@ const CarDetails = () => {
                     <span className="text-lg">{car.year}</span>
                     <span>•</span>
                     <span className="text-lg">{car.engineCapacity}</span>
+                    <span>•</span>
+                    <div className="flex items-center space-x-1">
+                      <Star className="h-5 w-5 text-yellow-400 fill-current" />
+                      <span className="font-medium">4.8 (124 reviews)</span>
+                    </div>
                   </div>
                   <p className="text-lg text-gray-700 leading-relaxed">{car.description}</p>
                 </div>
@@ -411,181 +415,42 @@ const CarDetails = () => {
               <div className="space-y-6">
                 <div className="bg-white rounded-xl shadow-lg border p-6">
                   <h3 className="text-xl font-semibold mb-4 text-gray-900">Owner Details</h3>
-                  {user ? (
-                    // Show owner contact for authenticated users
+                  {user && car.owner?.name ? (
                     <div className="space-y-4">
                       <div className="flex items-center space-x-3">
                         <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                           <span className="text-blue-600 font-bold text-lg">
-                            {(car.owner?.name || dealer.name || 'U').charAt(0)}
+                            {car.owner.name.charAt(0)}
                           </span>
                         </div>
                         <div>
-                          <h4 className="font-semibold text-lg text-gray-900">{car.owner?.name || dealer.name || 'Owner'}</h4>
+                          <h4 className="font-semibold text-lg text-gray-900">{car.owner.name}</h4>
                         </div>
                       </div>
                       
-                      <p className="text-gray-600 text-sm">
-                        {car.owner?.name ? 'Car owner' : 'Trusted dealership'}
-                      </p>
-                      
-                      {/* Show owner location if available */}
-                      {car.owner?.location && (
+                      {car.owner.location && (
                         <div className="flex items-center space-x-3">
                           <MapPin className="h-4 w-4 text-gray-500" />
                           <span className="text-sm text-gray-700">{car.owner.location}</span>
                         </div>
                       )}
-                      
-                      {car.owner?.phone || car.owner?.email ? (
-                        <div className="space-y-3">
-                          {car.owner?.phone && (
-                            <div className="flex items-center space-x-3">
-                              <Phone className="h-4 w-4 text-gray-500" />
-                              <span className="text-sm text-gray-700">{car.owner.phone}</span>
-                            </div>
-                          )}
-                          {car.owner?.email && (
-                            <div className="flex items-center space-x-3">
-                              <Mail className="h-4 w-4 text-gray-500" />
-                              <span className="text-sm text-gray-700">{car.owner.email}</span>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-gray-500">Contact information not available</p>
-                      )}
-
-                      {car.owner?.phone && (
-                        <div className="pt-4 space-y-2">
-                          <Button 
-                            className="w-full bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => {
-                              const phone = car.owner?.phone || '';
-                              const whatsapp = phone.replace(/[^0-9]/g, '');
-                              window.open(`https://wa.me/${whatsapp}`, '_blank');
-                            }}
-                          >
-                            <MessageCircle className="h-4 w-4 mr-2" />
-                            WhatsApp Owner
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
-                            onClick={() => {
-                              const phone = car.owner?.phone || '';
-                              window.open(`tel:${phone}`, '_self');
-                            }}
-                          >
-                            <Phone className="h-4 w-4 mr-2" />
-                            Call Owner
-                          </Button>
-                        </div>
-                      )}
                     </div>
                   ) : (
-                    // Show login prompt for unauthenticated users
                     <div className="space-y-4 text-center">
                       <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto" />
                       <p className="text-gray-600">
-                        Sign in to view owner contact details
+                        Sign in to view owner details
                       </p>
-                      <Dialog open={loginModalOpen} onOpenChange={setLoginModalOpen}>
-                        <DialogTrigger asChild>
-                          <Button className="w-full">
-                            <LogIn className="h-4 w-4 mr-2" />
-                            Sign in to view owner details
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Sign In Required</DialogTitle>
-                            <DialogDescription>
-                              Please sign in to view the owner's contact information.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="mt-4 space-y-2">
-                            <Button 
-                              className="w-full"
-                              onClick={() => {
-                                setLoginModalOpen(false);
-                                navigate('/auth?mode=login');
-                              }}
-                            >
-                              Go to Sign In
-                            </Button>
-                            <Button 
-                              variant="outline"
-                              className="w-full"
-                              onClick={() => setLoginModalOpen(false)}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                      <Button 
+                        className="w-full"
+                        onClick={() => setLoginModalOpen(true)}
+                      >
+                        <LogIn className="h-4 w-4 mr-2" />
+                        Sign in to view owner details
+                      </Button>
                     </div>
                   )}
                 </div>
-
-                {/* Status Toggle - Owner/Admin Only */}
-                {user && (user.is_admin || (car.owner && typeof car.owner === 'object' && car.owner._id === user._id)) && (
-                  <div className="bg-white rounded-xl shadow-lg border p-6">
-                    <h3 className="text-xl font-semibold mb-4 text-gray-900">Listing Status</h3>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Current Status:</span>
-                        <Badge variant={car.status === 'rented' ? 'destructive' : 'default'}>
-                          {car.status === 'rented' ? 'Rented' : 'Available'}
-                        </Badge>
-                      </div>
-                      <Button
-                        variant={car.status === 'rented' ? 'default' : 'outline'}
-                        className="w-full"
-                        onClick={async () => {
-                          if (!token) {
-                            toast({
-                              title: "Authentication Required",
-                              description: "Please sign in to update listing status",
-                              variant: "destructive",
-                            });
-                            return;
-                          }
-                          try {
-                            const newStatus = car.status === 'rented' ? 'available' : 'rented';
-                            const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
-                            const response = await fetch(`${API_BASE_URL}/cars/${car._id}/status`, {
-                              method: 'PUT',
-                              headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${token}`,
-                              },
-                              body: JSON.stringify({ status: newStatus }),
-                            });
-                            if (response.ok) {
-                              const updatedCar = await response.json();
-                              setCar(updatedCar);
-                              toast({
-                                title: "Status Updated",
-                                description: `Listing marked as ${newStatus}`,
-                              });
-                            } else {
-                              throw new Error('Failed to update status');
-                            }
-                          } catch (err: any) {
-                            toast({
-                              title: "Update Failed",
-                              description: err.message || "Failed to update listing status",
-                              variant: "destructive",
-                            });
-                          }
-                        }}
-                      >
-                        {car.status === 'rented' ? 'Mark as Available' : 'Mark as Rented'}
-                      </Button>
-                    </div>
-                  </div>
-                )}
 
                 {/* Additional Services */}
                 <div className="premium-card p-6">
@@ -615,6 +480,85 @@ const CarDetails = () => {
         </section>
       </main>
       <Footer />
+
+      {/* Login Modal */}
+      <Dialog open={loginModalOpen} onOpenChange={setLoginModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sign In Required</DialogTitle>
+            <DialogDescription>
+              Please sign in to view the owner's contact information.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 space-y-2">
+            <Button 
+              className="w-full"
+              onClick={() => {
+                setLoginModalOpen(false);
+                navigate('/auth?mode=login');
+              }}
+            >
+              Go to Sign In
+            </Button>
+            <Button 
+              variant="outline"
+              className="w-full"
+              onClick={() => setLoginModalOpen(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Contact Phone Modal */}
+      <Dialog open={contactModalOpen} onOpenChange={setContactModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Owner Contact</DialogTitle>
+            <DialogDescription>
+              Contact the owner directly
+            </DialogDescription>
+          </DialogHeader>
+          {contactPhone && (
+            <div className="mt-4 space-y-4">
+              <div className="text-center">
+                <Phone className="h-12 w-12 mx-auto mb-4 text-blue-600" />
+                <p className="text-2xl font-bold">{contactPhone}</p>
+              </div>
+              <div className="flex space-x-2">
+                <Button 
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    const whatsapp = contactPhone.replace(/[^0-9]/g, '');
+                    window.open(`https://wa.me/${whatsapp}`, '_blank');
+                  }}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  WhatsApp
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    window.open(`tel:${contactPhone}`, '_self');
+                  }}
+                >
+                  <Phone className="h-4 w-4 mr-2" />
+                  Call
+                </Button>
+              </div>
+              <Button 
+                variant="outline"
+                className="w-full"
+                onClick={() => setContactModalOpen(false)}
+              >
+                Close
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

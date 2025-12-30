@@ -52,30 +52,45 @@ router.get("/", async (req, res) => {
 
     const total = await Car.countDocuments(filters);
     let cars = await Car.find(filters)
-      .populate('owner', req.user ? 'name email phone unique_id' : 'unique_id') // Only show contact if authenticated
+      .populate('owner', req.user ? 'name email phone unique_id location' : 'unique_id') // Include name and location if authenticated
       .sort({ [sortBy]: order === "desc" ? -1 : 1 })
       .skip(skip)
       .limit(limitNum)
       .lean();
 
-    // Hide owner contact details for unauthenticated users
-    if (!req.user) {
-      cars = cars.map(car => {
-        if (car.owner && typeof car.owner === 'object') {
+    // Format owner data based on authentication
+    cars = cars.map(car => {
+      if (car.owner && typeof car.owner === 'object') {
+        if (req.user) {
+          // Authenticated: include name and location
           return {
             ...car,
             owner: {
               unique_id: car.owner.unique_id || null,
-              contact: null // Hide email, phone, etc.
+              name: car.owner.name || null,
+              location: car.owner.location || null,
+              email: car.owner.email || null,
+              phone: car.owner.phone || null
+            }
+          };
+        } else {
+          // Unauthenticated: only unique_id
+          return {
+            ...car,
+            owner: {
+              unique_id: car.owner.unique_id || null,
+              name: null,
+              location: null,
+              contact: null
             }
           };
         }
-        return car;
-      });
-    }
+      }
+      return car;
+    });
 
-    // Add caching headers
-    res.set('Cache-Control', 'public, max-age=30');
+    // Add caching headers with stale-while-revalidate
+    res.set('Cache-Control', 'public, max-age=20, stale-while-revalidate=60');
     res.set('Vary', 'Authorization');
 
     res.json({ 
@@ -91,28 +106,43 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET /api/cars/:id - Hide owner contact for unauthenticated users
+// GET /api/cars/:id - Include owner name and location when authenticated
 router.get("/:id", async (req, res) => {
   try {
     let car = await Car.findById(req.params.id)
-      .populate('owner', req.user ? 'name email phone unique_id' : 'unique_id')
+      .populate('owner', req.user ? 'name email phone unique_id location' : 'unique_id')
       .lean();
     if (!car) return res.status(404).json({ message: "Car not found" });
     
-    // Hide owner contact details for unauthenticated users
-    if (!req.user) {
-      if (car.owner && typeof car.owner === 'object') {
+    // Format owner data based on authentication
+    if (car.owner && typeof car.owner === 'object') {
+      if (req.user) {
+        // Authenticated: include name and location
         car.owner = {
           unique_id: car.owner.unique_id || null,
+          name: car.owner.name || null,
+          location: car.owner.location || null,
+          email: car.owner.email || null,
+          phone: car.owner.phone || null
+        };
+      } else {
+        // Unauthenticated: only unique_id
+        car.owner = {
+          unique_id: car.owner.unique_id || null,
+          name: null,
+          location: null,
           contact: null
         };
       }
+    }
+    
+    if (!req.user) {
       delete car.renterPhone;
       car.location = car.city;
     }
 
-    // Add caching headers
-    res.set('Cache-Control', 'public, max-age=30');
+    // Add caching headers with stale-while-revalidate
+    res.set('Cache-Control', 'public, max-age=20, stale-while-revalidate=60');
     res.set('Vary', 'Authorization');
 
     res.json(car);
@@ -310,6 +340,33 @@ router.patch("/:id/status", auth(["owner", "admin", "user"]), async (req, res) =
     return res.json(car);
   } catch (err) {
     console.error('Error updating car status:', err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// PUT /api/cars/:id/featured - Toggle featured status (admin only)
+router.put("/:id/featured", auth(['admin']), isAdmin, async (req, res) => {
+  try {
+    if (!req.user || !req.user.is_admin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    const carId = req.params.id;
+    const { featured } = req.body;
+
+    if (typeof featured !== 'boolean') {
+      return res.status(400).json({ message: "featured must be a boolean" });
+    }
+
+    const car = await Car.findById(carId);
+    if (!car) return res.status(404).json({ message: "Car not found" });
+
+    car.featured = featured;
+    await car.save();
+
+    return res.json(car);
+  } catch (err) {
+    console.error('Error updating featured status:', err);
     return res.status(500).json({ message: "Server error" });
   }
 });

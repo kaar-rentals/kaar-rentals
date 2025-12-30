@@ -293,9 +293,8 @@ const ListCar = () => {
     }
   };
 
-  // Show disabled message for non-admins or when listings are disabled
+  // Show disabled message for non-admins only (admins can always create)
   const isAdminUser = user?.is_admin || user?.role === 'admin';
-  const listingsEnabled = settings?.listings_enabled !== false; // Default to true if not set
 
   if (settingsLoading) {
     return (
@@ -305,7 +304,8 @@ const ListCar = () => {
     );
   }
 
-  if (!isAdminUser || !listingsEnabled) {
+  // Only show disabled message for non-admins
+  if (!isAdminUser) {
     return (
       <div className="min-h-screen">
         <Header />

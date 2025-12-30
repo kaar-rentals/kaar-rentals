@@ -435,6 +435,35 @@ class ApiService {
       throw error;
     }
   }
+
+  async getStats() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/stats`);
+      if (!response.ok) throw new Error('Failed to fetch stats');
+      return await this.parseJsonResponse(response);
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  }
+
+  async toggleFeatured(carId: string, featured: boolean, token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/cars/${carId}/featured`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(token),
+        body: JSON.stringify({ featured }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to toggle featured status' }));
+        throw new Error(errorData.message || 'Failed to toggle featured status');
+      }
+      return await this.parseJsonResponse(response);
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  }
 }
 
 export const apiService = new ApiService();

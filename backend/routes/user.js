@@ -16,13 +16,14 @@ router.get("/profile/:unique_id", async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    // Return public profile (no sensitive data)
+    // Return public profile (no sensitive data, but include name and location)
     res.json({
       user: {
         _id: user._id,
-        name: user.name,
+        name: user.name || user.email?.split('@')[0] || 'User',
         unique_id: user.unique_id,
         role: user.role,
+        location: user.location || null,
         // Don't return email, phone, etc. for public profiles
       }
     });

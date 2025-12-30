@@ -429,14 +429,16 @@ const CarDetails = () => {
                         {car.owner?.name ? 'Car owner' : 'Trusted dealership'}
                       </p>
                       
+                      {/* Show owner location if available */}
+                      {car.owner?.location && (
+                        <div className="flex items-center space-x-3">
+                          <MapPin className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm text-gray-700">{car.owner.location}</span>
+                        </div>
+                      )}
+                      
                       {car.owner?.phone || car.owner?.email ? (
                         <div className="space-y-3">
-                          {car.location && (
-                            <div className="flex items-center space-x-3">
-                              <MapPin className="h-4 w-4 text-gray-500" />
-                              <span className="text-sm text-gray-700">{car.location}</span>
-                            </div>
-                          )}
                           {car.owner?.phone && (
                             <div className="flex items-center space-x-3">
                               <Phone className="h-4 w-4 text-gray-500" />

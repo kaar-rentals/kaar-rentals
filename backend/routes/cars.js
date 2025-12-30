@@ -2,16 +2,15 @@ const express = require("express");
 const router = express.Router();
 const Car = require("../models/Car");
 const User = require("../models/User");
-const auth = require("../middleware/authMiddleware");
-const { isAdmin } = require("../middleware/authMiddleware");
+const { notifyListingEvent } = require("../utils/socket");
 
-// GET /api/cars - Support pagination, featured filter, hide owner contact for unauthenticated
+// GET /api/cars - Support pagination, featured filter, owner info based on auth
 router.get("/", async (req, res) => {
   try {
     const {
       city, category, minPrice, maxPrice, transmission, fuelType, seats, search,
       page = 1, limit = 12, offset = 0, sortBy = "createdAt", order = "desc",
-      featured
+      featured, owner_unique_id
     } = req.query;
 
     const filters = { isActive: true, isApproved: true };
@@ -22,16 +21,6 @@ router.get("/", async (req, res) => {
     if (seats) filters.seating = parseInt(seats);
     if (featured !== undefined) {
       filters.featured = featured === 'true' || featured === true;
-    }
-    // Filter by owner_unique_id if provided
-    if (req.query.owner_unique_id) {
-      const owner = await User.findOne({ unique_id: req.query.owner_unique_id });
-      if (owner) {
-        filters.owner = owner._id;
-      } else {
-        // If owner not found, return empty results
-        return res.json({ total: 0, page: parseInt(page), limit: limitNum, offset: skip, cars: [] });
-      }
     }
     if (minPrice || maxPrice) {
       filters.pricePerDay = {};
@@ -46,13 +35,22 @@ router.get("/", async (req, res) => {
       ];
     }
 
-    // Use offset if provided, otherwise calculate from page
+    // Filter by owner_unique_id if provided
+    if (owner_unique_id) {
+      const owner = await User.findOne({ unique_id: owner_unique_id });
+      if (owner) {
+        filters.owner = owner._id;
+      } else {
+        return res.json({ total: 0, page: parseInt(page), limit: parseInt(limit), offset: parseInt(offset) || 0, cars: [] });
+      }
+    }
+
     const skip = offset ? parseInt(offset) : (Math.max(1, parseInt(page)) - 1) * parseInt(limit);
     const limitNum = parseInt(limit) || 12;
 
     const total = await Car.countDocuments(filters);
     let cars = await Car.find(filters)
-      .populate('owner', req.user ? 'name email phone unique_id location' : 'unique_id') // Include name and location if authenticated
+      .populate('owner', req.user ? 'name email phone unique_id location' : 'unique_id')
       .sort({ [sortBy]: order === "desc" ? -1 : 1 })
       .skip(skip)
       .limit(limitNum)
@@ -89,7 +87,7 @@ router.get("/", async (req, res) => {
       return car;
     });
 
-    // Add caching headers with stale-while-revalidate
+    // Add caching headers
     res.set('Cache-Control', 'public, max-age=20, stale-while-revalidate=60');
     res.set('Vary', 'Authorization');
 
@@ -112,6 +110,7 @@ router.get("/:id", async (req, res) => {
     let car = await Car.findById(req.params.id)
       .populate('owner', req.user ? 'name email phone unique_id location' : 'unique_id')
       .lean();
+    
     if (!car) return res.status(404).json({ message: "Car not found" });
     
     // Format owner data based on authentication
@@ -134,49 +133,73 @@ router.get("/:id", async (req, res) => {
           contact: null
         };
       }
-    }
-    
-    if (!req.user) {
+    } else if (!req.user) {
+      delete car.owner;
       delete car.renterPhone;
       car.location = car.city;
     }
-
-    // Add caching headers with stale-while-revalidate
+    
+    // Add caching headers
     res.set('Cache-Control', 'public, max-age=20, stale-while-revalidate=60');
     res.set('Vary', 'Authorization');
-
+    
     res.json(car);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// POST /api/cars - Admin-only: Create a new car listing
-router.post("/", auth(['admin']), isAdmin, async (req, res) => {
+// GET /api/cars/:id/contact - Get owner phone (authenticated only)
+router.get("/:id/contact", async (req, res) => {
   try {
-    if (!req.user || !req.user.is_admin) {
-      return res.status(403).json({ message: "Admin access required" });
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const car = await Car.findById(req.params.id).populate('owner', 'phone unique_id');
+    if (!car) return res.status(404).json({ message: "Car not found" });
+
+    if (!car.owner || typeof car.owner !== 'object') {
+      return res.status(404).json({ message: "Owner not found" });
+    }
+
+    const phone = car.owner.phone;
+    if (!phone) {
+      return res.status(404).json({ message: "Owner phone not available" });
+    }
+
+    res.json({ phone });
+  } catch (err) {
+    console.error('Error fetching contact:', err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// POST /api/cars - Admin-only: Create listing (bypass listings_enabled if admin)
+router.post("/", async (req, res) => {
+  try {
+    if (!req.user || !(req.user.id || req.user._id)) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // Check if user is admin
+    const user = await User.findById(req.user.id || req.user._id);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    const isAdmin = user.is_admin || user.role === 'admin';
+    
+    // Only admins can create listings
+    if (!isAdmin) {
+      return res.status(403).json({ message: "Admin access required to create listings" });
     }
 
     const {
-      brand,
-      model,
-      year,
-      category,
-      pricePerDay,
-      images = [],
-      location,
-      city,
-      engineCapacity,
-      fuelType,
-      transmission,
-      mileage,
-      seating,
-      features = [],
-      description = "",
-      owner_unique_id, // Admin supplies owner's unique_id
-      featured = false,
-      status = 'available'
+      brand, model, year, category, pricePerDay, images = [],
+      location, city, engineCapacity, fuelType, transmission,
+      mileage, seating, features = [], description = "",
+      owner_unique_id, featured = false, status = 'available'
     } = req.body || {};
 
     // Basic required validations
@@ -199,16 +222,15 @@ router.post("/", auth(['admin']), isAdmin, async (req, res) => {
     if (missingFields.length > 0) {
       return res.status(400).json({ 
         message: "Missing required fields", 
-        missingFields: missingFields 
+        missingFields 
       });
     }
 
-    // Validate category enum
+    // Validate category
     const validCategories = ['Sedan', 'SUV', 'Hatchback'];
     if (!validCategories.includes(category)) {
       return res.status(400).json({ 
-        message: "Invalid category. Must be one of: " + validCategories.join(', '),
-        received: category
+        message: "Invalid category. Must be one of: " + validCategories.join(', ')
       });
     }
 
@@ -223,60 +245,53 @@ router.post("/", auth(['admin']), isAdmin, async (req, res) => {
 
     const car = await Car.create({
       owner: owner._id,
-      brand,
-      model,
-      year,
-      category,
-      pricePerDay,
-      images,
-      location,
-      city,
-      engineCapacity,
-      fuelType,
-      transmission,
-      mileage,
-      seating,
-      features,
-      description,
-      status: status === 'rented' ? 'rented' : 'available',
+      brand, model, year, category, pricePerDay, images,
+      location, city, engineCapacity, fuelType, transmission,
+      mileage, seating, features, description,
       featured: featured === true || featured === 'true',
+      status: status === 'rented' ? 'rented' : 'available',
       isActive: status === 'available',
       isRented: status === 'rented',
       isApproved: true, // Admin-created listings are auto-approved
       paymentStatus: 'PAID', // Admin bypass: free for admins
-      createdByAdmin: true
     });
 
-    return res.status(201).json(car);
+    // Populate owner for socket event
+    const populatedCar = await Car.findById(car._id)
+      .populate('owner', 'name email phone unique_id location')
+      .lean();
+
+    // Emit socket event
+    if (populatedCar.owner && typeof populatedCar.owner === 'object') {
+      populatedCar.owner_unique_id = populatedCar.owner.unique_id;
+    }
+    notifyListingEvent('created', populatedCar);
+
+    // Format response
+    if (populatedCar.owner && typeof populatedCar.owner === 'object') {
+      populatedCar.owner = {
+        unique_id: populatedCar.owner.unique_id || null,
+        name: populatedCar.owner.name || null,
+        location: populatedCar.owner.location || null
+      };
+    }
+
+    return res.status(201).json(populatedCar);
   } catch (err) {
     console.error('Error creating car:', err);
     return res.status(500).json({ message: "Server error" });
   }
 });
 
-// GET /api/cars/owner/my-cars - Get cars for the logged-in owner
-// Requires a valid JWT; allow roles owner/admin/user
-router.get("/owner/my-cars", auth(["owner", "admin", "user"]), async (req, res) => {
+// PUT /api/cars/:id/status - Toggle listing status (owner or admin)
+router.put("/:id/status", async (req, res) => {
   try {
-    const ownerId = req.user && req.user._id;
-    if (!ownerId) return res.status(401).json({ message: "Unauthorized" });
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-    const cars = await Car.find({ owner: ownerId })
-      .sort({ createdAt: -1 })
-      .lean();
-
-    return res.json(cars);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-// PUT /api/cars/:id/status - Owner or admin can toggle listing status
-router.put("/:id/status", auth(["owner", "admin", "user"]), async (req, res) => {
-  try {
     const carId = req.params.id;
-    const { status } = req.body; // 'available' or 'rented'
+    const { status } = req.body;
     const userId = req.user.id || req.user._id;
 
     if (!status || !['available', 'rented'].includes(status)) {
@@ -286,8 +301,12 @@ router.put("/:id/status", auth(["owner", "admin", "user"]), async (req, res) => 
     const car = await Car.findById(carId);
     if (!car) return res.status(404).json({ message: "Car not found" });
 
+    // Check if user is admin
+    const user = await User.findById(userId);
+    const isAdmin = user && (user.is_admin || user.role === 'admin');
+
     // Verify ownership (unless admin)
-    if (!req.user.is_admin && car.owner.toString() !== userId.toString()) {
+    if (!isAdmin && car.owner.toString() !== userId.toString()) {
       return res.status(403).json({ message: "You can only update your own listings" });
     }
 
@@ -302,42 +321,19 @@ router.put("/:id/status", auth(["owner", "admin", "user"]), async (req, res) => 
     }
 
     await car.save();
-    return res.json(car);
-  } catch (err) {
-    console.error('Error updating car status:', err);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
 
-// Also support PATCH for backward compatibility
-router.patch("/:id/status", auth(["owner", "admin", "user"]), async (req, res) => {
-  try {
-    const carId = req.params.id;
-    const { status } = req.body;
-    const userId = req.user.id || req.user._id;
+    // Populate owner for socket event
+    const populatedCar = await Car.findById(car._id)
+      .populate('owner', 'name email phone unique_id location')
+      .lean();
 
-    if (!status || !['available', 'rented'].includes(status)) {
-      return res.status(400).json({ message: "Invalid status. Must be 'available' or 'rented'" });
+    // Emit socket event
+    if (populatedCar.owner && typeof populatedCar.owner === 'object') {
+      populatedCar.owner_unique_id = populatedCar.owner.unique_id;
     }
+    notifyListingEvent('updated', populatedCar);
 
-    const car = await Car.findById(carId);
-    if (!car) return res.status(404).json({ message: "Car not found" });
-
-    if (!req.user.is_admin && car.owner.toString() !== userId.toString()) {
-      return res.status(403).json({ message: "You can only update your own listings" });
-    }
-
-    car.status = status;
-    if (status === 'rented') {
-      car.isRented = true;
-      car.isActive = false;
-    } else {
-      car.isRented = false;
-      car.isActive = true;
-    }
-
-    await car.save();
-    return res.json(car);
+    return res.json(populatedCar);
   } catch (err) {
     console.error('Error updating car status:', err);
     return res.status(500).json({ message: "Server error" });
@@ -345,9 +341,15 @@ router.patch("/:id/status", auth(["owner", "admin", "user"]), async (req, res) =
 });
 
 // PUT /api/cars/:id/featured - Toggle featured status (admin only)
-router.put("/:id/featured", auth(['admin']), isAdmin, async (req, res) => {
+router.put("/:id/featured", async (req, res) => {
   try {
-    if (!req.user || !req.user.is_admin) {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const userId = req.user.id || req.user._id;
+    const user = await User.findById(userId);
+    if (!user || !(user.is_admin || user.role === 'admin')) {
       return res.status(403).json({ message: "Admin access required" });
     }
 
@@ -358,37 +360,24 @@ router.put("/:id/featured", auth(['admin']), isAdmin, async (req, res) => {
       return res.status(400).json({ message: "featured must be a boolean" });
     }
 
-    const car = await Car.findById(carId);
+    const car = await Car.findByIdAndUpdate(
+      carId,
+      { featured: featured },
+      { new: true }
+    ).populate('owner', 'name email phone unique_id location');
+
     if (!car) return res.status(404).json({ message: "Car not found" });
 
-    car.featured = featured;
-    await car.save();
+    // Emit socket event
+    const carObj = car.toObject ? car.toObject() : car;
+    if (carObj.owner && typeof carObj.owner === 'object') {
+      carObj.owner_unique_id = carObj.owner.unique_id;
+    }
+    notifyListingEvent('updated', carObj);
 
     return res.json(car);
   } catch (err) {
     console.error('Error updating featured status:', err);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-// DELETE /api/cars/:id - Delete car (owner or admin)
-router.delete("/:id", auth(["owner", "admin"]), async (req, res) => {
-  try {
-    const carId = req.params.id;
-    const ownerId = req.user.id || req.user._id;
-
-    const car = await Car.findById(carId);
-    if (!car) return res.status(404).json({ message: "Car not found" });
-
-    // Verify ownership (unless admin)
-    if (req.user.role !== 'admin' && car.owner.toString() !== ownerId.toString()) {
-      return res.status(403).json({ message: "You can only delete your own listings" });
-    }
-
-    await Car.findByIdAndDelete(carId);
-    return res.json({ message: "Car deleted successfully" });
-  } catch (err) {
-    console.error('Error deleting car:', err);
     return res.status(500).json({ message: "Server error" });
   }
 });

@@ -3,14 +3,10 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 const dotenv = require("dotenv");
-const compression = require("compression");
 const { connectDB } = require("./config/db");
 
 dotenv.config();
 const app = express();
-
-// Compression middleware
-app.use(compression());
 
 // Middleware
 app.use(express.json());
@@ -78,11 +74,7 @@ app.use("/api/payments", require("./routes/payments"));
 app.use("/api/admin", require("./routes/admin"));
 app.use("/api/user", require("./routes/user"));
 app.use("/api/seed", require("./routes/seed"));
-app.use("/api/site-settings", require("./routes/siteSettings"));
 app.use("/api/stats", require("./routes/stats"));
-
-// Alias: support Safepay webhook at /api/safepay/webhook as requested by provider config
-app.post("/api/safepay/webhook", express.raw({ type: 'application/json' }), require("./controllers/paymentController").webhook);
 
 // Cloudinary upload route
 const uploadRoutes = require("./routes/upload");
@@ -99,11 +91,33 @@ app.get("/", (_req, res) => res.send("🚀 Kaar.rentals Backend API is running")
 // Connect to MongoDB
 connectDB(process.env.MONGO_URI || "mongodb://localhost:27017/kaarDB");
 
+// Create HTTP server for Socket.IO
+const http = require('http');
+const { Server } = require('socket.io');
+const httpServer = http.createServer(app);
+
+// Initialize Socket.IO
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
+// Make io available to routes
+app.set('io', io);
+
+// Set up socket utility
+const { setIO } = require('./utils/socket');
+setIO(io);
+
 // Start
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`🚀 Backend running on http://localhost:${PORT}`);
   console.log(`📊 Connected to MongoDB database: ${process.env.MONGO_DBNAME || 'kaarDB'}`);
+  console.log(`🔌 Socket.IO server initialized`);
 });
 
 // Global error handler

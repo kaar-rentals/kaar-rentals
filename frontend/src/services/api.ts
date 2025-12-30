@@ -102,7 +102,15 @@ class ApiService {
         throw new Error('Invalid response format - API may not be running');
       }
       
-      return await this.parseJsonResponse(response);
+      const data = await this.parseJsonResponse(response);
+      // Handle both array and object response formats
+      if (Array.isArray(data)) {
+        return data;
+      } else if (data.cars && Array.isArray(data.cars)) {
+        return data.cars;
+      } else {
+        return [];
+      }
     } catch (error) {
       console.error('API Error:', error);
       throw error;
@@ -424,19 +432,7 @@ class ApiService {
     }
   }
 
-  async getUserListings(token?: string) {
-    try {
-      const headers = token ? this.getAuthHeaders(token) : { 'Content-Type': 'application/json' };
-      const response = await fetch(`${API_BASE_URL}/user/listings`, { headers });
-      if (!response.ok) throw new Error('Failed to fetch user listings');
-      return await this.parseJsonResponse(response);
-    } catch (error) {
-      console.error('API Error:', error);
-      throw error;
-    }
-  }
-
-  async getStats() {
+  async getStats(): Promise<{ users_count: number; listings_count: number; featured_count: number }> {
     try {
       const response = await fetch(`${API_BASE_URL}/stats`);
       if (!response.ok) throw new Error('Failed to fetch stats');
@@ -447,17 +443,14 @@ class ApiService {
     }
   }
 
-  async toggleFeatured(carId: string, featured: boolean, token: string) {
+  async toggleFeatured(carId: string, featured: boolean, token: string): Promise<Car> {
     try {
       const response = await fetch(`${API_BASE_URL}/cars/${carId}/featured`, {
         method: 'PUT',
         headers: this.getAuthHeaders(token),
         body: JSON.stringify({ featured }),
       });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Failed to toggle featured status' }));
-        throw new Error(errorData.message || 'Failed to toggle featured status');
-      }
+      if (!response.ok) throw new Error('Failed to toggle featured status');
       return await this.parseJsonResponse(response);
     } catch (error) {
       console.error('API Error:', error);

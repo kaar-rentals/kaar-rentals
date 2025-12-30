@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { User, Mail, Calendar, Eye, Phone, Repeat2, Loader2, RefreshCw, Copy, Check } from "lucide-react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { User, Mail, Calendar, Eye, Phone, Repeat2, Loader2, RefreshCw, Copy, Check, ToggleLeft, ToggleRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,10 +10,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import socket from "@/lib/socket";
 
 const Profile = () => {
   const { unique_id } = useParams<{ unique_id?: string }>();
   const { user: authUser, token } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [user, setUser] = useState<any>(null);
   const [listings, setListings] = useState([]);
@@ -26,13 +28,38 @@ const Profile = () => {
     fetchListings();
   }, [unique_id, authUser]);
 
+  // Socket subscription for real-time updates
+  useEffect(() => {
+    if (!user?.unique_id) return;
+
+    const handleListingCreated = ({ listing, owner_unique_id }: any) => {
+      if (owner_unique_id === user.unique_id) {
+        console.log('[Socket] Listing created for this user, refetching...');
+        fetchListings();
+      }
+    };
+
+    const handleListingUpdated = ({ listing, owner_unique_id }: any) => {
+      if (owner_unique_id === user.unique_id) {
+        console.log('[Socket] Listing updated for this user, refetching...');
+        fetchListings();
+      }
+    };
+
+    socket.on('listing:created', handleListingCreated);
+    socket.on('listing:updated', handleListingUpdated);
+
+    return () => {
+      socket.off('listing:created', handleListingCreated);
+      socket.off('listing:updated', handleListingUpdated);
+    };
+  }, [user?.unique_id]);
+
   const fetchProfile = async () => {
     try {
       setLoading(true);
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
       
-      // If unique_id is provided, fetch that user's profile (public)
-      // Otherwise, fetch the authenticated user's profile
       if (unique_id) {
         // Fetch user by unique_id (public profile)
         const response = await fetch(`${API_BASE_URL}/user/profile/${unique_id}`);
@@ -49,10 +76,11 @@ const Profile = () => {
         });
         if (response.ok) {
           const data = await response.json();
-          setUser(data.user);
+          setUser(data.user || authUser);
+        } else {
+          setUser(authUser);
         }
       } else {
-        // No auth and no unique_id - show error or redirect to auth for own profile
         setError('Please sign in to view your profile, or provide a user unique ID');
       }
     } catch (err: any) {
@@ -69,9 +97,9 @@ const Profile = () => {
       
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
       
-      // Fetch listings by owner unique_id or user_id
+      // Fetch listings by owner unique_id
       const ownerId = user.unique_id || user._id;
-      const response = await fetch(`${API_BASE_URL}/cars?owner_unique_id=${ownerId}`, {
+      const response = await fetch(`${API_BASE_URL}/cars?owner_unique_id=${ownerId}&limit=12`, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       
@@ -81,6 +109,46 @@ const Profile = () => {
       }
     } catch (err: any) {
       console.error("Error fetching listings:", err);
+    }
+  };
+
+  const toggleListingStatus = async (listingId: string, currentStatus: string) => {
+    if (!token) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to update listing status",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const newStatus = currentStatus === 'rented' ? 'available' : 'rented';
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
+      const response = await fetch(`${API_BASE_URL}/cars/${listingId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Status Updated",
+          description: `Listing marked as ${newStatus}`,
+        });
+        fetchListings();
+      } else {
+        throw new Error('Failed to update status');
+      }
+    } catch (err: any) {
+      toast({
+        title: "Update Failed",
+        description: err.message || "Failed to update listing status",
+        variant: "destructive",
+      });
     }
   };
 
@@ -102,6 +170,12 @@ const Profile = () => {
     fetchListings();
   };
 
+  const isOwnerOrAdmin = (listing: any) => {
+    if (!authUser) return false;
+    if (authUser.is_admin || authUser.role === 'admin') return true;
+    return listing.owner && (listing.owner._id === authUser._id || listing.owner.toString() === authUser._id);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -115,7 +189,11 @@ const Profile = () => {
                   {user.name}
                 </h1>
               )}
-              {/* Display unique_id prominently */}
+              {!user?.name && (
+                <h1 className="text-3xl font-bold leading-tight">
+                  {unique_id ? 'User Profile' : 'My Profile'}
+                </h1>
+              )}
               {user?.unique_id && (
                 <div className="flex items-center gap-2 mb-2">
                   <p className="text-sm font-mono font-bold bg-muted px-3 py-1 rounded">
@@ -134,11 +212,6 @@ const Profile = () => {
                     )}
                   </Button>
                 </div>
-              )}
-              {!user?.name && (
-                <h1 className="text-3xl font-bold leading-tight">
-                  {unique_id ? 'User Profile' : 'My Profile'}
-                </h1>
               )}
               <p className="text-sm text-muted-foreground" aria-live="polite">
                 {unique_id ? 'Public profile' : 'Your account information and listings'}
@@ -179,7 +252,7 @@ const Profile = () => {
                       <User className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <p className="text-sm text-muted-foreground">Name</p>
-                        <p className="font-semibold">{user.name}</p>
+                        <p className="font-semibold">{user.name || 'Not set'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -254,6 +327,35 @@ const Profile = () => {
                           </CardDescription>
                         </CardHeader>
                       </Link>
+                      {/* Status Toggle - Owner/Admin Only */}
+                      {isOwnerOrAdmin(listing) && (
+                        <CardContent className="pt-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">Status:</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                toggleListingStatus(listing._id, listing.status || 'available');
+                              }}
+                              className="flex items-center gap-2"
+                            >
+                              {listing.status === 'rented' ? (
+                                <>
+                                  <ToggleRight className="h-4 w-4 text-red-500" />
+                                  <span className="text-red-600">Rented</span>
+                                </>
+                              ) : (
+                                <>
+                                  <ToggleLeft className="h-4 w-4 text-green-500" />
+                                  <span className="text-green-600">Available</span>
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      )}
                     </Card>
                   ))}
                 </div>
@@ -268,4 +370,3 @@ const Profile = () => {
 };
 
 export default Profile;
-

@@ -17,34 +17,23 @@ const FeaturedCars = () => {
   const loadFeaturedCars = async () => {
     try {
       setLoading(true);
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
-      
-      // Fetch featured listings from API
-      const response = await fetch(`${API_BASE_URL}/cars?featured=true&limit=6`);
+      // Fetch featured cars with limit
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/cars?featured=true&limit=6`);
       if (response.ok) {
         const data = await response.json();
-        if (data.cars && Array.isArray(data.cars) && data.cars.length > 0) {
-          setFeaturedCars(data.cars.slice(0, 6));
+        const cars = data.cars || [];
+        if (cars.length > 0) {
+          setFeaturedCars(cars.slice(0, 6));
           return;
         }
       }
       
-      // Fallback: Try via apiService
-      const featuredData = await apiService.getCars({ featured: 'true', limit: 6 });
-      if (featuredData && Array.isArray(featuredData) && featuredData.length > 0) {
-        setFeaturedCars(featuredData.slice(0, 6));
-        return;
-      }
-      
-      // Final fallback: Get all cars and filter for featured
+      // Fallback: Get all cars and filter for featured ones
       const carsData = await apiService.getCars();
-      if (carsData && Array.isArray(carsData)) {
-        const featuredCars = carsData.filter(car => car.featured === true);
-        if (featuredCars.length > 0) {
-          setFeaturedCars(featuredCars.slice(0, 6));
-        } else {
-          setFeaturedCars([]);
-        }
+      const carsArray = Array.isArray(carsData) ? carsData : (carsData?.cars || []);
+      const featuredCars = carsArray.filter((car: Car) => car.featured === true);
+      if (featuredCars.length > 0) {
+        setFeaturedCars(featuredCars.slice(0, 6));
       } else {
         setFeaturedCars([]);
       }

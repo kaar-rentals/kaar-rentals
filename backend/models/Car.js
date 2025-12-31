@@ -2,7 +2,9 @@
 const mongoose = require('mongoose');
 
 const carSchema = new mongoose.Schema({
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  // Legacy field for backward compatibility
+  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   brand: { type: String, required: true },
   model: { type: String, required: true },
   year: { type: Number, required: true },
@@ -31,7 +33,8 @@ const carSchema = new mongoose.Schema({
 // Indexes for performance
 carSchema.index({ featured: 1 });
 carSchema.index({ createdAt: -1 });
-carSchema.index({ owner: 1 });
+carSchema.index({ ownerId: 1 });
+carSchema.index({ owner: 1 }); // Legacy index
 carSchema.index({ status: 1 });
 
 module.exports = mongoose.model('Car', carSchema);

@@ -68,8 +68,9 @@ app.use('/uploads', express.static('uploads'));
 // Routes
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/upload", require("./routes/upload"));
-app.use("/api/cars", require("./routes/cars"));
-app.use("/api/listings", require("./routes/listings"));
+const carRoutes = require("./routes/cars");
+app.use("/api/cars", carRoutes);
+app.use("/api/listings", carRoutes);
 app.use("/api/bookings", require("./routes/bookings"));
 app.use("/api/payments", require("./routes/payments"));
 app.use("/api/admin", require("./routes/admin"));

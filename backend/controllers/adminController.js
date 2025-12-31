@@ -13,6 +13,10 @@ const getDashboardStats = async (req, res) => {
     const totalUsers = await User.countDocuments();
     const totalOwners = await User.countDocuments({ role: 'owner' });
     const totalBookings = await Booking.countDocuments();
+    const totalRevenue = await Payment.aggregate([
+      { $match: { status: 'SUCCEEDED' } },
+      { $group: { _id: null, total: { $sum: '$settledAmountInPaise' } } }
+    ]);
 
     res.json({
       totalCars,
@@ -20,7 +24,8 @@ const getDashboardStats = async (req, res) => {
       pendingCars,
       totalUsers,
       totalOwners,
-      totalBookings
+      totalBookings,
+      totalRevenue: totalRevenue[0]?.total || 0
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -40,19 +45,9 @@ const getPendingCars = async (req, res) => {
 
 const approveCar = async (req, res) => {
   try {
-    const { featured } = req.body; // Admin can set featured status
-    const updateData = { 
-      isApproved: true,
-      paymentStatus: 'PAID' // Admin bypass: approve without payment
-    };
-    
-    if (featured !== undefined) {
-      updateData.featured = featured;
-    }
-    
     const car = await Car.findByIdAndUpdate(
       req.params.id,
-      updateData,
+      { isApproved: true },
       { new: true }
     ).populate('owner', 'name email');
     
@@ -100,29 +95,6 @@ const updateUserRole = async (req, res) => {
     
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json(user);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-/**
- * PATCH /api/admin/users/:id/toggle-owner
- * Toggle user's owner status (user <-> owner)
- */
-const toggleOwnerStatus = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    
-    // Toggle between 'user' and 'owner'
-    const newRole = user.role === 'owner' ? 'user' : 'owner';
-    const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
-      { role: newRole },
-      { new: true }
-    ).select('-password');
-    
-    res.json(updatedUser);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -191,7 +163,7 @@ const getAllPayments = async (req, res) => {
 
 /**
  * GET /api/admin/payments/stats
- * Get payment statistics for admin dashboard (without revenue)
+ * Get payment statistics for admin dashboard
  */
 const getPaymentStats = async (req, res) => {
   try {
@@ -212,7 +184,13 @@ const getPaymentStats = async (req, res) => {
       {
         $group: {
           _id: null,
+          totalRevenue: { $sum: '$settledAmountInPaise' },
           totalFees: { $sum: '$gatewayFeesInPaise' },
+          netRevenue: { 
+            $sum: { 
+              $subtract: ['$settledAmountInPaise', { $ifNull: ['$gatewayFeesInPaise', 0] }] 
+            } 
+          },
           count: { $sum: 1 }
         }
       }
@@ -220,7 +198,7 @@ const getPaymentStats = async (req, res) => {
 
     res.json({
       statusBreakdown: stats,
-      totalStats: totalStats[0] || { totalFees: 0, count: 0 }
+      totalStats: totalStats[0] || { totalRevenue: 0, totalFees: 0, netRevenue: 0, count: 0 }
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -245,69 +223,6 @@ const getListingDrafts = async (req, res) => {
   }
 };
 
-/**
- * POST /api/admin/cars
- * Admin bypass: Create ad without payment requirement
- */
-const createCarAsAdmin = async (req, res) => {
-  try {
-    const {
-      brand, model, year, category, pricePerDay, images = [],
-      location, city, engineCapacity, fuelType, transmission,
-      mileage, seating, features = [], description = "",
-      owner, featured = false
-    } = req.body;
-
-    // Validate required fields
-    if (!brand || !model || !year || !category || !pricePerDay || !location || !city) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    // Generate public_id for ad (A-xxxx format)
-    const generatePublicId = () => {
-      const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-      return `A-${random}`;
-    };
-
-    let publicId = generatePublicId();
-    // Ensure uniqueness
-    while (await Car.findOne({ public_id: publicId })) {
-      publicId = generatePublicId();
-    }
-
-    const car = await Car.create({
-      owner: owner || req.user._id, // Use provided owner or admin's ID
-      brand,
-      model,
-      year,
-      category,
-      pricePerDay,
-      images,
-      location,
-      city,
-      engineCapacity,
-      fuelType,
-      transmission,
-      mileage,
-      seating,
-      features,
-      description,
-      public_id: publicId,
-      isActive: true,
-      isApproved: true,
-      isRented: false,
-      featured: featured,
-      paymentStatus: 'PAID', // Admin bypass
-      createdByAdmin: true
-    });
-
-    res.status(201).json(car);
-  } catch (err) {
-    console.error('Error creating car as admin:', err);
-    res.status(500).json({ error: err.message });
-  }
-};
-
 module.exports = {
   getDashboardStats,
   getPendingCars,
@@ -315,12 +230,10 @@ module.exports = {
   rejectCar,
   getAllUsers,
   updateUserRole,
-  toggleOwnerStatus,
   getAllCars,
   getRecentBookings,
   getAllPayments,
   getPaymentStats,
-  getListingDrafts,
-  createCarAsAdmin
+  getListingDrafts
 };
 

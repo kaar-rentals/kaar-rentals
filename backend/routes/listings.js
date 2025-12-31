@@ -11,17 +11,14 @@ router.get("/:id/contact", authMiddleware, async (req, res) => {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    const car = await Car.findById(req.params.id).populate('owner', 'phone');
+    const car = await Car.findById(req.params.id)
+      .populate('ownerId', 'name phone location');
+
     if (!car) {
-      return res.status(404).json({ message: 'Listing not found' });
+      return res.status(404).json({ message: 'Car not found' });
     }
 
-    if (!car.owner || typeof car.owner !== 'object') {
-      return res.status(404).json({ message: 'Owner not found' });
-    }
-
-    const phone = car.owner.phone;
-    if (!phone) {
+    if (!car.ownerId || !car.ownerId.phone) {
       return res.status(404).json({ message: 'Owner phone not available' });
     }
 
@@ -29,7 +26,9 @@ router.get("/:id/contact", authMiddleware, async (req, res) => {
     res.set('Vary', 'Authorization');
     res.set('Cache-Control', 'private, max-age=0, no-store');
     
-    return res.json({ phone });
+    return res.json({
+      phone: car.ownerId.phone
+    });
   } catch (err) {
     // Log error without exposing sensitive data
     console.error('Error in contact handler:', err);

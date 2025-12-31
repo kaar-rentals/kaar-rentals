@@ -2,6 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/authMiddleware');
+const { asHandler } = require('./_routeHelpers');
+const adminController = require('../controllers/adminController');
 const {
   getDashboardStats,
   getPendingCars,
@@ -9,42 +11,48 @@ const {
   rejectCar,
   getAllUsers,
   updateUserRole,
-  toggleOwnerStatus,
   getAllCars,
   getRecentBookings,
   getAllPayments,
   getPaymentStats,
-  getListingDrafts,
-  createCarAsAdmin
-} = require('../controllers/adminController');
+  getListingDrafts
+} = adminController;
+
+// Debug: log available exports
+if (process.env.NODE_ENV !== 'production') {
+  console.log('adminController exports:', Object.keys(adminController));
+}
 
 // All admin routes require admin role
 router.use(auth(['admin']));
 
 // Dashboard
-router.get('/dashboard', getDashboardStats);
+router.get('/dashboard', asHandler(getDashboardStats));
 
 // Car management
-router.get('/cars', getAllCars);
-router.get('/cars/pending', getPendingCars);
-router.patch('/cars/:id/approve', approveCar);
-router.patch('/cars/:id/reject', rejectCar);
-router.post('/cars', createCarAsAdmin); // Admin bypass: create ad without payment
+router.get('/cars', asHandler(getAllCars));
+router.get('/cars/pending', asHandler(getPendingCars));
+router.patch('/cars/:id/approve', asHandler(approveCar));
+router.patch('/cars/:id/reject', asHandler(rejectCar));
+// Note: createCarAsAdmin is not exported from adminController
+// Admin can use POST /api/cars endpoint directly (requires isAdmin middleware)
+// router.post('/cars', asHandler(createCarAsAdmin)); // Disabled - function not found
 
 // User management
-router.get('/users', getAllUsers);
-router.patch('/users/:id/role', updateUserRole);
-router.patch('/users/:id/toggle-owner', toggleOwnerStatus);
+router.get('/users', asHandler(getAllUsers));
+router.patch('/users/:id/role', asHandler(updateUserRole));
+// Note: toggleOwnerStatus is not exported from adminController
+// router.patch('/users/:id/toggle-owner', asHandler(toggleOwnerStatus)); // Disabled - function not found
 
 // Bookings
-router.get('/bookings', getRecentBookings);
+router.get('/bookings', asHandler(getRecentBookings));
 
 // Payment audit
-router.get('/payments', getAllPayments);
-router.get('/payments/stats', getPaymentStats);
+router.get('/payments', asHandler(getAllPayments));
+router.get('/payments/stats', asHandler(getPaymentStats));
 
 // Listing drafts audit
-router.get('/listing-drafts', getListingDrafts);
+router.get('/listing-drafts', asHandler(getListingDrafts));
 
 module.exports = router;
 

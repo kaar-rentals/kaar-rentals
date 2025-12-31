@@ -2,29 +2,30 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/authMiddleware');
+const { asHandler } = require('./_routeHelpers');
 const paymentController = require('../controllers/paymentController');
 
 // Create membership checkout (owner buys membership)
 // Requires login
-router.post('/create-membership', auth(['owner','admin','user']), express.json(), paymentController.createMembershipCheckout);
+router.post('/create-membership', auth(['owner','admin','user']), express.json(), asHandler(paymentController.createMembershipCheckout));
 
 // Create car listing payment (owner pays for car listing)
 // Requires login (allow any logged-in user)
-router.post('/create-car-listing', auth(['owner','admin','user']), express.json(), paymentController.createCarListingPayment);
+router.post('/create-car-listing', auth(['owner','admin','user']), express.json(), asHandler(paymentController.createCarListingPayment));
 
 // Create listing payment with pricing calculation
 // Requires login (allow any logged-in user)
-router.post('/create-listing-payment', auth(['owner','admin','user']), express.json(), paymentController.createListingPayment);
+router.post('/create-listing-payment', auth(['owner','admin','user']), express.json(), asHandler(paymentController.createListingPayment));
 
 // Verify payment status (no auth required to support post-redirect verification)
-router.get('/verify', paymentController.verifyPayment);
+router.get('/verify', asHandler(paymentController.verifyPayment));
 
 // Get pending listings for user
 // Requires login
-router.get('/pending-listings', auth(['owner','admin']), paymentController.getPendingListings);
+router.get('/pending-listings', auth(['owner','admin']), asHandler(paymentController.getPendingListings));
 
 // Webhook endpoint (Safepay -> server). Use raw body so signature can be validated.
-router.post('/webhook', express.raw({ type: 'application/json' }), paymentController.webhook);
+router.post('/webhook', express.raw({ type: 'application/json' }), asHandler(paymentController.webhook));
 
 // Dev-only: force-settle a payment for testing (DO NOT enable in production)
 if (process.env.NODE_ENV !== 'production') {

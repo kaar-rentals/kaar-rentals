@@ -66,6 +66,17 @@ curl -X POST http://localhost:8080/api/auth/login \
 
 - `backend/routes/_routeHelpers.js` - New helper file with `asHandler` function
 - `backend/routes/auth.js` - Wrapped handlers with `asHandler`
+- `backend/routes/admin.js` - Wrapped handlers with `asHandler`, removed non-existent functions
+- `backend/routes/payments.js` - Wrapped handlers with `asHandler`
+- `backend/routes/bookings.js` - Wrapped handlers with `asHandler`
+
+## Issues Found and Fixed
+
+1. **admin.js**: `createCarAsAdmin` and `toggleOwnerStatus` were not exported from adminController
+   - Removed these routes (commented out with notes)
+   - Admin can use POST /api/cars directly (requires isAdmin middleware)
+
+2. **All route files**: Wrapped controller function handlers with `asHandler` to prevent crashes
 
 ## Notes
 

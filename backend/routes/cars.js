@@ -161,27 +161,22 @@ router.get("/:id", async (req, res) => {
 // GET /api/cars/:id/contact - Get owner phone (authenticated only)
 router.get("/:id/contact", authMiddleware, async (req, res) => {
   try {
-    // Auth middleware sets req.user, but check explicitly for clarity
     if (!req.user) {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    const car = await Car.findById(req.params.id).populate('owner', 'phone unique_id');
+    const car = await Car.findById(req.params.id).populate('owner', 'phone');
     if (!car) {
       return res.status(404).json({ message: 'Listing not found' });
     }
 
     if (!car.owner || typeof car.owner !== 'object') {
-      // Owner not found in database - internal error
-      console.warn(`Owner not found for listing ${req.params.id}`);
-      return res.status(500).json({ message: 'Server error: owner data unavailable' });
+      return res.status(404).json({ message: 'Owner not found' });
     }
 
     const phone = car.owner.phone;
     if (!phone) {
-      // Owner exists but phone is missing - internal error
-      console.warn(`Owner phone missing for listing ${req.params.id}`);
-      return res.status(500).json({ message: 'Server error: owner contact unavailable' });
+      return res.status(404).json({ message: 'Owner phone not available' });
     }
 
     // Set security headers - do not cache sensitive owner phone data
@@ -191,8 +186,8 @@ router.get("/:id/contact", authMiddleware, async (req, res) => {
     return res.json({ phone });
   } catch (err) {
     // Log error without exposing sensitive data
-    console.error('Error fetching contact for listing:', req.params.id);
-    return res.status(500).json({ message: 'Server error' });
+    console.error('Error in contact handler:', err);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 

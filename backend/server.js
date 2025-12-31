@@ -69,6 +69,7 @@ app.use('/uploads', express.static('uploads'));
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/upload", require("./routes/upload"));
 app.use("/api/cars", require("./routes/cars"));
+app.use("/api/listings", require("./routes/listings"));
 app.use("/api/bookings", require("./routes/bookings"));
 app.use("/api/payments", require("./routes/payments"));
 app.use("/api/admin", require("./routes/admin"));

@@ -282,6 +282,16 @@ const CarDetails = () => {
                               return;
                             }
                             
+                            if (response.status === 404) {
+                              const errorData = await response.json().catch(() => ({ message: 'Owner phone not available' }));
+                              toast({
+                                title: "Contact Unavailable",
+                                description: errorData.message || "Owner phone not available",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+                            
                             if (!response.ok) {
                               throw new Error('Failed to fetch contact');
                             }

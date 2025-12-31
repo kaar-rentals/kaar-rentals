@@ -59,7 +59,7 @@ router.get("/", async (req, res) => {
 
     const total = await Car.countDocuments(filters);
     let cars = await Car.find(filters)
-      .populate('owner', req.user ? 'name email phone unique_id location' : 'unique_id')
+      .populate('ownerId', req.user ? 'name email phone unique_id location' : 'unique_id')
       .sort({ [sortBy]: order === "desc" ? -1 : 1 })
       .skip(skip)
       .limit(limitNum)
@@ -67,17 +67,18 @@ router.get("/", async (req, res) => {
 
     // Format owner data based on authentication
     cars = cars.map(car => {
-      if (car.owner && typeof car.owner === 'object') {
+      const owner = car.ownerId || car.owner; // Support both ownerId and legacy owner
+      if (owner && typeof owner === 'object') {
         if (req.user) {
           // Authenticated: include name and location
           return {
             ...car,
             owner: {
-              unique_id: car.owner.unique_id || null,
-              name: car.owner.name || null,
-              location: car.owner.location || null,
-              email: car.owner.email || null,
-              phone: car.owner.phone || null
+              unique_id: owner.unique_id || null,
+              name: owner.name || null,
+              location: owner.location || null,
+              email: owner.email || null,
+              phone: owner.phone || null
             }
           };
         } else {
@@ -85,7 +86,7 @@ router.get("/", async (req, res) => {
           return {
             ...car,
             owner: {
-              unique_id: car.owner.unique_id || null,
+              unique_id: owner.unique_id || null,
               name: null,
               location: null,
               contact: null
@@ -117,26 +118,27 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     let car = await Car.findById(req.params.id)
-      .populate('owner', req.user ? 'name email phone unique_id location' : 'unique_id')
+      .populate('ownerId', req.user ? 'name email phone unique_id location' : 'unique_id')
       .lean();
     
     if (!car) return res.status(404).json({ message: "Car not found" });
     
     // Format owner data based on authentication
-    if (car.owner && typeof car.owner === 'object') {
+    const owner = car.ownerId || car.owner; // Support both ownerId and legacy owner
+    if (owner && typeof owner === 'object') {
       if (req.user) {
         // Authenticated: include name and location
         car.owner = {
-          unique_id: car.owner.unique_id || null,
-          name: car.owner.name || null,
-          location: car.owner.location || null,
-          email: car.owner.email || null,
-          phone: car.owner.phone || null
+          unique_id: owner.unique_id || null,
+          name: owner.name || null,
+          location: owner.location || null,
+          email: owner.email || null,
+          phone: owner.phone || null
         };
       } else {
         // Unauthenticated: only unique_id
         car.owner = {
-          unique_id: car.owner.unique_id || null,
+          unique_id: owner.unique_id || null,
           name: null,
           location: null,
           contact: null
@@ -165,35 +167,39 @@ router.get("/:id/contact", authMiddleware, async (req, res) => {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    const car = await Car.findById(req.params.id).populate('owner', 'name phone location');
+    const car = await Car.findById(req.params.id)
+      .populate('ownerId', 'name phone location');
+
     if (!car) {
-      return res.status(404).json({ message: 'Listing not found' });
+      return res.status(404).json({ message: 'Car not found' });
     }
 
-    if (!car.owner || typeof car.owner !== 'object') {
-      return res.status(404).json({ message: 'Owner not found' });
-    }
-
-    const phone = car.owner.phone;
-    if (!phone) {
+    if (!car.ownerId || !car.ownerId.phone) {
       return res.status(404).json({ message: 'Owner phone not available' });
     }
 
-    // Set security headers - do not cache sensitive owner phone data
-    res.set('Vary', 'Authorization');
-    res.set('Cache-Control', 'private, max-age=0, no-store');
-    
-    // Return ONLY phone - no admin phone, no placeholders, no fake data
-    return res.json({ phone });
-  } catch (err) {
-    // Log error without exposing sensitive data
-    console.error('Error in contact handler:', err);
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.json({
+      phone: car.ownerId.phone
+    });
+  } catch (error) {
+    console.error('CONTACT OWNER ERROR:', error);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 
 // POST /api/cars - Admin-only: Create listing
-router.post("/", authMiddleware, isAdmin, async (req, res) => {
+router.post("/", authMiddleware, async (req, res) => {
+  // Check admin status explicitly
+  if (!req.user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+  
+  const user = await User.findById(req.user.id || req.user._id);
+  if (!user || !(user.is_admin === true || user.role === 'admin')) {
+    return res.status(403).json({ message: 'Admin access required' });
+  }
+  
+  // Continue with handler logic
   try {
 
     const {
@@ -236,8 +242,8 @@ router.post("/", authMiddleware, isAdmin, async (req, res) => {
     }
 
     // Resolve owner_unique_id to owner_id
-    const owner = await User.findOne({ unique_id: owner_unique_id });
-    if (!owner) {
+    const ownerUser = await User.findOne({ unique_id: owner_unique_id });
+    if (!ownerUser) {
       return res.status(422).json({ 
         message: "Owner not found with the provided unique_id",
         owner_unique_id 
@@ -246,13 +252,14 @@ router.post("/", authMiddleware, isAdmin, async (req, res) => {
 
     // Admin-only: If owner has no phone and admin provided owner_phone, save it to owner
     const { owner_phone } = req.body;
-    if (!owner.phone && owner_phone) {
-      owner.phone = owner_phone.trim() || null;
-      await owner.save();
+    if (!ownerUser.phone && owner_phone) {
+      ownerUser.phone = owner_phone.trim() || null;
+      await ownerUser.save();
     }
 
     const car = await Car.create({
-      owner: owner._id,
+      ownerId: ownerUser._id,
+      owner: ownerUser._id, // Legacy field for backward compatibility
       brand, model, year, category, pricePerDay, images,
       location, city, engineCapacity, fuelType, transmission,
       mileage, seating, features, description,
@@ -266,21 +273,27 @@ router.post("/", authMiddleware, isAdmin, async (req, res) => {
 
     // Populate owner for socket event
     const populatedCar = await Car.findById(car._id)
-      .populate('owner', 'name email phone unique_id location')
+      .populate('ownerId', 'name email phone unique_id location')
       .lean();
 
-    // Emit socket event
-    if (populatedCar.owner && typeof populatedCar.owner === 'object') {
-      populatedCar.owner_unique_id = populatedCar.owner.unique_id;
+    // Emit socket event - support both ownerId and legacy owner
+    const owner = populatedCar.ownerId || populatedCar.owner;
+    if (owner && typeof owner === 'object') {
+      populatedCar.owner_unique_id = owner.unique_id;
+      populatedCar.owner = {
+        unique_id: owner.unique_id || null,
+        name: owner.name || null,
+        location: owner.location || null
+      };
     }
     notifyListingEvent('created', populatedCar);
 
     // Format response
-    if (populatedCar.owner && typeof populatedCar.owner === 'object') {
+    if (owner && typeof owner === 'object') {
       populatedCar.owner = {
-        unique_id: populatedCar.owner.unique_id || null,
-        name: populatedCar.owner.name || null,
-        location: populatedCar.owner.location || null
+        unique_id: owner.unique_id || null,
+        name: owner.name || null,
+        location: owner.location || null
       };
     }
 
@@ -313,8 +326,9 @@ router.put("/:id/status", async (req, res) => {
     const user = await User.findById(userId);
     const isAdmin = user && (user.is_admin || user.role === 'admin');
 
-    // Verify ownership (unless admin)
-    if (!isAdmin && car.owner.toString() !== userId.toString()) {
+    // Verify ownership (unless admin) - support both ownerId and legacy owner
+    const carOwnerId = car.ownerId || car.owner;
+    if (!isAdmin && carOwnerId && carOwnerId.toString() !== userId.toString()) {
       return res.status(403).json({ message: "You can only update your own listings" });
     }
 
@@ -392,14 +406,20 @@ router.put("/:id/featured", async (req, res) => {
       carId,
       { featured: featured },
       { new: true }
-    ).populate('owner', 'name email phone unique_id location');
+    ).populate('ownerId', 'name email phone unique_id location');
 
     if (!car) return res.status(404).json({ message: "Car not found" });
 
-    // Emit socket event
+    // Emit socket event - support both ownerId and legacy owner
     const carObj = car.toObject ? car.toObject() : car;
-    if (carObj.owner && typeof carObj.owner === 'object') {
-      carObj.owner_unique_id = carObj.owner.unique_id;
+    const owner = carObj.ownerId || carObj.owner;
+    if (owner && typeof owner === 'object') {
+      carObj.owner_unique_id = owner.unique_id;
+      carObj.owner = {
+        unique_id: owner.unique_id || null,
+        name: owner.name || null,
+        location: owner.location || null
+      };
     }
     notifyListingEvent('updated', carObj);
 

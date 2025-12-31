@@ -9,21 +9,13 @@ const auth = (roles = []) => {
       if (!token) return res.status(401).json({ error: "No token provided" });
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.id).select('_id name email role unique_id is_admin');
+      const user = await User.findById(decoded.id);
 
       if (!user) return res.status(401).json({ error: "User not found" });
       if (roles.length && !roles.includes(user.role))
         return res.status(403).json({ error: "Forbidden" });
 
-      req.user = {
-        id: user._id,
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        unique_id: user.unique_id,
-        is_admin: user.is_admin || user.role === 'admin'
-      };
+      req.user = user;
       next();
     } catch (err) {
       res.status(401).json({ error: "Invalid token" });
@@ -31,16 +23,4 @@ const auth = (roles = []) => {
   };
 };
 
-// Admin-only middleware
-const isAdmin = (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Authentication required" });
-  }
-  if (!req.user.is_admin && req.user.role !== 'admin') {
-    return res.status(403).json({ error: "Admin access required" });
-  }
-  next();
-};
-
 module.exports = auth;
-module.exports.isAdmin = isAdmin;

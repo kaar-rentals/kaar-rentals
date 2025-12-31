@@ -165,7 +165,7 @@ router.get("/:id/contact", authMiddleware, async (req, res) => {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    const car = await Car.findById(req.params.id).populate('owner', 'phone');
+    const car = await Car.findById(req.params.id).populate('owner', 'name phone location');
     if (!car) {
       return res.status(404).json({ message: 'Listing not found' });
     }
@@ -183,6 +183,7 @@ router.get("/:id/contact", authMiddleware, async (req, res) => {
     res.set('Vary', 'Authorization');
     res.set('Cache-Control', 'private, max-age=0, no-store');
     
+    // Return ONLY phone - no admin phone, no placeholders, no fake data
     return res.json({ phone });
   } catch (err) {
     // Log error without exposing sensitive data

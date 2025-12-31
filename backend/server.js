@@ -76,6 +76,7 @@ app.use("/api/admin", require("./routes/admin"));
 app.use("/api/user", require("./routes/user"));
 app.use("/api/seed", require("./routes/seed"));
 app.use("/api/stats", require("./routes/stats"));
+app.use("/api/site-settings", require("./routes/siteSettings"));
 
 // Cloudinary upload route
 const uploadRoutes = require("./routes/upload");

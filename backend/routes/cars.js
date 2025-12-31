@@ -243,6 +243,13 @@ router.post("/", authMiddleware, isAdmin, async (req, res) => {
       });
     }
 
+    // Admin-only: If owner has no phone and admin provided owner_phone, save it to owner
+    const { owner_phone } = req.body;
+    if (!owner.phone && owner_phone) {
+      owner.phone = owner_phone.trim() || null;
+      await owner.save();
+    }
+
     const car = await Car.create({
       owner: owner._id,
       brand, model, year, category, pricePerDay, images,

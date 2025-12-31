@@ -53,7 +53,8 @@ const ListCar = () => {
     email: '',
     phone: '',
     isDealership: false,
-    owner_unique_id: '' // Admin-only: unique_id of the car owner
+    owner_unique_id: '', // Admin-only: unique_id of the car owner
+    owner_phone: '' // Admin-only: optional phone to set on owner if missing
   });
   const [showAdvancedFields, setShowAdvancedFields] = useState(false);
 
@@ -253,6 +254,7 @@ const ListCar = () => {
         const adminListingData = {
           ...listingDraft,
           owner_unique_id: formData.owner_unique_id,
+          owner_phone: formData.owner_phone || undefined, // Only send if provided
           featured: featureAddon,
           status: 'available'
         };
@@ -724,6 +726,19 @@ const ListCar = () => {
                       />
                       <p className="text-sm text-muted-foreground">
                         Enter the unique ID of the user who owns this car. The listing will appear on their profile.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="owner_phone">Owner Phone (Optional)</Label>
+                      <Input 
+                        id="owner_phone" 
+                        type="tel"
+                        placeholder="+92 300 1234567"
+                        value={formData.owner_phone}
+                        onChange={(e) => setFormData(prev => ({...prev, owner_phone: e.target.value}))}
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        If the owner doesn't have a phone number set, this will be saved to their profile. Leave empty if owner already has a phone.
                       </p>
                     </div>
                     <div className="flex items-center space-x-2">

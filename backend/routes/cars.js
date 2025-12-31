@@ -15,7 +15,14 @@ router.get("/", async (req, res) => {
       featured, owner_unique_id
     } = req.query;
 
+    // Don't filter by status - show all listings including rented ones
+    // Only filter by isActive and isApproved
     const filters = { isActive: true, isApproved: true };
+    
+    // Optional status filter if explicitly requested
+    if (req.query.status) {
+      filters.status = req.query.status;
+    }
     if (city) filters.city = city;
     if (category) filters.category = category;
     if (transmission) filters.transmission = transmission;

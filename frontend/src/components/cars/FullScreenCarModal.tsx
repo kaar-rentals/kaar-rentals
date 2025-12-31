@@ -157,12 +157,6 @@ const FullScreenCarModal = ({ car, isOpen, onClose, initialImageIndex = 0 }: Ful
                   </button>
                 </div>
 
-                {/* Rating */}
-                <div className="flex items-center space-x-1">
-                  <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                  <span className="text-sm font-medium">4.8</span>
-                  <span className="text-sm text-gray-500">(24 reviews)</span>
-                </div>
 
                 {/* Badges */}
                 <div className="flex flex-wrap gap-2">

@@ -321,6 +321,33 @@ const ListCar = () => {
     }
   };
 
+  // Check if user is admin
+  const isAdminUser = user?.is_admin || user?.role === 'admin';
+
+  // If not admin, show restricted message
+  if (!isAdminUser) {
+    return (
+      <div className="min-h-screen">
+        <Header />
+        <main className="pt-16">
+          <section className="py-20">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+              <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h1 className="text-3xl font-bold mb-4">Listing Creation Restricted</h1>
+              <p className="text-lg text-muted-foreground mb-6">
+                Listing creation is restricted to admins. Please contact an administrator if you need to create a listing.
+              </p>
+              <Button onClick={() => navigate('/')} variant="outline">
+                Go to Homepage
+              </Button>
+            </div>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       <Header />
@@ -328,9 +355,9 @@ const ListCar = () => {
         {/* Hero Section */}
         <section className="bg-gradient-to-r from-primary via-primary-dark to-accent py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-5xl font-bold text-white mb-4">List Your Car</h1>
+            <h1 className="text-5xl font-bold text-white mb-4">List Your Car (Admin)</h1>
             <p className="text-xl text-white/90 max-w-2xl mx-auto">
-              Join our premium network and start earning from your luxury vehicle
+              Create a listing on behalf of a car owner
             </p>
           </div>
         </section>

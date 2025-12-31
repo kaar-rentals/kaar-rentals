@@ -3,6 +3,8 @@ const router = express.Router();
 const Car = require("../models/Car");
 const User = require("../models/User");
 const { notifyListingEvent } = require("../utils/socket");
+const authMiddleware = require("../middleware/auth");
+const isAdmin = require("../middleware/isAdmin");
 
 // GET /api/cars - Support pagination, featured filter, owner info based on auth
 router.get("/", async (req, res) => {
@@ -175,25 +177,9 @@ router.get("/:id/contact", async (req, res) => {
   }
 });
 
-// POST /api/cars - Admin-only: Create listing (bypass listings_enabled if admin)
-router.post("/", async (req, res) => {
+// POST /api/cars - Admin-only: Create listing
+router.post("/", authMiddleware, isAdmin, async (req, res) => {
   try {
-    if (!req.user || !(req.user.id || req.user._id)) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    // Check if user is admin
-    const user = await User.findById(req.user.id || req.user._id);
-    if (!user) {
-      return res.status(401).json({ message: "User not found" });
-    }
-
-    const isAdmin = user.is_admin || user.role === 'admin';
-    
-    // Only admins can create listings
-    if (!isAdmin) {
-      return res.status(403).json({ message: "Admin access required to create listings" });
-    }
 
     const {
       brand, model, year, category, pricePerDay, images = [],
@@ -322,15 +308,35 @@ router.put("/:id/status", async (req, res) => {
 
     await car.save();
 
-    // Populate owner for socket event
+    // Populate owner for socket event and response
     const populatedCar = await Car.findById(car._id)
       .populate('owner', 'name email phone unique_id location')
       .lean();
 
-    // Emit socket event
+    // Format owner data based on authentication
     if (populatedCar.owner && typeof populatedCar.owner === 'object') {
+      if (req.user) {
+        // Authenticated: include name and location
+        populatedCar.owner = {
+          unique_id: populatedCar.owner.unique_id || null,
+          name: populatedCar.owner.name || null,
+          location: populatedCar.owner.location || null,
+          email: populatedCar.owner.email || null,
+          phone: populatedCar.owner.phone || null
+        };
+      } else {
+        // Unauthenticated: only unique_id
+        populatedCar.owner = {
+          unique_id: populatedCar.owner.unique_id || null,
+          name: null,
+          location: null,
+          contact: null
+        };
+      }
       populatedCar.owner_unique_id = populatedCar.owner.unique_id;
     }
+
+    // Emit socket event
     notifyListingEvent('updated', populatedCar);
 
     return res.json(populatedCar);

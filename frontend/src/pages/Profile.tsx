@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { User, Mail, Calendar, Eye, Phone, Repeat2, Loader2, RefreshCw, Copy, Check, ToggleLeft, ToggleRight } from "lucide-react";
+import { User, Mail, Calendar, Eye, Phone, Repeat2, Loader2, RefreshCw, Copy, Check, ToggleLeft, ToggleRight, Edit2, Save, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiService } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +24,9 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', email: '', phone: '' });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -122,8 +127,18 @@ const Profile = () => {
       return;
     }
 
+    const newStatus = currentStatus === 'rented' ? 'available' : 'rented';
+    
+    // Optimistic update
+    setListings((prevListings: any[]) =>
+      prevListings.map((listing: any) =>
+        listing._id === listingId
+          ? { ...listing, status: newStatus }
+          : listing
+      )
+    );
+
     try {
-      const newStatus = currentStatus === 'rented' ? 'available' : 'rented';
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
       const response = await fetch(`${API_BASE_URL}/cars/${listingId}/status`, {
         method: 'PUT',
@@ -135,12 +150,26 @@ const Profile = () => {
       });
 
       if (response.ok) {
+        const updatedListing = await response.json();
+        // Update with server response
+        setListings((prevListings: any[]) =>
+          prevListings.map((listing: any) =>
+            listing._id === listingId ? updatedListing : listing
+          )
+        );
         toast({
           title: "Status Updated",
           description: `Listing marked as ${newStatus}`,
         });
-        fetchListings();
       } else {
+        // Rollback on error
+        setListings((prevListings: any[]) =>
+          prevListings.map((listing: any) =>
+            listing._id === listingId
+              ? { ...listing, status: currentStatus }
+              : listing
+          )
+        );
         throw new Error('Failed to update status');
       }
     } catch (err: any) {
@@ -174,6 +203,74 @@ const Profile = () => {
     if (!authUser) return false;
     if (authUser.is_admin || authUser.role === 'admin') return true;
     return listing.owner && (listing.owner._id === authUser._id || listing.owner.toString() === authUser._id);
+  };
+
+  const handleEditProfile = () => {
+    if (user) {
+      setEditForm({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || ''
+      });
+      setIsEditing(true);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!token) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to edit your profile",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
+      const response = await fetch(`${API_BASE_URL}/user/me`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(editForm),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to update profile' }));
+        throw new Error(errorData.error || 'Failed to update profile');
+      }
+
+      const data = await response.json();
+      setUser(data.user);
+      setIsEditing(false);
+      
+      // Update auth context if available
+      if (authUser && authUser._id === data.user._id) {
+        // Trigger refresh of auth context
+        window.location.reload(); // Simple approach - could use context refresh instead
+      }
+
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Update Failed",
+        description: err.message || "Failed to update profile",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditForm({ name: '', email: '', phone: '' });
   };
 
   return (
@@ -238,41 +335,111 @@ const Profile = () => {
           {/* User Profile Card */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Account Information
-              </CardTitle>
-              <CardDescription>Your profile details</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Account Information
+                  </CardTitle>
+                  <CardDescription>Your profile details</CardDescription>
+                </div>
+                {authUser && !unique_id && !isEditing && (
+                  <Button variant="outline" size="sm" onClick={handleEditProfile}>
+                    <Edit2 className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {user ? (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center gap-3">
-                      <User className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Name</p>
-                        <p className="font-semibold">{user.name || 'Not set'}</p>
+                  {isEditing ? (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-name">Name</Label>
+                        <Input
+                          id="edit-name"
+                          value={editForm.name}
+                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                          placeholder="Your name"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-email">Email</Label>
+                        <Input
+                          id="edit-email"
+                          type="email"
+                          value={editForm.email}
+                          onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                          placeholder="your@email.com"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-phone">Phone</Label>
+                        <Input
+                          id="edit-phone"
+                          type="tel"
+                          value={editForm.phone}
+                          onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                          placeholder="+92 300 1234567"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button onClick={handleSaveProfile} disabled={saving}>
+                          {saving ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4 mr-2" />
+                              Save
+                            </>
+                          )}
+                        </Button>
+                        <Button variant="outline" onClick={handleCancelEdit}>
+                          <X className="h-4 w-4 mr-2" />
+                          Cancel
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Mail className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Email</p>
-                        <p className="font-semibold">{user.email}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge variant={user.role === "admin" ? "destructive" : "default"}>
-                        {user.role}
-                      </Badge>
-                    </div>
-                    {user.membershipActive && (
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex items-center gap-3">
-                        <Badge variant="secondary">Premium Member</Badge>
+                        <User className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Name</p>
+                          <p className="font-semibold">{user.name || 'Not set'}</p>
+                        </div>
                       </div>
-                    )}
-                  </div>
+                      <div className="flex items-center gap-3">
+                        <Mail className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Email</p>
+                          <p className="font-semibold">{user.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Phone className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Phone</p>
+                          <p className="font-semibold">{user.phone || 'Not set'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge variant={user.role === "admin" ? "destructive" : "default"}>
+                          {user.role}
+                        </Badge>
+                      </div>
+                      {user.membershipActive && (
+                        <div className="flex items-center gap-3">
+                          <Badge variant="secondary">Premium Member</Badge>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="flex items-center justify-center py-8">
@@ -327,11 +494,16 @@ const Profile = () => {
                           </CardDescription>
                         </CardHeader>
                       </Link>
-                      {/* Status Toggle - Owner/Admin Only */}
-                      {isOwnerOrAdmin(listing) && (
-                        <CardContent className="pt-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Status:</span>
+                      {/* Status Badge and Toggle - Owner/Admin Only */}
+                      <CardContent className="pt-2 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Badge 
+                            variant={listing.status === 'rented' ? 'destructive' : 'default'}
+                            className={listing.status === 'rented' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}
+                          >
+                            {listing.status === 'rented' ? 'Rented' : 'Available'}
+                          </Badge>
+                          {isOwnerOrAdmin(listing) && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -341,21 +513,11 @@ const Profile = () => {
                               }}
                               className="flex items-center gap-2"
                             >
-                              {listing.status === 'rented' ? (
-                                <>
-                                  <ToggleRight className="h-4 w-4 text-red-500" />
-                                  <span className="text-red-600">Rented</span>
-                                </>
-                              ) : (
-                                <>
-                                  <ToggleLeft className="h-4 w-4 text-green-500" />
-                                  <span className="text-green-600">Available</span>
-                                </>
-                              )}
+                              Change status
                             </Button>
-                          </div>
-                        </CardContent>
-                      )}
+                          )}
+                        </div>
+                      </CardContent>
                     </Card>
                   ))}
                 </div>

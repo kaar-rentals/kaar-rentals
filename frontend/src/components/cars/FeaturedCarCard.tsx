@@ -4,14 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Car } from '@/services/api';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface FeaturedCarCardProps {
   car: Car;
 }
 
 const FeaturedCarCard = ({ car }: FeaturedCarCardProps) => {
-  const { user } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
 
@@ -160,17 +158,6 @@ const FeaturedCarCard = ({ car }: FeaturedCarCardProps) => {
                 </h3>
                 <p className="text-sm text-slate-600 mt-1">{car.year || 'N/A'} • {car.engineCapacity || 'N/A'}</p>
               </div>
-              <div className="flex items-center space-x-1 bg-amber-50 px-3 py-1.5 rounded-full">
-                <div className="flex items-center">
-                  <Star className="h-4 w-4 text-amber-500 fill-current" />
-                  <Star className="h-4 w-4 text-amber-500 fill-current" />
-                  <Star className="h-4 w-4 text-amber-500 fill-current" />
-                  <Star className="h-4 w-4 text-amber-500 fill-current" />
-                  <Star className="h-4 w-4 text-amber-500 fill-current" />
-                </div>
-                <span className="text-sm text-amber-700 font-semibold ml-1">4.8</span>
-                <span className="text-xs text-amber-600">(24)</span>
-              </div>
             </div>
             
             {/* Credibility Badges */}
@@ -234,22 +221,6 @@ const FeaturedCarCard = ({ car }: FeaturedCarCardProps) => {
               </Badge>
             )}
           </div>
-
-          {/* Owner Info - Show when authenticated */}
-          {user && car.owner && typeof car.owner === 'object' && car.owner.name && (
-            <div className="pt-2 border-t border-slate-100">
-              <div className="flex items-center gap-2 text-xs text-slate-600">
-                <User className="h-3 w-3" />
-                <span className="font-medium">{car.owner.name}</span>
-                {car.owner.location && (
-                  <>
-                    <span>•</span>
-                    <span>{car.owner.location}</span>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* Price and Status */}
           <div className="flex items-center justify-between pt-3 border-t border-slate-100">

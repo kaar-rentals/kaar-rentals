@@ -315,20 +315,25 @@ const CarDetails = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Main Car Info - 2/3 width */}
               <div className="lg:col-span-2 space-y-8">
-                {/* Car Title and Rating */}
+                {/* Car Title and Status */}
                 <div>
-                  <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                    {car.brand} {car.model}
-                  </h1>
+                  <div className="flex items-center justify-between mb-2">
+                    <h1 className="text-4xl font-bold text-gray-900">
+                      {car.brand} {car.model}
+                    </h1>
+                    {car.status && (
+                      <Badge 
+                        variant={car.status === 'rented' ? 'destructive' : 'default'}
+                        className={car.status === 'rented' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}
+                      >
+                        {car.status === 'rented' ? 'Rented' : 'Available'}
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex items-center space-x-4 text-gray-600 mb-4">
                     <span className="text-lg">{car.year}</span>
                     <span>•</span>
                     <span className="text-lg">{car.engineCapacity}</span>
-                    <span>•</span>
-                    <div className="flex items-center space-x-1">
-                      <Star className="h-5 w-5 text-yellow-400 fill-current" />
-                      <span className="font-medium">4.8 (124 reviews)</span>
-                    </div>
                   </div>
                   <p className="text-lg text-gray-700 leading-relaxed">{car.description}</p>
                 </div>
@@ -451,6 +456,68 @@ const CarDetails = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Status Toggle - Owner/Admin Only */}
+                {user && (user.is_admin || user.role === 'admin' || (car.owner && typeof car.owner === 'object' && (car.owner._id === user._id || car.owner.toString() === user._id))) && (
+                  <div className="bg-white rounded-xl shadow-lg border p-6">
+                    <h3 className="text-xl font-semibold mb-4 text-gray-900">Listing Status</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Current Status:</span>
+                        <Badge 
+                          variant={car.status === 'rented' ? 'destructive' : 'default'}
+                          className={car.status === 'rented' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}
+                        >
+                          {car.status === 'rented' ? 'Rented' : 'Available'}
+                        </Badge>
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={async () => {
+                          if (!token) {
+                            toast({
+                              title: "Authentication Required",
+                              description: "Please sign in to update listing status",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          try {
+                            const newStatus = car.status === 'rented' ? 'available' : 'rented';
+                            const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
+                            const response = await fetch(`${API_BASE_URL}/cars/${car._id}/status`, {
+                              method: 'PUT',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`,
+                              },
+                              body: JSON.stringify({ status: newStatus }),
+                            });
+                            if (response.ok) {
+                              const updatedCar = await response.json();
+                              setCar(updatedCar);
+                              toast({
+                                title: "Status Updated",
+                                description: `Listing marked as ${newStatus}`,
+                              });
+                            } else {
+                              throw new Error('Failed to update status');
+                            }
+                          } catch (err: any) {
+                            toast({
+                              title: "Update Failed",
+                              description: err.message || "Failed to update listing status",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
+                        Change status to {car.status === 'rented' ? 'Available' : 'Rented'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Additional Services */}
                 <div className="premium-card p-6">

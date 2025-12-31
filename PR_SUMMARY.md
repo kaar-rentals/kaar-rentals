@@ -1,115 +1,121 @@
-# PR Summary: Fix Toggle, Owner Visibility, and Admin-Only Listing Creation
+# PR Summary: Fix Site Settings and Contact Endpoints
+
+## Overview
+
+Fixes 404 errors for `/api/site-settings` and 500 errors for `/api/cars/:id/contact` by adding robust endpoints with proper error handling.
 
 ## Changes Made
 
-### Backend
+### 1. Site Settings Endpoint
 
-1. **Created isAdmin middleware** (`backend/middleware/isAdmin.js`)
-   - Enforces admin-only access for protected routes
-   - Checks `req.user.is_admin` or `req.user.role === 'admin'`
+**Files Created:**
+- `backend/models/SiteSettings.js` - Mongoose model for site_settings collection
+- `backend/routes/siteSettings.js` - Route handler for GET /api/site-settings
+- `backend/migrations/20250104_add_site_settings.js` - Migration script
 
-2. **Enforced admin-only listing creation** (`backend/routes/cars.js`)
-   - Updated `POST /api/cars` to use `authMiddleware` and `isAdmin` middleware
-   - Removed inline admin check, now using middleware
-   - Ensures only admins can create listings via API
+**Behavior:**
+- Returns site settings from MongoDB `site_settings` collection
+- Falls back to `process.env.LISTINGS_ENABLED` if collection doesn't exist
+- Returns JSON: `{ listings_enabled: boolean, ... }`
+- Handles type conversion (booleans, numbers) from string values
+- Sets `Vary: Authorization` header
 
-3. **Updated status endpoint** (`backend/routes/cars.js`)
-   - `PUT /api/cars/:id/status` now returns formatted owner info based on authentication
-   - Owner info includes name and location for authenticated users
+### 2. Contact Endpoints Fixed
 
-4. **Created migration** (`backend/migrations/20250102_fix_listing_status_and_admin.js`)
-   - Adds `is_admin` flag to users collection
-   - Ensures `status` field exists in cars collection
-   - Creates indexes for performance
+**Files Updated:**
+- `backend/routes/cars.js` - Fixed GET /api/cars/:id/contact
+- `backend/routes/listings.js` - Fixed GET /api/listings/:id/contact
 
-### Frontend
+**Changes:**
+- Changed missing owner from 500 → 404 with "Owner not found"
+- Changed missing phone from 500 → 404 with "Owner phone not available"
+- Improved error handling - all exceptions caught and return 500
+- Removed sensitive data from logs
+- Both endpoints use same robust handler logic
 
-1. **Hidden listing creation UI for non-admins** (`frontend/src/pages/ListCar.tsx`)
-   - Shows restricted message for non-admin users
-   - Only admins can access the listing creation form
-   - Prevents non-admins from attempting to create listings
+**Error Response Codes:**
+- 401: Unauthenticated → `{ message: 'Authentication required' }`
+- 404: Listing not found → `{ message: 'Listing not found' }`
+- 404: Owner not found → `{ message: 'Owner not found' }`
+- 404: Phone not available → `{ message: 'Owner phone not available' }`
+- 500: Server error → `{ message: 'Internal server error' }`
 
-2. **Status toggle** (Already implemented in `frontend/src/pages/Profile.tsx`)
-   - Toggle allows owners and admins to mark listings as available/rented
-   - Updates listing status via `PUT /api/cars/:id/status` endpoint
+**Security Headers:**
+- `Vary: Authorization`
+- `Cache-Control: private, max-age=0, no-store`
 
-3. **Owner info visibility** (Already implemented)
-   - `ListingCard` and `CarDetails` show owner name/location when authenticated
-   - Unauthenticated users see "Sign in to view owner details" button
-   - Owner info is returned conditionally by backend based on `req.user`
+### 3. Server Configuration
 
-## Smoke Tests Performed
+**Files Updated:**
+- `backend/server.js` - Added `/api/site-settings` route registration
 
-### ✅ Test 1: Admin-Only Listing Creation
-- **Setup**: Created Alice (regular user) and AdminBob (is_admin=true)
-- **Test**: Attempted to create listing as Alice
-- **Result**: 
-  - Frontend: Shows "Listing creation is restricted to admins" message
-  - Backend: `POST /api/cars` returns 403 Forbidden for non-admin users
-- **Status**: ✅ PASS
+### 4. Documentation
 
-### ✅ Test 2: Admin Creates Listing for User
-- **Setup**: AdminBob creates listing with `owner_unique_id=Alice.unique_id`
-- **Test**: Created listing via admin endpoint
-- **Result**: 
-  - Success 201 response
-  - Listing saved with `owner_id` pointing to Alice
-  - Listing appears on Alice's profile via socket event
-- **Status**: ✅ PASS
+**Files Created:**
+- `SMOKE_CONTACT_AND_SETTINGS.md` - Comprehensive smoke test instructions
 
-### ✅ Test 3: Owner Info Visibility (Unauthenticated)
-- **Test**: Visited listing card/detail as unauthenticated visitor
-- **Result**: 
-  - "Sign in to view owner details" button shown
-  - Owner name and location are hidden
-- **Status**: ✅ PASS
+## API Examples
 
-### ✅ Test 4: Owner Info Visibility (Authenticated)
-- **Test**: Logged in as any authenticated user and visited listing
-- **Result**: 
-  - Owner name and location are visible on card/detail
-  - Owner info correctly displayed from API response
-- **Status**: ✅ PASS
+### GET /api/site-settings
+```bash
+curl http://localhost:8080/api/site-settings
+```
+Response:
+```json
+{
+  "listings_enabled": false
+}
+```
 
-### ✅ Test 5: Status Toggle
-- **Setup**: Alice (owner) visits My Listings page
-- **Test**: Toggle listing status to Rented
-- **Result**: 
-  - Status toggle visible for listing owner
-  - Status updates in database
-  - UI updates immediately
-  - Admin can also toggle any listing
-- **Status**: ✅ PASS
-
-### ✅ Test 6: Vary Header
-- **Test**: Checked `GET /api/cars` response headers
-- **Result**: 
-  - `Vary: Authorization` header present
-  - Ensures proper caching behavior
-- **Status**: ✅ PASS
-
-## Files Changed
-
-**Backend:**
-- `backend/middleware/isAdmin.js` (new)
-- `backend/routes/cars.js` (modified)
-- `backend/migrations/20250102_fix_listing_status_and_admin.js` (new)
-
-**Frontend:**
-- `frontend/src/pages/ListCar.tsx` (modified)
+### GET /api/cars/:id/contact (Authenticated)
+```bash
+curl -H "Authorization: Bearer <token>" \
+  http://localhost:8080/api/cars/<id>/contact
+```
+Response (200):
+```json
+{
+  "phone": "+92 300 1234567"
+}
+```
 
 ## Migration Instructions
 
-Run the migration before deploying:
+Before deploying, run the migration to create the site_settings collection:
+
 ```bash
 cd backend
-node migrations/20250102_fix_listing_status_and_admin.js
+node migrations/20250104_add_site_settings.js
 ```
+
+This will:
+- Create the `site_settings` collection if it doesn't exist
+- Seed `listings_enabled` with default value `false` if not present
+- Safe to run multiple times (idempotent)
+
+## Smoke Test Checklist
+
+See `SMOKE_CONTACT_AND_SETTINGS.md` for detailed instructions.
+
+### Quick Test Checklist:
+
+- [x] GET /api/site-settings returns 200 with listings_enabled
+- [x] GET /api/cars/:id/contact (authenticated) returns 200 with phone
+- [x] GET /api/cars/:id/contact (unauthenticated) returns 401
+- [x] GET /api/cars/:id/contact (non-existent) returns 404
+- [x] GET /api/cars/:id/contact (no owner) returns 404
+- [x] GET /api/cars/:id/contact (no phone) returns 404
+- [x] GET /api/listings/:id/contact works as alias
+- [x] All exceptions handled gracefully (no 500 for expected errors)
+
+## Breaking Changes
+
+None - all changes are additive or fix existing behavior.
 
 ## Notes
 
-- Owner info is already correctly returned by backend based on authentication
-- Status toggle was already implemented in Profile page
-- All changes are backward compatible
-- No breaking changes to existing API contracts
-
+- Site settings endpoint works even if collection doesn't exist (env fallback)
+- Contact endpoints now return proper 404s instead of 500s for missing data
+- All endpoints handle exceptions gracefully
+- No sensitive data exposed in logs or error messages
+- Both `/api/cars/:id/contact` and `/api/listings/:id/contact` use identical logic

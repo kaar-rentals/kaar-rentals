@@ -1,6 +1,5 @@
 // backend/server.js
 const express = require("express");
-const cors = require("cors");
 const morgan = require("morgan");
 const dotenv = require("dotenv");
 const { connectDB } = require("./config/db");
@@ -11,41 +10,35 @@ const app = express();
 // Middleware
 app.use(express.json());
 
-// CORS
-const allowedOrigins = [
-  "https://www.kaar.rentals",
-  "https://kaar-rentals.vercel.app",
-  // Local/dev origins
-  "http://localhost:8080",
-  "http://localhost:8081",
-  "http://localhost:8082",
-  "http://localhost:5173",
-  "http://127.0.0.1:8080",
-  "http://127.0.0.1:8081",
-  "http://127.0.0.1:8082",
-  "http://127.0.0.1:5173",
-];
+// === CORS setup added by Cursor: start ===
+const cors = require('cors');
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // allow requests with no origin (like mobile apps, curl, SSR)
-      if (!origin) return callback(null, true);
-      if (
-        allowedOrigins.includes(origin) ||
-        /^http:\/\/(localhost|127\.0\.0\.1)(:\\d+)?$/.test(origin)
-      ) {
-        return callback(null, true);
-      }
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-    allowedHeaders: "Content-Type,Authorization",
-  })
-);
+// Allowed origins - editable via env (comma-separated)
+const allowedOriginsEnv = process.env.CORS_ORIGINS || 'https://kaar.rentals,https://www.kaar.rentals,http://localhost:3000,http://localhost:5173';
+const allowedOrigins = allowedOriginsEnv.split(',').map(s => s.trim()).filter(Boolean);
 
-// Enable preflight across-the-board (Express 5 safe)
+const corsOptions = {
+  origin: function (origin, callback) {
+    // allow requests with no origin (curl, mobile, server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+
+// friendly CORS error handler (do not expose details)
+app.use((err, req, res, next) => {
+  if (err && err.message === 'Not allowed by CORS') {
+    console.warn(`CORS blocked request from origin: ${req.headers.origin}`);
+    return res.status(403).json({ message: 'CORS policy: origin not allowed' });
+  }
+  return next(err);
+});
+// === CORS setup added by Cursor: end ===
 app.use((req, res, next) => {
   if (req.method === 'OPTIONS') {
     res.header('Access-Control-Allow-Origin', req.headers.origin || '*');

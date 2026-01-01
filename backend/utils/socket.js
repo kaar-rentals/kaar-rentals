@@ -1,28 +1,32 @@
-// Socket.IO utility for emitting listing events
-let io = null;
+let io;
 
-function setIO(socketIO) {
-  io = socketIO;
-}
-
-function notifyListingEvent(type, listing) {
-  if (!io || !listing) return;
-  
-  // Get owner_unique_id from listing
-  let owner_unique_id = null;
-  if (listing.owner_unique_id) {
-    owner_unique_id = listing.owner_unique_id;
-  } else if (listing.owner && typeof listing.owner === 'object' && listing.owner.unique_id) {
-    owner_unique_id = listing.owner.unique_id;
+module.exports = {
+  init: (httpServer) => {
+    const { Server } = require('socket.io');
+    io = new Server(httpServer, {
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+      }
+    });
+    return io;
+  },
+  setIO: (socketIO) => {
+    io = socketIO;
+  },
+  getIo: () => {
+    if (!io) {
+      throw new Error('Socket.io not initialized!');
+    }
+    return io;
+  },
+  notifyListingEvent: (type, listing) => {
+    if (!io) {
+      console.warn('Socket.io not initialized, cannot emit event.');
+      return;
+    }
+    const owner_unique_id = listing.owner_unique_id || listing.owner?.unique_id || listing.ownerId?.unique_id;
+    io.emit(`listing:${type}`, { listing, owner_unique_id });
   }
-  
-  io.emit(`listing:${type}`, {
-    listing,
-    owner_unique_id
-  });
-  
-  console.log(`[Socket] Emitted listing:${type} for owner: ${owner_unique_id || 'unknown'}`);
-}
-
-module.exports = { setIO, notifyListingEvent };
+};
 

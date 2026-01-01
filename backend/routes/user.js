@@ -87,4 +87,46 @@ router.put("/me", authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/user/me - Get authenticated user's profile with listings count
+router.get("/me", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user || !(req.user.id || req.user._id)) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const userId = req.user.id || req.user._id;
+    const Car = require("../models/Car");
+    
+    const user = await User.findById(userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get listings count
+    const listingsCount = await Car.countDocuments({ 
+      $or: [
+        { ownerId: userId },
+        { owner: userId }
+      ]
+    });
+
+    res.json({
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        unique_id: user.unique_id,
+        location: user.location,
+        is_admin: user.is_admin,
+        listingsCount
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching user profile:', err);
+    return res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+});
+
 module.exports = router;

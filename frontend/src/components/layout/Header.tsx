@@ -61,14 +61,18 @@ const Header = () => {
                     </Button>
                   </Link>
                 )}
-                {(user.role === 'owner' || user.role === 'admin') && (
-                  <Link to="/owner-profile">
-                    <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                      <User className="h-4 w-4 mr-2" />
-                      My Cars
-                    </Button>
-                  </Link>
-                )}
+                <Link to="/profile/me" onClick={(e) => {
+                  if (!user) {
+                    e.preventDefault();
+                    // Open login modal - navigate to auth page
+                    window.location.href = '/auth';
+                  }
+                }}>
+                  <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                    <User className="h-4 w-4 mr-2" />
+                    My Cars
+                  </Button>
+                </Link>
                 <Link to="/list-car">
                   <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
                     List Your Car
@@ -132,14 +136,17 @@ const Header = () => {
                         </Button>
                       </Link>
                     )}
-                    {(user.role === 'owner' || user.role === 'admin') && (
-                      <Link to="/owner-profile" className="block">
-                        <Button variant="outline" className="w-full">
-                          <User className="h-4 w-4 mr-2" />
-                          My Cars
-                        </Button>
-                      </Link>
-                    )}
+                    <Link to="/profile/me" className="block" onClick={(e) => {
+                      if (!user) {
+                        e.preventDefault();
+                        window.location.href = '/auth';
+                      }
+                    }}>
+                      <Button variant="outline" className="w-full">
+                        <User className="h-4 w-4 mr-2" />
+                        My Cars
+                      </Button>
+                    </Link>
                     <Link to="/list-car" className="block">
                       <Button variant="outline" className="w-full">
                         List Your Car

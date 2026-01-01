@@ -228,6 +228,8 @@ const ListCar = () => {
         category: categoryMapped,
         year: Number(formData.year),
         pricePerDay: Number(formData.price),
+        price: Number(formData.price),
+        priceType: formData.priceType || 'daily',
         // Provide safe defaults to satisfy backend ListingDraft schema requirements
         engineCapacity: formData.engineCapacity || '2.0L',
         fuelType: formData.fuelType || 'gasoline',

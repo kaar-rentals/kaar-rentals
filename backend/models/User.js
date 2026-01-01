@@ -3,10 +3,10 @@ const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
   name: { type: String },
-  email: { type: String, unique: true, required: true },
+  email: { type: String, unique: true, sparse: true, required: false },
   password: { type: String, required: true },
   role: { type: String, enum: ['user', 'owner', 'admin'], default: 'user' },
-  phone: { type: String, trim: true, default: null },
+  phone: { type: String, trim: true, required: true },
   location: { type: String },
   unique_id: { type: String, unique: true, sparse: true },
   is_admin: { type: Boolean, default: false },

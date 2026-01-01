@@ -27,11 +27,32 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ name: '', email: '', phone: '' });
   const [saving, setSaving] = useState(false);
+  const [editingPrice, setEditingPrice] = useState<string | null>(null);
+  const [priceForm, setPriceForm] = useState({ price: '', priceType: 'daily' });
 
+  // Handle /profile/me route
   useEffect(() => {
-    fetchProfile();
-    fetchListings();
+    if (!unique_id && authUser) {
+      // If no unique_id and user is authenticated, fetch their own profile
+      fetchProfile();
+      fetchListings();
+    } else if (unique_id) {
+      // Fetch profile by unique_id
+      fetchProfile();
+      fetchListings();
+    } else if (!authUser) {
+      // Not authenticated and no unique_id, show error or redirect
+      setError('Please sign in to view your profile');
+      setLoading(false);
+    }
   }, [unique_id, authUser]);
+
+  // Refetch listings when authUser changes
+  useEffect(() => {
+    if (authUser && user) {
+      fetchListings();
+    }
+  }, [authUser]);
 
   // Socket subscription for real-time updates
   useEffect(() => {
@@ -74,10 +95,10 @@ const Profile = () => {
         } else {
           setError('User not found');
         }
-      } else if (authUser) {
-        // Fetch authenticated user's own profile
-        const response = await fetch(`${API_BASE_URL}/auth/me`, {
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      } else if (authUser && token) {
+        // Fetch authenticated user's own profile via /api/user/me
+        const response = await fetch(`${API_BASE_URL}/user/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
           const data = await response.json();
@@ -102,9 +123,10 @@ const Profile = () => {
       
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
       
-      // Fetch listings by owner unique_id
+      // Fetch listings by owner unique_id with cache-busting
       const ownerId = user.unique_id || user._id;
-      const response = await fetch(`${API_BASE_URL}/cars?owner_unique_id=${ownerId}&limit=12`, {
+      const timestamp = Date.now();
+      const response = await fetch(`${API_BASE_URL}/cars?owner_unique_id=${ownerId}&limit=12&_t=${timestamp}`, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       
@@ -114,6 +136,87 @@ const Profile = () => {
       }
     } catch (err: any) {
       console.error("Error fetching listings:", err);
+    }
+  };
+
+  const handleEditPrice = (listing: any) => {
+    setEditingPrice(listing._id);
+    setPriceForm({
+      price: String(listing.pricePerDay || listing.price || ''),
+      priceType: listing.priceType || 'daily'
+    });
+  };
+
+  const handleSavePrice = async (listingId: string) => {
+    if (!token) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to update listing price",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const priceNum = Number(priceForm.price);
+    if (isNaN(priceNum) || priceNum <= 0) {
+      toast({
+        title: "Invalid Price",
+        description: "Price must be a positive number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Optimistic update
+    const originalListing = listings.find((l: any) => l._id === listingId);
+    setListings((prevListings: any[]) =>
+      prevListings.map((listing: any) =>
+        listing._id === listingId
+          ? { ...listing, pricePerDay: priceNum, price: priceNum, priceType: priceForm.priceType }
+          : listing
+      )
+    );
+
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
+      const response = await fetch(`${API_BASE_URL}/cars/${listingId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ price: priceNum, priceType: priceForm.priceType }),
+      });
+
+      if (response.ok) {
+        const updatedListing = await response.json();
+        setListings((prevListings: any[]) =>
+          prevListings.map((listing: any) =>
+            listing._id === listingId ? updatedListing : listing
+          )
+        );
+        setEditingPrice(null);
+        toast({
+          title: "Price Updated",
+          description: "Listing price has been updated successfully",
+        });
+      } else {
+        // Rollback on error
+        if (originalListing) {
+          setListings((prevListings: any[]) =>
+            prevListings.map((listing: any) =>
+              listing._id === listingId ? originalListing : listing
+            )
+          );
+        }
+        throw new Error('Failed to update price');
+      }
+    } catch (err: any) {
+      toast({
+        title: "Update Failed",
+        description: err.message || "Failed to update listing price",
+        variant: "destructive",
+      });
     }
   };
 

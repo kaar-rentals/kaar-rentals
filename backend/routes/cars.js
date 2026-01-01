@@ -192,8 +192,8 @@ router.post("/", authMiddleware, async (req, res) => {
   // Check admin status explicitly
   if (!req.user) {
     return res.status(401).json({ message: 'Authentication required' });
-  }
-  
+    }
+
   const user = await User.findById(req.user.id || req.user._id);
   if (!user || !(user.is_admin === true || user.role === 'admin')) {
     return res.status(403).json({ message: 'Admin access required' });
@@ -304,8 +304,156 @@ router.post("/", authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /api/cars/:id - Update listing (price, priceType, etc.) - owner or admin only
+router.put("/:id", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const carId = req.params.id;
+    const { price, pricePerDay, priceType } = req.body;
+    const userId = req.user.id || req.user._id;
+
+    const car = await Car.findById(carId);
+    if (!car) return res.status(404).json({ message: "Car not found" });
+
+    // Check if user is admin
+    const user = await User.findById(userId);
+    const isAdmin = user && (user.is_admin || user.role === 'admin');
+
+    // Verify ownership (unless admin) - support both ownerId and legacy owner
+    const carOwnerId = car.ownerId || car.owner;
+    if (!isAdmin && carOwnerId && carOwnerId.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "You can only update your own listings" });
+    }
+
+    // Validate price if provided
+    const finalPrice = price || pricePerDay;
+    if (finalPrice !== undefined) {
+      const priceNum = Number(finalPrice);
+      if (isNaN(priceNum) || priceNum <= 0) {
+        return res.status(400).json({ message: "Price must be a positive number" });
+      }
+      car.pricePerDay = priceNum;
+      car.price = priceNum;
+    }
+
+    // Validate priceType if provided
+    if (priceType !== undefined) {
+      if (!['daily', 'monthly'].includes(priceType)) {
+        return res.status(400).json({ message: "priceType must be 'daily' or 'monthly'" });
+      }
+      car.priceType = priceType;
+    }
+
+    await car.save();
+
+    // Populate owner for socket event and response
+    const populatedCar = await Car.findById(car._id)
+      .populate('ownerId', 'name email phone unique_id location')
+      .lean();
+
+    // Emit socket event - support both ownerId and legacy owner
+    const owner = populatedCar.ownerId || populatedCar.owner;
+    if (owner && typeof owner === 'object') {
+      populatedCar.owner_unique_id = owner.unique_id;
+      populatedCar.owner = {
+        unique_id: owner.unique_id || null,
+        name: owner.name || null,
+        location: owner.location || null
+      };
+    }
+    notifyListingEvent('updated', populatedCar);
+
+    // Format response
+    if (owner && typeof owner === 'object') {
+      populatedCar.owner = {
+        unique_id: owner.unique_id || null,
+        name: owner.name || null,
+        location: owner.location || null
+      };
+    }
+
+    res.set('Vary', 'Authorization');
+    res.json(populatedCar);
+  } catch (err) {
+    console.error('Error updating car:', err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// PUT /api/cars/:id/price - Update price and priceType (shortcut endpoint)
+router.put("/:id/price", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const carId = req.params.id;
+    const { price, pricePerDay, priceType } = req.body;
+    const userId = req.user.id || req.user._id;
+
+    const car = await Car.findById(carId);
+    if (!car) return res.status(404).json({ message: "Car not found" });
+
+    // Check if user is admin
+    const user = await User.findById(userId);
+    const isAdmin = user && (user.is_admin || user.role === 'admin');
+
+    // Verify ownership (unless admin)
+    const carOwnerId = car.ownerId || car.owner;
+    if (!isAdmin && carOwnerId && carOwnerId.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "You can only update your own listings" });
+    }
+
+    // Validate price
+    const finalPrice = price || pricePerDay;
+    if (finalPrice !== undefined) {
+      const priceNum = Number(finalPrice);
+      if (isNaN(priceNum) || priceNum <= 0) {
+        return res.status(400).json({ message: "Price must be a positive number" });
+      }
+      car.pricePerDay = priceNum;
+      car.price = priceNum;
+    }
+
+    // Validate priceType
+    if (priceType !== undefined) {
+      if (!['daily', 'monthly'].includes(priceType)) {
+        return res.status(400).json({ message: "priceType must be 'daily' or 'monthly'" });
+      }
+      car.priceType = priceType;
+    }
+
+    await car.save();
+
+    // Populate and format response
+    const populatedCar = await Car.findById(car._id)
+      .populate('ownerId', 'name email phone unique_id location')
+      .lean();
+
+    const owner = populatedCar.ownerId || populatedCar.owner;
+    if (owner && typeof owner === 'object') {
+      populatedCar.owner_unique_id = owner.unique_id;
+      populatedCar.owner = {
+        unique_id: owner.unique_id || null,
+        name: owner.name || null,
+        location: owner.location || null
+      };
+    }
+    notifyListingEvent('updated', populatedCar);
+
+    res.set('Vary', 'Authorization');
+    res.json(populatedCar);
+  } catch (err) {
+    console.error('Error updating car price:', err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // PUT /api/cars/:id/status - Toggle listing status (owner or admin)
-router.put("/:id/status", async (req, res) => {
+router.put("/:id/status", authMiddleware, async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });

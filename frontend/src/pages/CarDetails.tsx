@@ -260,9 +260,9 @@ const CarDetails = () => {
 
                     {/* Contact Owner Button */}
                     <div className="space-y-3">
-                      <Button 
-                        size="lg" 
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3"
+                        <Button 
+                          size="lg" 
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3"
                         onClick={async () => {
                           if (!user) {
                             setLoginModalOpen(true);
@@ -329,8 +329,8 @@ const CarDetails = () => {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <h1 className="text-4xl font-bold text-gray-900">
-                      {car.brand} {car.model}
-                    </h1>
+                    {car.brand} {car.model}
+                  </h1>
                     {car.status && (
                       <Badge 
                         variant={car.status === 'rented' ? 'destructive' : 'default'}
@@ -431,23 +431,23 @@ const CarDetails = () => {
                 <div className="bg-white rounded-xl shadow-lg border p-6">
                   <h3 className="text-xl font-semibold mb-4 text-gray-900">Owner Details</h3>
                   {user && car.owner?.name ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-bold text-lg">
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 font-bold text-lg">
                             {car.owner.name.charAt(0)}
-                          </span>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-lg text-gray-900">{car.owner.name}</h4>
-                        </div>
+                        </span>
                       </div>
-                      
+                      <div>
+                          <h4 className="font-semibold text-lg text-gray-900">{car.owner.name}</h4>
+                      </div>
+                    </div>
+                    
                       {car.owner.location && (
-                        <div className="flex items-center space-x-3">
-                          <MapPin className="h-4 w-4 text-gray-500" />
+                      <div className="flex items-center space-x-3">
+                        <MapPin className="h-4 w-4 text-gray-500" />
                           <span className="text-sm text-gray-700">{car.owner.location}</span>
-                        </div>
+                      </div>
                       )}
                     </div>
                   ) : (
@@ -481,8 +481,8 @@ const CarDetails = () => {
                           {car.status === 'rented' ? 'Rented' : 'Available'}
                         </Badge>
                       </div>
-                      <Button
-                        variant="outline"
+                      <Button 
+                        variant="outline" 
                         className="w-full"
                         onClick={async () => {
                           if (!token) {

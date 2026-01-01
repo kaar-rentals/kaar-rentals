@@ -10,6 +10,8 @@ const carSchema = new mongoose.Schema({
   year: { type: Number, required: true },
   category: { type: String, enum: ['Sedan', 'SUV', 'Hatchback'], required: true },
   pricePerDay: { type: Number, required: true },
+  price: { type: Number, required: true }, // Alias for pricePerDay for consistency
+  priceType: { type: String, enum: ['daily', 'monthly'], default: 'daily' },
   images: [String],
   location: { type: String, required: true },
   city: { type: String, required: true }, // Karachi, Lahore, Islamabad

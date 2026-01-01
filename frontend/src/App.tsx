@@ -12,6 +12,7 @@ import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import OwnerProfile from "./pages/OwnerProfile";
+import Profile from "./pages/Profile";
 import ListCar from "./pages/ListCar";
 import BookCar from "./pages/BookCar";
 import CarDetails from "./pages/CarDetails";
@@ -39,6 +40,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/owner-profile" element={<OwnerProfile />} />
+            <Route path="/profile/me" element={<Profile />} />
+            <Route path="/profile/:unique_id" element={<Profile />} />
             <Route path="/list-car" element={<ListCar />} />
             <Route path="/car/:id" element={<CarDetails />} />
             <Route path="/car/:id/book" element={<BookCar />} />

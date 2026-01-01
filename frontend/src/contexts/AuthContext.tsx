@@ -14,7 +14,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string | null, password: string, phone: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   loading: boolean;
@@ -41,24 +41,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initializeAuth = async () => {
       try {
         const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
         
-        if (storedToken && storedUser) {
+        if (storedToken) {
           setToken(storedToken);
-          setUser(JSON.parse(storedUser));
           
-          // Verify token is still valid by making a test request
+          // Fetch fresh user data from /api/user/me
           try {
-            const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+            const response = await fetch(`${API_BASE_URL}/user/me`, {
               method: 'GET',
-              credentials: 'include',
               headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${storedToken}`,
               },
             });
             
-            if (!response.ok) {
+            if (response.ok) {
+              const data = await response.json();
+              setUser(data.user);
+              localStorage.setItem('user', JSON.stringify(data.user));
+            } else {
               // Token is invalid, clear storage
               localStorage.removeItem('token');
               localStorage.removeItem('user');
@@ -72,6 +73,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             localStorage.removeItem('user');
             setToken(null);
             setUser(null);
+          }
+        } else {
+          // No token, check for stored user (legacy)
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            localStorage.removeItem('user');
           }
         }
       } catch (error) {
@@ -127,10 +134,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string | null, password: string, phone: string) => {
     try {
       setLoading(true);
-      console.log('Attempting registration with:', { name, email, password: '***' });
+      console.log('Attempting registration with:', { name, email, phone, password: '***' });
       
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
@@ -138,7 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email: email || null, password, phone }),
       });
 
       if (!response.ok) {
@@ -157,13 +164,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await response.json();
       console.log('Registration successful:', data);
       
-      if (!data._id) {
+      if (!data.token || !data.user) {
         throw new Error('Invalid response from server');
       }
 
-      // Auto-login after successful registration
-      console.log('Auto-logging in after registration...');
-      await login(email, password);
+      // Store token and user
+      setToken(data.token);
+      setUser(data.user);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
     } catch (error) {
       console.error('Registration error:', error);
       throw error;

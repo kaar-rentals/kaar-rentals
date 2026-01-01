@@ -30,29 +30,27 @@ const Profile = () => {
   const [editingPrice, setEditingPrice] = useState<string | null>(null);
   const [priceForm, setPriceForm] = useState({ price: '', priceType: 'daily' });
 
-  // Handle /profile/me route
+  // Handle /profile/me route - fetch on mount and when authUser/unique_id changes
   useEffect(() => {
     if (!unique_id && authUser) {
       // If no unique_id and user is authenticated, fetch their own profile
       fetchProfile();
-      fetchListings();
     } else if (unique_id) {
       // Fetch profile by unique_id
       fetchProfile();
-      fetchListings();
     } else if (!authUser) {
-      // Not authenticated and no unique_id, show error or redirect
+      // Not authenticated and no unique_id, show error
       setError('Please sign in to view your profile');
       setLoading(false);
     }
   }, [unique_id, authUser]);
 
-  // Refetch listings when authUser changes
+  // Fetch listings when user is loaded
   useEffect(() => {
-    if (authUser && user) {
+    if (user) {
       fetchListings();
     }
-  }, [authUser]);
+  }, [user]);
 
   // Socket subscription for real-time updates
   useEffect(() => {
@@ -592,8 +590,66 @@ const Profile = () => {
                           <CardTitle className="text-lg">
                             {listing.brand} {listing.model} ({listing.year})
                           </CardTitle>
-                          <CardDescription>
-                            PKR {listing.pricePerDay?.toLocaleString()}/day
+                          <CardDescription className="flex items-center justify-between">
+                            {editingPrice === listing._id ? (
+                              <div className="flex items-center gap-2 flex-1">
+                                <Input
+                                  type="number"
+                                  value={priceForm.price}
+                                  onChange={(e) => setPriceForm({ ...priceForm, price: e.target.value })}
+                                  className="w-24 h-8"
+                                  min="0"
+                                  step="0.01"
+                                />
+                                <select
+                                  value={priceForm.priceType}
+                                  onChange={(e) => setPriceForm({ ...priceForm, priceType: e.target.value })}
+                                  className="h-8 px-2 border rounded text-sm"
+                                >
+                                  <option value="daily">/day</option>
+                                  <option value="monthly">/month</option>
+                                </select>
+                                <Button
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handleSavePrice(listing._id);
+                                  }}
+                                  className="h-8"
+                                >
+                                  <Save className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setEditingPrice(null);
+                                  }}
+                                  className="h-8"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <span>
+                                PKR {(listing.pricePerDay || listing.price || 0).toLocaleString()}
+                                {listing.priceType === 'monthly' ? '/month' : '/day'}
+                              </span>
+                            )}
+                            {isOwnerOrAdmin(listing) && editingPrice !== listing._id && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleEditPrice(listing);
+                                }}
+                                className="h-6 w-6 p-0 ml-2"
+                              >
+                                <Edit2 className="h-3 w-3" />
+                              </Button>
+                            )}
                           </CardDescription>
                         </CardHeader>
                       </Link>

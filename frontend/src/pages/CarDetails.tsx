@@ -253,7 +253,9 @@ const CarDetails = () => {
                     <div className="text-center">
                       <div className="text-3xl font-bold text-gray-900 mb-1">
                         PKR {(car.pricePerDay || car.price || 0).toLocaleString()}
-                        <span className="text-lg text-gray-600 font-normal">/day</span>
+                        <span className="text-lg text-gray-600 font-normal">
+                          {car.priceType === 'monthly' ? '/month' : '/day'}
+                        </span>
                       </div>
                       <p className="text-sm text-gray-600">Best price guaranteed</p>
                     </div>

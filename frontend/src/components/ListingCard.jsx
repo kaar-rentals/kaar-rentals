@@ -241,7 +241,9 @@ export default function ListingCard({ car }) {
             <div>
               <div className="text-xl font-bold text-slate-900">
                 PKR {Number(car.pricePerDay || car.price || 0).toLocaleString()}
-                <span className="text-sm text-slate-600 font-normal">/day</span>
+                <span className="text-sm text-slate-600 font-normal">
+                  {car.priceType === 'monthly' ? '/month' : '/day'}
+                </span>
               </div>
               <p className="text-xs text-slate-500">{car.location || 'Location not specified'}</p>
             </div>

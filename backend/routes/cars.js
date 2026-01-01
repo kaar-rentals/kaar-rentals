@@ -257,10 +257,16 @@ router.post("/", authMiddleware, async (req, res) => {
       await ownerUser.save();
     }
 
+    // Get priceType from request or default to 'daily'
+    const { priceType = 'daily' } = req.body;
+    
     const car = await Car.create({
       ownerId: ownerUser._id,
       owner: ownerUser._id, // Legacy field for backward compatibility
-      brand, model, year, category, pricePerDay, images,
+      brand, model, year, category, pricePerDay, 
+      price: pricePerDay, // Set price alias
+      priceType: priceType === 'monthly' ? 'monthly' : 'daily',
+      images,
       location, city, engineCapacity, fuelType, transmission,
       mileage, seating, features, description,
       featured: featured === true || featured === 'true',
@@ -494,34 +500,42 @@ router.put("/:id/status", authMiddleware, async (req, res) => {
 
     // Populate owner for socket event and response
     const populatedCar = await Car.findById(car._id)
-      .populate('owner', 'name email phone unique_id location')
+      .populate('ownerId', 'name email phone unique_id location')
       .lean();
 
-    // Format owner data based on authentication
-    if (populatedCar.owner && typeof populatedCar.owner === 'object') {
+    // Emit socket event - support both ownerId and legacy owner
+    const owner = populatedCar.ownerId || populatedCar.owner;
+    if (owner && typeof owner === 'object') {
+      populatedCar.owner_unique_id = owner.unique_id;
+      populatedCar.owner = {
+        unique_id: owner.unique_id || null,
+        name: owner.name || null,
+        location: owner.location || null
+      };
+    }
+    notifyListingEvent('updated', populatedCar);
+
+    // Format response based on authentication
+    if (owner && typeof owner === 'object') {
       if (req.user) {
         // Authenticated: include name and location
         populatedCar.owner = {
-          unique_id: populatedCar.owner.unique_id || null,
-          name: populatedCar.owner.name || null,
-          location: populatedCar.owner.location || null,
-          email: populatedCar.owner.email || null,
-          phone: populatedCar.owner.phone || null
+          unique_id: owner.unique_id || null,
+          name: owner.name || null,
+          location: owner.location || null,
+          email: owner.email || null,
+          phone: owner.phone || null
         };
       } else {
         // Unauthenticated: only unique_id
         populatedCar.owner = {
-          unique_id: populatedCar.owner.unique_id || null,
+          unique_id: owner.unique_id || null,
           name: null,
           location: null,
           contact: null
         };
       }
-      populatedCar.owner_unique_id = populatedCar.owner.unique_id;
     }
-
-    // Emit socket event
-    notifyListingEvent('updated', populatedCar);
 
     return res.json(populatedCar);
   } catch (err) {

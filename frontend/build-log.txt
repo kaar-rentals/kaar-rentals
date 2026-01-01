@@ -21,4 +21,4 @@ dist/assets/index-DFoiVpht.js            627.20 kB │ gzip: 181.77 kB │ map: 
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 6.02s
+✓ built in 6.13s

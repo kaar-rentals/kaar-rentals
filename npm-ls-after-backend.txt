@@ -1,0 +1,4 @@
+kaar-rentals-backend@1.0.0 /Users/shahzaibsanaullah/kaar-rentals/backend
+`-- cloudinary@2.8.0
+  `-- q@1.5.1
+

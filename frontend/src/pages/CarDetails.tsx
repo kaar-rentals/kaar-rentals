@@ -28,7 +28,7 @@ const CarDetails = () => {
 
   useEffect(() => {
     loadCar();
-  }, [id]);
+  }, [id, user]); // Re-fetch when user changes (login/logout)
 
   const loadCar = async () => {
     try {

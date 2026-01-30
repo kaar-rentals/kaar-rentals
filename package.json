@@ -32,6 +32,9 @@
     "url": "https://github.com/kaar-rentals/kaar-rentals/issues"
   },
   "homepage": "https://github.com/kaar-rentals/kaar-rentals#readme",
+  "engines": {
+    "node": "18.x"
+  },
   "devDependencies": {
     "nodemon": "^3.1.10"
   }

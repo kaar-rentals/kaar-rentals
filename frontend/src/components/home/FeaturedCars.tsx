@@ -18,7 +18,8 @@ const FeaturedCars = () => {
     try {
       setLoading(true);
       // Fetch featured cars with limit
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/cars?featured=true&limit=6`);
+      const API_BASE = import.meta.env.VITE_API_URL || '';
+      const response = await fetch(`${API_BASE}/api/cars?featured=true&limit=6`);
       if (response.ok) {
         const data = await response.json();
         const cars = data.cars || [];

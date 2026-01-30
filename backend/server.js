@@ -14,7 +14,8 @@ app.use(express.json());
 const cors = require('cors');
 
 // Allowed origins - editable via env (comma-separated)
-const allowedOriginsEnv = process.env.CORS_ORIGINS || 'https://kaar.rentals,https://www.kaar.rentals,http://localhost:3000,http://localhost:5173';
+// Support both CORS_ORIGINS and FRONTEND_ORIGIN for compatibility
+const allowedOriginsEnv = process.env.FRONTEND_ORIGIN || process.env.CORS_ORIGINS || 'https://kaar.rentals,https://www.kaar.rentals,http://localhost:3000,http://localhost:5173';
 const allowedOrigins = allowedOriginsEnv.split(',').map(s => s.trim()).filter(Boolean);
 
 const corsOptions = {
@@ -94,8 +95,9 @@ const httpServer = http.createServer(app);
 
 // Initialize Socket.IO
 const io = new Server(httpServer, {
+  path: '/socket.io',
   cors: {
-    origin: '*',
+    origin: process.env.FRONTEND_ORIGIN ? process.env.FRONTEND_ORIGIN.split(',') : allowedOrigins,
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -110,8 +112,8 @@ setIO(io);
 
 // Start
 const PORT = process.env.PORT || 8080;
-httpServer.listen(PORT, () => {
-  console.log(`🚀 Backend running on http://localhost:${PORT}`);
+httpServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Backend running on port ${PORT}`);
   console.log(`📊 Connected to MongoDB database: ${process.env.MONGO_DBNAME || 'kaarDB'}`);
   console.log(`🔌 Socket.IO server initialized`);
 });

@@ -1,14 +1,16 @@
-import { io } from 'socket.io-client';
+import { io } from "socket.io-client";
 
-const SOCKET_BASE = import.meta.env.VITE_SOCKET_URL || '';
+/**
+ * Vite: use import.meta.env.VITE_SOCKET_URL at build time for production.
+ * If empty, io() will use the current origin (recommended when frontend+backend share origin).
+ * Use `wss://` in the env for secure websockets if site is served over https.
+ */
+const SOCKET_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SOCKET_URL) ? import.meta.env.VITE_SOCKET_URL : '';
 
-const socket = io(SOCKET_BASE, {
+export const socket = io(SOCKET_BASE, {
   path: '/socket.io',
   transports: ['websocket'],
   autoConnect: true,
-  reconnection: true,
-  reconnectionDelay: 1000,
-  reconnectionAttempts: 5
 });
 
 export default socket;

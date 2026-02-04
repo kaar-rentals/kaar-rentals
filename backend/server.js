@@ -10,36 +10,12 @@ const app = express();
 // Middleware
 app.use(express.json());
 
-// === CORS setup added by Cursor: start ===
+// HTTP CORS
 const cors = require('cors');
-
-// Allowed origins - editable via env (comma-separated)
-// Support both CORS_ORIGINS and FRONTEND_ORIGIN for compatibility
-const allowedOriginsEnv = process.env.FRONTEND_ORIGIN || process.env.CORS_ORIGINS || 'https://kaar.rentals,https://www.kaar.rentals,http://localhost:3000,http://localhost:5173';
-const allowedOrigins = allowedOriginsEnv.split(',').map(s => s.trim()).filter(Boolean);
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    // allow requests with no origin (curl, mobile, server-to-server)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
-    callback(new Error('Not allowed by CORS'));
-  },
+app.use(cors({
+  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:3000',
   credentials: true,
-  optionsSuccessStatus: 200
-};
-
-app.use(cors(corsOptions));
-
-// friendly CORS error handler (do not expose details)
-app.use((err, req, res, next) => {
-  if (err && err.message === 'Not allowed by CORS') {
-    console.warn(`CORS blocked request from origin: ${req.headers.origin}`);
-    return res.status(403).json({ message: 'CORS policy: origin not allowed' });
-  }
-  return next(err);
-});
-// === CORS setup added by Cursor: end ===
+}));
 app.use((req, res, next) => {
   if (req.method === 'OPTIONS') {
     res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -93,13 +69,13 @@ const http = require('http');
 const { Server } = require('socket.io');
 const httpServer = http.createServer(app);
 
-// Initialize Socket.IO
+// Socket.IO init with CORS
 const io = new Server(httpServer, {
   path: '/socket.io',
   cors: {
-    origin: process.env.FRONTEND_ORIGIN ? process.env.FRONTEND_ORIGIN.split(',') : allowedOrigins,
+    origin: process.env.FRONTEND_ORIGIN ? process.env.FRONTEND_ORIGIN.split(',') : ['http://localhost:3000'],
     methods: ['GET', 'POST'],
-    credentials: true
+    credentials: true,
   }
 });
 

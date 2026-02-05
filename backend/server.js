@@ -12,8 +12,13 @@ app.use(express.json());
 
 // HTTP CORS
 const cors = require('cors');
-const allowedOrigins = process.env.FRONTEND_ORIGIN
-  ? process.env.FRONTEND_ORIGIN.split(',')
+
+const corsEnv =
+  process.env.FRONTEND_URL ||
+  process.env.FRONTEND_ORIGIN;
+
+const allowedOrigins = corsEnv
+  ? corsEnv.split(',')
   : ['http://localhost:3000', 'https://kaar.rentals', 'https://www.kaar.rentals'];
 
 app.use(cors({
@@ -77,7 +82,7 @@ const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
   path: '/socket.io',
   cors: {
-    origin: process.env.FRONTEND_ORIGIN ? process.env.FRONTEND_ORIGIN.split(',') : ['http://localhost:3000'],
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
     credentials: true,
   }

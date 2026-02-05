@@ -1,4 +1,4 @@
-// backend/server.js
+// backend/index.js
 const express = require("express");
 const morgan = require("morgan");
 const dotenv = require("dotenv");

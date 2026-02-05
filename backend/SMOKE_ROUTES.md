@@ -23,14 +23,14 @@ Added `asHandler` wrapper in `backend/routes/_routeHelpers.js` that:
 **Before Fix:**
 ```bash
 cd backend
-node server.js
+node index.js
 # Would crash with: TypeError: argument handler must be a function
 ```
 
 **After Fix:**
 ```bash
 cd backend
-node server.js
+node index.js
 # Should start successfully with: "🚀 Backend running on http://localhost:8080"
 ```
 

@@ -12,8 +12,12 @@ app.use(express.json());
 
 // HTTP CORS
 const cors = require('cors');
+const allowedOrigins = process.env.FRONTEND_ORIGIN
+  ? process.env.FRONTEND_ORIGIN.split(',')
+  : ['http://localhost:3000', 'https://kaar.rentals', 'https://www.kaar.rentals'];
+
 app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:3000',
+  origin: allowedOrigins,
   credentials: true,
 }));
 app.use((req, res, next) => {

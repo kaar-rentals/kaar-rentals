@@ -19,7 +19,7 @@
   "dev": "nodemon server.js"
   
   },
-  
+    
   "dependencies": {
   
     
@@ -29,7 +29,7 @@
   "bcryptjs": "^2.4.3",
   
     
-  "cloudinary": "^2.7.0",
+  "cloudinary": "^2.9.0",
   
     
   "compression": "^1.8.1",
@@ -67,12 +67,15 @@
   },
   
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   },
   "devDependencies": {
   
     
     "nodemon": "^3.1.4"
   
+  },
+  "overrides": {
+    "q": null
   }
 }

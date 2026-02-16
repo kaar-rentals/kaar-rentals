@@ -4,7 +4,7 @@
   "installCommand": "cd frontend && npm ci",
   "outputDirectory": "frontend/dist",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://api.kaar.rentals/api/:path*" },
+    { "source": "/api/:path*", "destination": "https://kaar-rentals-backend.onrender.com/api/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [

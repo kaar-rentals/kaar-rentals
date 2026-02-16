@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { apiUrl } from "../lib/apiBase";
 
 export default function AddCar() {
   const [loading, setLoading] = useState(false);
@@ -20,7 +21,7 @@ export default function AddCar() {
       if (file) {
         const fd = new FormData();
         fd.append("image", file);
-        const uploadRes = await fetch(`${import.meta.env.VITE_API_URL}/upload`, {
+        const uploadRes = await fetch(apiUrl("/api/upload"), {
           method: "POST",
           body: fd
         });
@@ -39,7 +40,7 @@ export default function AddCar() {
       const headers = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/cars`, {
+      const res = await fetch(apiUrl("/api/cars"), {
         method: "POST",
         headers,
         body: JSON.stringify(body)

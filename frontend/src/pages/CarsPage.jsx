@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import FilterBar from "../components/FilterBar";
 import ListingCard from "../components/ListingCard";
+import { apiUrl } from "../lib/apiBase";
 
 export default function CarsPage() {
   const [cars, setCars] = useState([]);
@@ -14,7 +15,7 @@ export default function CarsPage() {
       const qs = new URLSearchParams({ ...query, page, limit: 12 }).toString();
       const headers = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/cars?${qs}`, { headers });
+      const res = await fetch(apiUrl(`/api/cars?${qs}`), { headers });
       const json = await res.json();
       setCars(json.cars || []);
     }

@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import FeaturedCarCard from '@/components/cars/FeaturedCarCard';
 import { apiService, Car } from '@/services/api';
 import { cars as staticCars } from '@/data/cars';
+import { apiUrl } from '@/lib/apiBase';
 
 const FeaturedCars = () => {
   const [featuredCars, setFeaturedCars] = useState<Car[]>([]);
@@ -18,8 +19,7 @@ const FeaturedCars = () => {
     try {
       setLoading(true);
       // Fetch featured cars with limit
-      const API_BASE = import.meta.env.VITE_API_URL || '';
-      const response = await fetch(`${API_BASE}/api/cars?featured=true&limit=6`);
+      const response = await fetch(apiUrl('/api/cars?featured=true&limit=6'));
       if (response.ok) {
         const data = await response.json();
         const cars = data.cars || [];

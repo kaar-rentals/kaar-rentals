@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import socket from "@/lib/socket";
+import { apiUrl } from "@/lib/apiBase";
 
 const Profile = () => {
   const { unique_id } = useParams<{ unique_id?: string }>();
@@ -82,11 +83,10 @@ const Profile = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
       
       if (unique_id) {
         // Fetch user by unique_id (public profile)
-        const response = await fetch(`${API_BASE_URL}/user/profile/${unique_id}`);
+        const response = await fetch(apiUrl(`/api/user/profile/${unique_id}`));
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
@@ -95,7 +95,7 @@ const Profile = () => {
         }
       } else if (authUser && token) {
         // Fetch authenticated user's own profile via /api/user/me
-        const response = await fetch(`${API_BASE_URL}/user/me`, {
+        const response = await fetch(apiUrl('/api/user/me'), {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
@@ -119,12 +119,10 @@ const Profile = () => {
     try {
       if (!user) return;
       
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
-      
       // Fetch listings by owner unique_id with cache-busting
       const ownerId = user.unique_id || user._id;
       const timestamp = Date.now();
-      const response = await fetch(`${API_BASE_URL}/cars?owner_unique_id=${ownerId}&limit=12&_t=${timestamp}`, {
+      const response = await fetch(apiUrl(`/api/cars?owner_unique_id=${ownerId}&limit=12&_t=${timestamp}`), {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       
@@ -176,8 +174,7 @@ const Profile = () => {
     );
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
-      const response = await fetch(`${API_BASE_URL}/cars/${listingId}`, {
+      const response = await fetch(apiUrl(`/api/cars/${listingId}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -240,8 +237,7 @@ const Profile = () => {
     );
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
-      const response = await fetch(`${API_BASE_URL}/cars/${listingId}/status`, {
+      const response = await fetch(apiUrl(`/api/cars/${listingId}/status`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -329,8 +325,7 @@ const Profile = () => {
 
     try {
       setSaving(true);
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
-      const response = await fetch(`${API_BASE_URL}/user/me`, {
+      const response = await fetch(apiUrl('/api/user/me'), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

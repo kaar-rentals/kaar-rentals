@@ -6,6 +6,7 @@ import FeaturedCarCard from '@/components/cars/FeaturedCarCard';
 import FilterBar from '@/components/FilterBar';
 import { Button } from '@/components/ui/button';
 import { Car } from '@/services/api';
+import { apiUrl } from '@/lib/apiBase';
 
 const Cars = () => {
   const [cars, setCars] = useState<Car[]>([]);
@@ -25,7 +26,7 @@ const Cars = () => {
       const qs = new URLSearchParams({ ...query, page, limit: 12 }).toString();
       const headers = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/cars?${qs}`, { headers });
+      const res = await fetch(apiUrl(`/api/cars?${qs}`), { headers });
       const json = await res.json();
       setCars(json.cars || []);
     } catch (error) {

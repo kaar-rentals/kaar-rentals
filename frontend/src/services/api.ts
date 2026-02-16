@@ -1,6 +1,4 @@
-// Prefer explicit backend URL in dev to avoid cross-port inference issues
-const API_BASE =
-  import.meta.env.VITE_API_URL || '';
+import { apiUrl } from '@/lib/apiBase';
 
 // Helper to get auth token from localStorage
 function getAuthToken(): string | null {
@@ -94,7 +92,7 @@ class ApiService {
   // Car operations
   async getCars(queryParams?: { featured?: boolean; category?: string; [key: string]: any }): Promise<Car[]> {
     try {
-      let url = `${API_BASE}/api/cars`;
+      let url = apiUrl('/api/cars');
       
       // Add query parameters if provided
       if (queryParams) {
@@ -138,7 +136,7 @@ class ApiService {
 
   async getCarById(id: string): Promise<Car> {
     try {
-      const response = await fetch(`${API_BASE}/api/cars/${id}`, {
+      const response = await fetch(apiUrl(`/api/cars/${id}`), {
         headers: getAuthHeaders()
       });
       if (!response.ok) throw new Error('Failed to fetch car');
@@ -151,7 +149,7 @@ class ApiService {
 
   async getOwnerCars(token?: string): Promise<Car[]> {
     try {
-      const response = await fetch(`${API_BASE}/api/cars/owner/my-cars`, {
+      const response = await fetch(apiUrl('/api/cars/owner/my-cars'), {
         headers: getAuthHeaders(token),
       });
       if (!response.ok) throw new Error('Failed to fetch owner cars');
@@ -164,7 +162,7 @@ class ApiService {
 
   async createCar(carData: CreateCarData, token?: string): Promise<Car> {
     try {
-      const response = await fetch(`${API_BASE}/api/cars`, {
+      const response = await fetch(apiUrl('/api/cars'), {
         method: 'POST',
         headers: getAuthHeaders(token),
         body: JSON.stringify(carData),
@@ -179,7 +177,7 @@ class ApiService {
 
   async updateCar(id: string, carData: Partial<CreateCarData>, token?: string): Promise<Car> {
     try {
-      const response = await fetch(`${API_BASE}/api/cars/${id}`, {
+      const response = await fetch(apiUrl(`/api/cars/${id}`), {
         method: 'PUT',
         headers: getAuthHeaders(token),
         body: JSON.stringify(carData),
@@ -207,7 +205,7 @@ class ApiService {
 
   async updateCarPrice(id: string, pricePerDay: number, token?: string): Promise<Car> {
     try {
-      const response = await fetch(`${API_BASE}/api/cars/${id}`, {
+      const response = await fetch(apiUrl(`/api/cars/${id}`), {
         method: 'PUT',
         headers: getAuthHeaders(token),
         body: JSON.stringify({ pricePerDay }),
@@ -222,7 +220,7 @@ class ApiService {
 
   async toggleCarRentalStatus(id: string, token?: string): Promise<Car> {
     try {
-      const response = await fetch(`${API_BASE}/api/cars/${id}/toggle-rental`, {
+      const response = await fetch(apiUrl(`/api/cars/${id}/toggle-rental`), {
         method: 'PATCH',
         headers: getAuthHeaders(token),
       });
@@ -236,7 +234,7 @@ class ApiService {
 
   async updateCarRentalStatus(id: string, isRented: boolean, token?: string): Promise<Car> {
     try {
-      const response = await fetch(`${API_BASE}/api/cars/${id}`, {
+      const response = await fetch(apiUrl(`/api/cars/${id}`), {
         method: 'PATCH',
         headers: getAuthHeaders(token),
         body: JSON.stringify({ isRented }),
@@ -264,7 +262,7 @@ class ApiService {
 
   async deleteCar(id: string, token?: string): Promise<void> {
     try {
-      const response = await fetch(`${API_BASE}/api/cars/${id}`, {
+      const response = await fetch(apiUrl(`/api/cars/${id}`), {
         method: 'DELETE',
         headers: getAuthHeaders(token),
       });
@@ -278,7 +276,7 @@ class ApiService {
   // Payment operations
   async createCarListingPayment(carId: string, amount: number, token?: string) {
     try {
-      const response = await fetch(`${API_BASE}/api/payments/create-car-listing`, {
+      const response = await fetch(apiUrl('/api/payments/create-car-listing'), {
         method: 'POST',
         headers: getAuthHeaders(token),
         body: JSON.stringify({ carId, amount }),
@@ -294,7 +292,7 @@ class ApiService {
   // Admin operations
   async getAdminDashboard(token?: string) {
     try {
-      const response = await fetch(`${API_BASE}/api/admin/dashboard`, {
+      const response = await fetch(apiUrl('/api/admin/dashboard'), {
         headers: getAuthHeaders(token),
       });
       if (!response.ok) throw new Error('Failed to fetch dashboard data');
@@ -307,7 +305,7 @@ class ApiService {
 
   async getPendingCars(token?: string): Promise<Car[]> {
     try {
-      const response = await fetch(`${API_BASE}/api/admin/cars/pending`, {
+      const response = await fetch(apiUrl('/api/admin/cars/pending'), {
         headers: getAuthHeaders(token),
       });
       if (!response.ok) throw new Error('Failed to fetch pending cars');
@@ -320,7 +318,7 @@ class ApiService {
 
   async approveCar(id: string, token?: string): Promise<Car> {
     try {
-      const response = await fetch(`${API_BASE}/api/admin/cars/${id}/approve`, {
+      const response = await fetch(apiUrl(`/api/admin/cars/${id}/approve`), {
         method: 'PATCH',
         headers: getAuthHeaders(token),
       });
@@ -334,7 +332,7 @@ class ApiService {
 
   async rejectCar(id: string, token?: string): Promise<Car> {
     try {
-      const response = await fetch(`${API_BASE}/api/admin/cars/${id}/reject`, {
+      const response = await fetch(apiUrl(`/api/admin/cars/${id}/reject`), {
         method: 'PATCH',
         headers: getAuthHeaders(token),
       });
@@ -348,7 +346,7 @@ class ApiService {
 
   async getAllUsers(token?: string) {
     try {
-      const response = await fetch(`${API_BASE}/api/admin/users`, {
+      const response = await fetch(apiUrl('/api/admin/users'), {
         headers: getAuthHeaders(token),
       });
       if (!response.ok) throw new Error('Failed to fetch users');
@@ -361,7 +359,7 @@ class ApiService {
 
   async updateUserRole(userId: string, role: string, token?: string) {
     try {
-      const response = await fetch(`${API_BASE}/api/admin/users/${userId}/role`, {
+      const response = await fetch(apiUrl(`/api/admin/users/${userId}/role`), {
         method: 'PATCH',
         headers: getAuthHeaders(token),
         body: JSON.stringify({ role }),
@@ -377,7 +375,7 @@ class ApiService {
   // Payment operations for listing
   async createListingPayment(listingDraft: any, feature: boolean, token?: string) {
     try {
-      const response = await fetch(`${API_BASE}/api/payments/create-listing-payment`, {
+      const response = await fetch(apiUrl('/api/payments/create-listing-payment'), {
         method: 'POST',
         headers: getAuthHeaders(token),
         body: JSON.stringify({ listingDraft, feature }),
@@ -405,7 +403,7 @@ class ApiService {
 
   async verifyPayment(paymentId: string, token?: string) {
     try {
-      const response = await fetch(`${API_BASE}/api/payments/verify?paymentId=${paymentId}`, {
+      const response = await fetch(apiUrl(`/api/payments/verify?paymentId=${paymentId}`), {
         method: 'GET',
         headers: getAuthHeaders(token),
       });
@@ -432,7 +430,7 @@ class ApiService {
 
   async getPendingListings(token?: string) {
     try {
-      const response = await fetch(`${API_BASE}/api/payments/pending-listings`, {
+      const response = await fetch(apiUrl('/api/payments/pending-listings'), {
         method: 'GET',
         headers: getAuthHeaders(token),
       });
@@ -455,7 +453,7 @@ class ApiService {
 
   async getStats(): Promise<{ users_count: number; listings_count: number; featured_count: number }> {
     try {
-      const response = await fetch(`${API_BASE}/api/stats`);
+      const response = await fetch(apiUrl('/api/stats'));
       if (!response.ok) throw new Error('Failed to fetch stats');
       return await this.parseJsonResponse(response);
     } catch (error) {
@@ -466,7 +464,7 @@ class ApiService {
 
   async toggleFeatured(carId: string, featured: boolean, token?: string): Promise<Car> {
     try {
-      const response = await fetch(`${API_BASE}/api/cars/${carId}/featured`, {
+      const response = await fetch(apiUrl(`/api/cars/${carId}/featured`), {
         method: 'PUT',
         headers: getAuthHeaders(token),
         body: JSON.stringify({ featured }),

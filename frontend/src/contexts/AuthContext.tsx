@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { apiUrl } from '@/lib/apiBase';
 
 interface User {
   _id: string;
@@ -30,7 +31,8 @@ export const useAuth = () => {
   return context;
 };
 
-const API_BASE = typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL ? import.meta.env.VITE_API_URL : '';
+// NOTE: `VITE_API_URL` should be the backend ORIGIN (no trailing slash).
+// If empty, we call relative "/api/..." and rely on Vercel rewrites / same-origin proxy.
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -47,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           // Fetch fresh user data from /api/user/me
           try {
-            const response = await fetch(`${API_BASE}/api/user/me`, {
+            const response = await fetch(apiUrl('/api/user/me'), {
               method: 'GET',
               headers: {
                 'Content-Type': 'application/json',
@@ -95,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       console.log('Attempting login with:', { email, password: '***' });
-      const response = await fetch(`${API_BASE}/api/auth/login`, {
+      const response = await fetch(apiUrl('/api/auth/login'), {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -139,7 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       console.log('Attempting registration with:', { name, email, phone, password: '***' });
       
-      const response = await fetch(`${API_BASE}/api/auth/register`, {
+      const response = await fetch(apiUrl('/api/auth/register'), {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -185,7 +187,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!token) return;
     
     try {
-      const response = await fetch(`${API_BASE}/api/auth/profile`, {
+      const response = await fetch(apiUrl('/api/auth/profile'), {
         method: 'GET',
         credentials: 'include',
         headers: {

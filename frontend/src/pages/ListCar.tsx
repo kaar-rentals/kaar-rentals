@@ -16,6 +16,7 @@ import CityAutocomplete from '@/components/ui/CityAutocomplete';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
+import { apiUrl } from '@/lib/apiBase';
 
 const ListCar = () => {
   const { user, token } = useAuth();
@@ -192,7 +193,7 @@ const ListCar = () => {
             const formData = new FormData();
             formData.append('image', file);
             
-            const uploadResponse = await fetch(`${import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api'}/upload`, {
+            const uploadResponse = await fetch(apiUrl('/api/upload'), {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${token}`,
@@ -252,7 +253,6 @@ const ListCar = () => {
           throw new Error('Please provide the owner unique ID');
         }
         
-        const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
         const adminListingData = {
           ...listingDraft,
           owner_unique_id: formData.owner_unique_id,
@@ -261,7 +261,7 @@ const ListCar = () => {
           status: 'available'
         };
         
-        const response = await fetch(`${API_BASE_URL}/cars`, {
+        const response = await fetch(apiUrl('/api/cars'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -10,6 +10,7 @@ import { apiService, Car } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { cars, dealers } from '@/data/cars';
+import { apiUrl } from '@/lib/apiBase';
 
 const CarDetails = () => {
   const { id } = useParams();
@@ -272,8 +273,7 @@ const CarDetails = () => {
                           }
                           
                           try {
-                            const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
-                            const response = await fetch(`${API_BASE_URL}/cars/${car._id || car.id}/contact`, {
+                            const response = await fetch(apiUrl(`/api/cars/${car._id || car.id}/contact`), {
                               headers: {
                                 'Authorization': `Bearer ${token}`,
                               },
@@ -497,8 +497,7 @@ const CarDetails = () => {
                           }
                           try {
                             const newStatus = car.status === 'rented' ? 'available' : 'rented';
-                            const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kaar-rentals-backend.onrender.com/api';
-                            const response = await fetch(`${API_BASE_URL}/cars/${car._id}/status`, {
+                            const response = await fetch(apiUrl(`/api/cars/${car._id}/status`), {
                               method: 'PUT',
                               headers: {
                                 'Content-Type': 'application/json',

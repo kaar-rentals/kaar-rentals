@@ -67,15 +67,12 @@
   },
   
   "engines": {
-    "node": "24.x"
+    "node": "20"
   },
   "devDependencies": {
   
     
     "nodemon": "^3.1.4"
   
-  },
-  "overrides": {
-    "q": null
   }
 }

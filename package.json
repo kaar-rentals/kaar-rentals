@@ -33,7 +33,7 @@
   },
   "homepage": "https://github.com/kaar-rentals/kaar-rentals#readme",
   "engines": {
-    "node": "24.x"
+    "node": "20"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

@@ -346,6 +346,15 @@ const CarDetails = () => {
                     <span className="text-lg">{car.year}</span>
                     <span>•</span>
                     <span className="text-lg">{car.engineCapacity}</span>
+                    {(car.city || car.location) && (
+                      <>
+                        <span>•</span>
+                        <div className="flex items-center space-x-1">
+                          <MapPin className="h-4 w-4" />
+                          <span className="text-lg">{car.city || car.location}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                   <p className="text-lg text-gray-700 leading-relaxed">{car.description}</p>
                 </div>
@@ -422,6 +431,15 @@ const CarDetails = () => {
                           <span className="text-muted-foreground">Seating</span>
                           <span className="font-semibold">{car.seating} persons</span>
                         </div>
+                        {(car.city || car.location) && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Location</span>
+                            <span className="font-semibold flex items-center gap-1">
+                              <MapPin className="h-4 w-4" />
+                              {car.city || car.location}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

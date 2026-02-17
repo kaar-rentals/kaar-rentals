@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import citiesData from "@/data/cities.json";
 
 export default function FilterBar({ onApply }) {
   const [search, setSearch] = useState("");
@@ -51,9 +52,9 @@ export default function FilterBar({ onApply }) {
         }}
       >
         <option value="">All cities</option>
-        <option>Karachi</option>
-        <option>Lahore</option>
-        <option>Islamabad</option>
+        {citiesData.map((cityName) => (
+          <option key={cityName} value={cityName}>{cityName}</option>
+        ))}
       </select>
       <select 
         value={category} 

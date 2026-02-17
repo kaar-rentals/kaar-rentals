@@ -23,7 +23,7 @@ const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(value);
-  const [filteredCities, setFilteredCities] = useState<string[]>(citiesData.slice(0, 10));
+  const [filteredCities, setFilteredCities] = useState<string[]>(citiesData);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -37,10 +37,10 @@ const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
   // Filter cities based on search query
   useEffect(() => {
     if (searchQuery.trim() === '') {
-      setFilteredCities(citiesData.slice(0, 10)); // Show first 10 cities when empty
+      setFilteredCities(citiesData); // Show all cities when empty
     } else {
       const results = fuse.search(searchQuery);
-      setFilteredCities(results.map(result => result.item).slice(0, 10));
+      setFilteredCities(results.map(result => result.item)); // Show all matching results
     }
     setSelectedIndex(-1);
   }, [searchQuery]);
@@ -150,7 +150,7 @@ const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
       {isOpen && filteredCities.length > 0 && (
         <div
           ref={listRef}
-          className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
+          className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-96 overflow-auto"
         >
           {filteredCities.map((city, index) => (
             <div

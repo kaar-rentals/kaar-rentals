@@ -10,7 +10,8 @@ export const contactConfig = {
     import.meta.env.VITE_ADDRESS_2 || 'Gulberg, Lahore',
     import.meta.env.VITE_ADDRESS_3 || 'Islamabad & Rawalpindi'
   ],
-  showAddresses: import.meta.env.VITE_SHOW_ADDRESSES !== 'false',
+  // Only show physical addresses if explicitly enabled
+  showAddresses: import.meta.env.VITE_SHOW_ADDRESSES === 'true',
   businessHours: import.meta.env.VITE_BUSINESS_HOURS || '24/7',
   responseTime: import.meta.env.VITE_RESPONSE_TIME || 'Quick response guaranteed'
 };

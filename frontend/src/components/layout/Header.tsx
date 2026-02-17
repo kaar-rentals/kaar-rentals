@@ -18,7 +18,8 @@ const Header = () => {
   // Add authenticated-only navigation items
   const authenticatedNav = user
     ? [
-        { name: 'Profile', href: '/dashboard/profile' },
+        // Profile page for the currently logged-in user
+        { name: 'Profile', href: '/profile/me' },
       ]
     : [];
 

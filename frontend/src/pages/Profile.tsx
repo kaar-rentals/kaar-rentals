@@ -298,8 +298,24 @@ const Profile = () => {
 
   const isOwnerOrAdmin = (listing: any) => {
     if (!authUser) return false;
+
+    // Admins can always manage listings
     if (authUser.is_admin || authUser.role === 'admin') return true;
-    return listing.owner && (listing.owner._id === authUser._id || listing.owner.toString() === authUser._id);
+
+    // When viewing own profile (/profile/me), allow managing all shown listings
+    if (!unique_id && user && (user._id === authUser._id || user.unique_id === authUser.unique_id)) {
+      return true;
+    }
+
+    // For public profiles (/profile/:unique_id), fall back to owner field on listing
+    return (
+      listing.owner &&
+      (
+        listing.owner._id === authUser._id ||
+        listing.owner.id === authUser._id ||
+        listing.owner.toString() === authUser._id
+      )
+    );
   };
 
   const handleEditProfile = () => {

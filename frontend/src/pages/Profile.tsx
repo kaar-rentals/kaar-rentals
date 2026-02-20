@@ -601,7 +601,13 @@ const Profile = () => {
                           <CardTitle className="text-lg">
                             {listing.brand} {listing.model} ({listing.year})
                           </CardTitle>
-                          <CardDescription className="flex items-center justify-between">
+                          <CardDescription
+                            className="flex items-center justify-between"
+                            onClick={(e) => {
+                              // Prevent card link navigation when interacting with price controls
+                              e.preventDefault();
+                            }}
+                          >
                             {editingPrice === listing._id ? (
                               <div className="flex items-center gap-2 flex-1">
                                 <Input

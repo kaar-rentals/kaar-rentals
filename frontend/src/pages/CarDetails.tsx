@@ -145,6 +145,18 @@ const CarDetails = () => {
     );
   }
 
+  const currentUserId = user?.id || (user as any)?._id;
+  const isAdmin = !!user && (user.is_admin || user.role === 'admin');
+  const isOwner =
+    !!currentUserId &&
+    car &&
+    (
+      (car as any).ownerId === currentUserId ||
+      (car.owner && typeof car.owner === 'object' &&
+        ((car.owner as any)._id === currentUserId || (car.owner as any).id === currentUserId))
+    );
+  const canManageListing = isAdmin || isOwner;
+
   const handleStartEditPrice = () => {
     const currentPrice = car.pricePerDay || car.price || 0;
     setPriceInput(currentPrice ? String(currentPrice) : '');
@@ -540,7 +552,7 @@ const CarDetails = () => {
                 </div>
 
                 {/* Status & Pricing - Owner/Admin Only */}
-                {user && (user.is_admin || user.role === 'admin' || (car.owner && typeof car.owner === 'object' && (car.owner._id === user._id || car.owner.toString() === user._id))) && (
+                {canManageListing && (
                   <>
                     <div className="bg-white rounded-xl shadow-lg border p-6">
                       <h3 className="text-xl font-semibold mb-4 text-gray-900">Listing Status</h3>

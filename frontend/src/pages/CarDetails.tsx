@@ -6,6 +6,7 @@ import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { apiService, Car } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +26,9 @@ const CarDetails = () => {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [contactPhone, setContactPhone] = useState<string | null>(null);
   const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [editingPrice, setEditingPrice] = useState(false);
+  const [priceInput, setPriceInput] = useState('');
+  const [savingPrice, setSavingPrice] = useState(false);
   const dealer = dealers[0]; // For demo, using first dealer
 
   useEffect(() => {
@@ -140,6 +144,54 @@ const CarDetails = () => {
       </div>
     );
   }
+
+  const handleStartEditPrice = () => {
+    const currentPrice = car.pricePerDay || car.price || 0;
+    setPriceInput(currentPrice ? String(currentPrice) : '');
+    setEditingPrice(true);
+  };
+
+  const handleSavePrice = async () => {
+    try {
+      if (!token) {
+        toast({
+          title: 'Authentication Required',
+          description: 'Please sign in to update the price',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const value = Number(priceInput);
+      if (!priceInput || isNaN(value) || value <= 0) {
+        toast({
+          title: 'Invalid price',
+          description: 'Please enter a valid positive number for price.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setSavingPrice(true);
+      const updatedCar = await apiService.updateCarPrice(car._id, value, token);
+      setCar(updatedCar);
+
+      toast({
+        title: 'Price Updated',
+        description: `Daily price updated to PKR ${value.toLocaleString()}`,
+      });
+
+      setEditingPrice(false);
+    } catch (err: any) {
+      toast({
+        title: 'Update Failed',
+        description: err.message || 'Failed to update price. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingPrice(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -487,65 +539,130 @@ const CarDetails = () => {
                   )}
                 </div>
 
-                {/* Status Toggle - Owner/Admin Only */}
+                {/* Status & Pricing - Owner/Admin Only */}
                 {user && (user.is_admin || user.role === 'admin' || (car.owner && typeof car.owner === 'object' && (car.owner._id === user._id || car.owner.toString() === user._id))) && (
-                  <div className="bg-white rounded-xl shadow-lg border p-6">
-                    <h3 className="text-xl font-semibold mb-4 text-gray-900">Listing Status</h3>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Current Status:</span>
-                        <Badge 
-                          variant={car.status === 'rented' ? 'destructive' : 'default'}
-                          className={car.status === 'rented' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}
-                        >
-                          {car.status === 'rented' ? 'Rented' : 'Available'}
-                        </Badge>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={async () => {
-                          if (!token) {
-                            toast({
-                              title: "Authentication Required",
-                              description: "Please sign in to update listing status",
-                              variant: "destructive",
-                            });
-                            return;
-                          }
-                          try {
-                            const newStatus = car.status === 'rented' ? 'available' : 'rented';
-                            const response = await fetch(apiUrl(`/api/cars/${car._id}/status`), {
-                              method: 'PUT',
-                              headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${token}`,
-                              },
-                              body: JSON.stringify({ status: newStatus }),
-                            });
-                            if (response.ok) {
-                              const updatedCar = await response.json();
-                              setCar(updatedCar);
+                  <>
+                    <div className="bg-white rounded-xl shadow-lg border p-6">
+                      <h3 className="text-xl font-semibold mb-4 text-gray-900">Listing Status</h3>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Current Status:</span>
+                          <Badge 
+                            variant={car.status === 'rented' ? 'destructive' : 'default'}
+                            className={car.status === 'rented' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}
+                          >
+                            {car.status === 'rented' ? 'Rented' : 'Available'}
+                          </Badge>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={async () => {
+                            if (!token) {
                               toast({
-                                title: "Status Updated",
-                                description: `Listing marked as ${newStatus}`,
+                                title: "Authentication Required",
+                                description: "Please sign in to update listing status",
+                                variant: "destructive",
                               });
-                            } else {
-                              throw new Error('Failed to update status');
+                              return;
                             }
-                          } catch (err: any) {
-                            toast({
-                              title: "Update Failed",
-                              description: err.message || "Failed to update listing status",
-                              variant: "destructive",
-                            });
-                          }
-                        }}
-                      >
-                        Change status to {car.status === 'rented' ? 'Available' : 'Rented'}
-                      </Button>
+                            try {
+                              const newStatus = car.status === 'rented' ? 'available' : 'rented';
+                              const response = await fetch(apiUrl(`/api/cars/${car._id}/status`), {
+                                method: 'PUT',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                  'Authorization': `Bearer ${token}`,
+                                },
+                                body: JSON.stringify({ status: newStatus }),
+                              });
+                              if (response.ok) {
+                                const updatedCar = await response.json();
+                                setCar(updatedCar);
+                                toast({
+                                  title: "Status Updated",
+                                  description: `Listing marked as ${newStatus}`,
+                                });
+                              } else {
+                                throw new Error('Failed to update status');
+                              }
+                            } catch (err: any) {
+                              toast({
+                                title: "Update Failed",
+                                description: err.message || "Failed to update listing status",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                        >
+                          Change status to {car.status === 'rented' ? 'Available' : 'Rented'}
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+
+                    <div className="bg-white rounded-xl shadow-lg border p-6">
+                      <h3 className="text-xl font-semibold mb-4 text-gray-900">Manage Pricing</h3>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Current Price:</span>
+                          <span className="font-semibold text-gray-900">
+                            PKR {(car.pricePerDay || car.price || 0).toLocaleString()}
+                            <span className="text-sm text-gray-600">
+                              {car.priceType === 'monthly' ? '/month' : '/day'}
+                            </span>
+                          </span>
+                        </div>
+
+                        {editingPrice ? (
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                min={1}
+                                value={priceInput}
+                                onChange={(e) => setPriceInput(e.target.value)}
+                                className="h-9"
+                                placeholder="Enter new price"
+                              />
+                              <span className="text-sm text-gray-600">
+                                {car.priceType === 'monthly' ? 'PKR/month' : 'PKR/day'}
+                              </span>
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingPrice(false);
+                                  setPriceInput('');
+                                }}
+                                disabled={savingPrice}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                onClick={handleSavePrice}
+                                disabled={savingPrice}
+                              >
+                                {savingPrice ? (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                                ) : (
+                                  'Save Price'
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={handleStartEditPrice}
+                          >
+                            Change Price
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </>
                 )}
 
                 {/* Additional Services */}

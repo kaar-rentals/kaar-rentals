@@ -205,7 +205,7 @@ class ApiService {
 
   async updateCarPrice(id: string, pricePerDay: number, token?: string): Promise<Car> {
     try {
-      const response = await fetch(apiUrl(`/api/cars/${id}`), {
+      const response = await fetch(apiUrl(`/api/cars/${id}/price`), {
         method: 'PUT',
         headers: getAuthHeaders(token),
         body: JSON.stringify({ pricePerDay }),
@@ -234,10 +234,10 @@ class ApiService {
 
   async updateCarRentalStatus(id: string, isRented: boolean, token?: string): Promise<Car> {
     try {
-      const response = await fetch(apiUrl(`/api/cars/${id}`), {
-        method: 'PATCH',
+      const response = await fetch(apiUrl(`/api/cars/${id}/status`), {
+        method: 'PUT',
         headers: getAuthHeaders(token),
-        body: JSON.stringify({ isRented }),
+        body: JSON.stringify({ status: isRented ? 'rented' : 'available' }),
       });
       
       if (response.status === 401) {

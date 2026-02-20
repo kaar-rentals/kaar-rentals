@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Car, apiService } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +22,8 @@ const MyListedCars = ({ userId }: MyListedCarsProps) => {
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState<{ carId: string; newStatus: boolean } | null>(null);
+  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
+  const [priceInput, setPriceInput] = useState<string>('');
 
   useEffect(() => {
     loadMyCars();
@@ -141,6 +144,60 @@ const MyListedCars = ({ userId }: MyListedCarsProps) => {
     setShowConfirm({ carId, newStatus: !currentStatus });
   };
 
+  const startEditPrice = (car: Car) => {
+    setEditingPriceId(car._id);
+    setPriceInput(car.pricePerDay?.toString() || '');
+  };
+
+  const savePrice = async (carId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please log in to update car price');
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to update car price",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const value = Number(priceInput);
+      if (!priceInput || isNaN(value) || value <= 0) {
+        toast({
+          title: "Invalid price",
+          description: "Please enter a valid positive number for price per day.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setUpdating(carId);
+
+      await apiService.updateCarPrice(carId, value, token);
+
+      toast({
+        title: "Price Updated",
+        description: `Daily price updated to PKR ${value.toLocaleString()}`,
+      });
+
+      await loadMyCars();
+      setEditingPriceId(null);
+      setPriceInput('');
+    } catch (err: any) {
+      console.error('Error updating car price:', err);
+      const errorMessage = err.message || 'Failed to update car price. Please try again.';
+      setError(errorMessage);
+      toast({
+        title: "Update Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setUpdating(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -244,9 +301,57 @@ const MyListedCars = ({ userId }: MyListedCarsProps) => {
                         {car.isRented ? 'Rented' : 'Available'}
                       </Badge>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">
-                      {car.year} • {car.category} • PKR {car.pricePerDay?.toLocaleString()}/day
-                    </p>
+                    <div className="text-sm text-gray-600 mb-2 flex items-center gap-2 flex-wrap">
+                      <span>
+                        {car.year} • {car.category}
+                      </span>
+                      <span className="text-gray-400">•</span>
+                      {editingPriceId === car._id ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            min={1}
+                            value={priceInput}
+                            onChange={(e) => setPriceInput(e.target.value)}
+                            className="h-8 w-28 text-sm"
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={updating === car._id}
+                            onClick={() => savePrice(car._id)}
+                          >
+                            {updating === car._id ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                            ) : (
+                              'Save'
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setEditingPriceId(null);
+                              setPriceInput('');
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <span>PKR {car.pricePerDay?.toLocaleString()}/day</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => startEditPrice(car)}
+                          >
+                            Change price
+                          </Button>
+                        </>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500">{car.location}</p>
                   </div>
                   

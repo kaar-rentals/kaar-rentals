@@ -145,6 +145,22 @@ const CarDetails = () => {
     );
   }
 
+  // SEO: dynamic title/description for each car
+  useEffect(() => {
+    if (!car) return;
+    const city = car.city || car.location || 'Pakistan';
+    const price = (car.pricePerDay || car.price || 0).toLocaleString();
+    document.title = `${car.brand} ${car.model} ${car.year} for rent in ${city} – Kaar.Rentals`;
+    const desc = `Rent a ${car.year} ${car.brand} ${car.model} in ${city} for PKR ${price} per ${car.priceType === 'monthly' ? 'month' : 'day'}. Book verified cars from trusted owners on Kaar.Rentals.`;
+    let meta = document.querySelector("meta[name='description']");
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'description');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', desc);
+  }, [car]);
+
   const currentUserId = user?.id || (user as any)?._id;
   const isAdmin = !!user && (user.is_admin || user.role === 'admin');
   const isOwner =
@@ -207,6 +223,31 @@ const CarDetails = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Structured data for car listing */}
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: `${car.brand} ${car.model} ${car.year}`,
+            description: car.description,
+            image: car.images && car.images.length > 0 ? car.images[0] : undefined,
+            brand: car.brand,
+            url: typeof window !== 'undefined' ? window.location.href : undefined,
+            offers: {
+              '@type': 'Offer',
+              priceCurrency: 'PKR',
+              price: car.pricePerDay || car.price || 0,
+              availability:
+                car.status === 'rented'
+                  ? 'https://schema.org/OutOfStock'
+                  : 'https://schema.org/InStock',
+            },
+          }),
+        }}
+      />
       <Header />
       <main className="pt-16">
         {/* Breadcrumb */}

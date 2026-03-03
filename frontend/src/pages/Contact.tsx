@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { MapPin, Phone, Mail, Clock, MessageCircle, Facebook, Instagram } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -8,6 +9,18 @@ import { Label } from '@/components/ui/label';
 import { contactConfig } from '@/config/contact';
 
 const Contact = () => {
+  useEffect(() => {
+    document.title = 'Contact Kaar.Rentals – Support & bookings';
+    const desc = 'Contact Kaar.Rentals for car rental bookings, support and partnership enquiries. Call, WhatsApp or email our team 24/7.';
+    let meta = document.querySelector("meta[name='description']");
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'description');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', desc);
+  }, []);
+
   const contactInfo = [
     {
       icon: Phone,

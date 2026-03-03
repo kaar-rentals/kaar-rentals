@@ -17,6 +17,16 @@ const Cars = () => {
   const isAuthenticated = !!token;
 
   useEffect(() => {
+    document.title = 'Browse cars for rent – Kaar.Rentals';
+    const desc = 'Search and filter cars for rent by city, price, body type, transmission and more. Verified listings from real owners across Pakistan.';
+    let meta = document.querySelector("meta[name='description']");
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'description');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', desc);
+
     loadCars();
   }, [query, page, token]);
 

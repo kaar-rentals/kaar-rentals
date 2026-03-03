@@ -90,6 +90,18 @@ const About = () => {
     }
   ];
 
+  useEffect(() => {
+    document.title = 'About Kaar.Rentals – Reliable car rentals in Pakistan';
+    const desc = 'Learn how Kaar.Rentals connects verified car owners with renters, offering safe, transparent and premium rental experiences across Pakistan.';
+    let meta = document.querySelector("meta[name='description']");
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'description');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', desc);
+  }, []);
+
   return (
     <div className="min-h-screen">
       <Header />

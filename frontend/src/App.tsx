@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { Analytics } from "@vercel/analytics/react";
 import Index from "./pages/Index";
 import Cars from "./pages/Cars";
 import About from "./pages/About";
@@ -55,6 +56,7 @@ const App = () => (
           </Routes>
           </AuthProvider>
         </BrowserRouter>
+        <Analytics />
       </TooltipProvider>
     </QueryClientProvider>
   </ErrorBoundary>

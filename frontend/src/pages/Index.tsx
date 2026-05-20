@@ -4,6 +4,7 @@ import Footer from '@/components/layout/Footer';
 import Hero from '@/components/home/Hero';
 import FeaturedCars from '@/components/home/FeaturedCars';
 import Categories from '@/components/home/Categories';
+import Pricing from '@/components/home/Pricing';
 import AdBanner from '@/components/ads/AdBanner';
 
 const Index = () => {
@@ -25,6 +26,7 @@ const Index = () => {
       <main className="pt-16">
         <Hero />
         <Categories />
+        <Pricing />
         {/* Home page AdSense banner (configure slot via env: VITE_ADSENSE_SLOT_HOME) */}
         <section className="py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

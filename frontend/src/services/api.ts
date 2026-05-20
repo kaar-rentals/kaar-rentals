@@ -161,7 +161,9 @@ class ApiService {
         headers: getAuthHeaders(token),
       });
       if (!response.ok) throw new Error('Failed to fetch owner cars');
-      return await this.parseJsonResponse(response);
+      const data = await this.parseJsonResponse(response);
+      const list = Array.isArray(data) ? data : (data.cars || []);
+      return list.map((c: Record<string, unknown>) => normalizeCar(c));
     } catch (error) {
       console.error('API Error:', error);
       throw error;
@@ -204,11 +206,48 @@ class ApiService {
         throw new Error(`Failed to update car: ${errorText || response.statusText}`);
       }
       
-      return await this.parseJsonResponse(response);
+      const raw = await this.parseJsonResponse(response);
+      return normalizeCar(raw as Record<string, unknown>);
     } catch (error) {
       console.error('API Error:', error);
       throw error;
     }
+  }
+
+  async toggleCarFeatured(id: string, featured: boolean, token?: string): Promise<Car> {
+    const response = await fetch(apiUrl(`/api/cars/${id}/featured`), {
+      method: 'PUT',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ featured }),
+    });
+    if (!response.ok) throw new Error('Failed to update featured status');
+    const raw = await this.parseJsonResponse(response);
+    const car = raw._id ? raw : raw;
+    return normalizeCar(car as Record<string, unknown>);
+  }
+
+  async logCarInquiry(id: string, message?: string, token?: string): Promise<void> {
+    await fetch(apiUrl(`/api/cars/${id}/inquiry`), {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ message }),
+    });
+  }
+
+  async uploadImage(file: File, token?: string): Promise<string> {
+    const formData = new FormData();
+    formData.append('image', file);
+    const headers: HeadersInit = {};
+    const t = token || getAuthToken();
+    if (t) headers['Authorization'] = `Bearer ${t}`;
+    const response = await fetch(apiUrl('/api/upload'), {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    if (!response.ok) throw new Error('Image upload failed');
+    const data = await this.parseJsonResponse(response);
+    return data.url;
   }
 
   async updateCarPrice(id: string, pricePerDay: number, token?: string): Promise<Car> {

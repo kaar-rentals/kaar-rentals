@@ -14,10 +14,12 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import socket from "@/lib/socket";
 import { apiUrl } from "@/lib/apiBase";
+import OwnerListingsManager from "@/components/owner/OwnerListingsManager";
+import { normalizeCar } from "@/lib/normalizeCar";
 
 const Profile = () => {
   const { unique_id } = useParams<{ unique_id?: string }>();
-  const { user: authUser, token } = useAuth();
+  const { user: authUser, token, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [user, setUser] = useState<any>(null);
@@ -31,20 +33,19 @@ const Profile = () => {
   const [editingPrice, setEditingPrice] = useState<string | null>(null);
   const [priceForm, setPriceForm] = useState({ price: '', priceType: 'daily' });
 
-  // Handle /profile/me route - fetch on mount and when authUser/unique_id changes
+  // Wait for auth hydration before deciding logged-out state
   useEffect(() => {
-    if (!unique_id && authUser) {
-      // If no unique_id and user is authenticated, fetch their own profile
+    if (authLoading) return;
+
+    if (unique_id) {
       fetchProfile();
-    } else if (unique_id) {
-      // Fetch profile by unique_id
+    } else if (authUser && token) {
       fetchProfile();
-    } else if (!authUser) {
-      // Not authenticated and no unique_id, show error
+    } else if (!unique_id) {
       setError('Please sign in to view your profile');
       setLoading(false);
     }
-  }, [unique_id, authUser]);
+  }, [unique_id, authUser, token, authLoading]);
 
   // Fetch listings when user is loaded
   useEffect(() => {
@@ -118,19 +119,27 @@ const Profile = () => {
   const fetchListings = async () => {
     try {
       if (!user) return;
-      
-      // Fetch listings by owner unique_id with cache-busting
+
+      // Own dashboard: all listings including rented
+      if (!unique_id && token) {
+        const myCars = await apiService.getOwnerCars(token);
+        setListings(myCars as never[]);
+        return;
+      }
+
       const ownerId = user.unique_id || user._id;
       const timestamp = Date.now();
-      const response = await fetch(apiUrl(`/api/cars?owner_unique_id=${ownerId}&limit=12&_t=${timestamp}`), {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      });
-      
+      const response = await fetch(
+        apiUrl(`/api/cars?owner_unique_id=${ownerId}&limit=50&_t=${timestamp}`),
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+
       if (response.ok) {
         const data = await response.json();
-        setListings(data.cars || []);
+        const raw = data.cars || [];
+        setListings(raw.map((c: Record<string, unknown>) => normalizeCar(c)) as never[]);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error fetching listings:", err);
     }
   };
@@ -384,6 +393,18 @@ const Profile = () => {
     setEditForm({ name: '', email: '', phone: '' });
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 pt-16 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -569,7 +590,9 @@ const Profile = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {loading && listings.length === 0 ? (
+              {!unique_id && authUser && token ? (
+                <OwnerListingsManager />
+              ) : loading && listings.length === 0 ? (
                 <div className="text-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
                   <p className="text-muted-foreground">Loading listings...</p>
@@ -577,11 +600,6 @@ const Profile = () => {
               ) : listings.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground mb-4">No listings yet</p>
-                  {authUser && !unique_id && (
-                    <Link to="/list-car">
-                      <Button>List your first car</Button>
-                    </Link>
-                  )}
                 </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

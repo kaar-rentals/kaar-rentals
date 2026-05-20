@@ -417,6 +417,11 @@ const CarDetails = () => {
                             const data = await response.json();
                             setContactPhone(data.phone);
                             setContactModalOpen(true);
+                            try {
+                              await apiService.logCarInquiry(car._id, 'Contacted owner from listing page', token);
+                            } catch {
+                              /* non-blocking */
+                            }
                           } catch (err: any) {
                             toast({
                               title: "Error",

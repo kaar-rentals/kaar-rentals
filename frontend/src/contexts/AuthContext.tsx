@@ -3,9 +3,13 @@ import { apiUrl } from '@/lib/apiBase';
 
 interface User {
   _id: string;
+  id?: string;
   name: string;
   email: string;
+  phone?: string;
   role: 'user' | 'owner' | 'admin';
+  is_admin?: boolean;
+  unique_id?: string;
   membershipActive?: boolean;
   membershipPlan?: string | null;
   membershipExpiry?: string | null;
@@ -43,11 +47,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initializeAuth = async () => {
       try {
         const storedToken = localStorage.getItem('token');
-        
+        const storedUser = localStorage.getItem('user');
+
+        // Hydrate immediately so refresh does not flash logged-out state
         if (storedToken) {
           setToken(storedToken);
-          
-          // Fetch fresh user data from /api/user/me
+          if (storedUser) {
+            try {
+              setUser(JSON.parse(storedUser));
+            } catch {
+              localStorage.removeItem('user');
+            }
+          }
+
           try {
             const response = await fetch(apiUrl('/api/user/me'), {
               method: 'GET',
@@ -56,31 +68,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 'Authorization': `Bearer ${storedToken}`,
               },
             });
-            
+
             if (response.ok) {
               const data = await response.json();
               setUser(data.user);
               localStorage.setItem('user', JSON.stringify(data.user));
-            } else {
-              // Token is invalid, clear storage
+            } else if (response.status === 401 || response.status === 403) {
               localStorage.removeItem('token');
               localStorage.removeItem('user');
               setToken(null);
               setUser(null);
             }
+            // On 5xx/network errors keep cached user + token for session persistence
           } catch (error) {
-            console.error('Token verification failed:', error);
-            // Clear invalid token
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            setToken(null);
-            setUser(null);
-          }
-        } else {
-          // No token, check for stored user (legacy)
-          const storedUser = localStorage.getItem('user');
-          if (storedUser) {
-            localStorage.removeItem('user');
+            console.error('Token verification failed (keeping session):', error);
           }
         }
       } catch (error) {
@@ -184,29 +185,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshUser = async () => {
-    if (!token) return;
-    
+    const activeToken = token || localStorage.getItem('token');
+    if (!activeToken) return;
+
     try {
-      const response = await fetch(apiUrl('/api/auth/profile'), {
+      const response = await fetch(apiUrl('/api/user/me'), {
         method: 'GET',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${activeToken}`,
         },
       });
 
       if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-      } else {
-        // Token is invalid, logout
+        const data = await response.json();
+        setUser(data.user);
+        localStorage.setItem('user', JSON.stringify(data.user));
+      } else if (response.status === 401 || response.status === 403) {
         logout();
       }
     } catch (error) {
-      console.error('Failed to refresh user data:', error);
-      logout();
+      console.error('Failed to refresh user data (session kept):', error);
     }
   };
 

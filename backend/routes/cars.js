@@ -15,9 +15,11 @@ router.get("/", async (req, res) => {
       featured, owner_unique_id
     } = req.query;
 
-    // Don't filter by status - show all listings including rented ones
-    // Only filter by isActive and isApproved
-    const filters = { isActive: true, isApproved: true };
+    // Show approved listings; include rented (status) even if legacy isActive was false
+    const filters = {
+      isApproved: true,
+      $or: [{ isActive: true }, { status: 'rented' }]
+    };
     
     // Optional status filter if explicitly requested
     if (req.query.status) {
@@ -44,11 +46,12 @@ router.get("/", async (req, res) => {
       ];
     }
 
-    // Filter by owner_unique_id if provided
+    // Filter by owner_unique_id if provided (show all statuses including rented)
     if (owner_unique_id) {
       const owner = await User.findOne({ unique_id: owner_unique_id });
       if (owner) {
-        filters.owner = owner._id;
+        filters.$or = [{ ownerId: owner._id }, { owner: owner._id }];
+        delete filters.isActive; // Keep rented listings visible on owner profile
       } else {
         return res.json({ total: 0, page: parseInt(page), limit: parseInt(limit), offset: parseInt(offset) || 0, cars: [] });
       }
@@ -119,9 +122,57 @@ router.get("/", async (req, res) => {
   }
 });
 
+// GET /api/cars/owner/my-cars - All listings for authenticated owner (any status)
+router.get("/owner/my-cars", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user || !(req.user.id || req.user._id)) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    const userId = req.user.id || req.user._id;
+
+    // Repair legacy listings hidden when marked rented
+    await Car.updateMany(
+      { $or: [{ ownerId: userId }, { owner: userId }], status: 'rented', isActive: false },
+      { $set: { isActive: true } }
+    );
+
+    const cars = await Car.find({
+      $or: [{ ownerId: userId }, { owner: userId }]
+    })
+      .populate('ownerId', 'name email phone unique_id location membershipPlan membershipActive')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const formatted = cars.map((car) => {
+      const owner = car.ownerId || car.owner;
+      const ownerIdStr = owner && typeof owner === 'object' && owner._id ? String(owner._id) : null;
+      return {
+        ...car,
+        ownerId: ownerIdStr,
+        owner: owner && typeof owner === 'object' ? {
+          _id: ownerIdStr,
+          name: owner.name,
+          email: owner.email,
+          phone: owner.phone,
+          unique_id: owner.unique_id,
+          location: owner.location
+        } : car.owner
+      };
+    });
+
+    return res.json({ cars: formatted });
+  } catch (err) {
+    console.error('Error fetching owner cars:', err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 // GET /api/cars/:id - Include owner name and location when authenticated
 router.get("/:id", async (req, res) => {
   try {
+    // Track listing views (non-blocking)
+    Car.findByIdAndUpdate(req.params.id, { $inc: { viewCount: 1 } }).catch(() => {});
+
     let car = await Car.findById(req.params.id)
       .populate('ownerId', req.user ? 'name email phone unique_id location' : 'unique_id')
       .lean();
@@ -280,7 +331,7 @@ router.post("/", authMiddleware, async (req, res) => {
       mileage, seating, features, description,
       featured: featured === true || featured === 'true',
       status: status === 'rented' ? 'rented' : 'available',
-      isActive: status === 'available',
+      isActive: true,
       isRented: status === 'rented',
       isApproved: true, // Admin-created listings are auto-approved
       paymentStatus: 'PAID', // Admin bypass: free for admins
@@ -327,24 +378,26 @@ router.put("/:id", authMiddleware, async (req, res) => {
     }
 
     const carId = req.params.id;
-    const { price, pricePerDay, priceType } = req.body;
+    const {
+      price, pricePerDay, priceType, brand, model, year, category,
+      description, features, images, location, city, engineCapacity,
+      fuelType, transmission, mileage, seating, featured
+    } = req.body;
     const userId = req.user.id || req.user._id;
 
     const car = await Car.findById(carId);
     if (!car) return res.status(404).json({ message: "Car not found" });
 
-    // Check if user is admin
     const user = await User.findById(userId);
     const isAdmin = user && (user.is_admin || user.role === 'admin');
+    const isPremium = user && (user.membershipPlan === 'premium' || user.membershipActive);
 
-    // Verify ownership (unless admin) - support both ownerId and legacy owner
     const carOwnerId = car.ownerId || car.owner;
     if (!isAdmin && carOwnerId && carOwnerId.toString() !== userId.toString()) {
       return res.status(403).json({ message: "You can only update your own listings" });
     }
 
-    // Validate price if provided
-    const finalPrice = price || pricePerDay;
+    const finalPrice = price ?? pricePerDay;
     if (finalPrice !== undefined) {
       const priceNum = Number(finalPrice);
       if (isNaN(priceNum) || priceNum <= 0) {
@@ -353,13 +406,31 @@ router.put("/:id", authMiddleware, async (req, res) => {
       car.pricePerDay = priceNum;
       car.price = priceNum;
     }
-
-    // Validate priceType if provided
     if (priceType !== undefined) {
       if (!['daily', 'monthly'].includes(priceType)) {
         return res.status(400).json({ message: "priceType must be 'daily' or 'monthly'" });
       }
       car.priceType = priceType;
+    }
+    if (brand !== undefined) car.brand = brand;
+    if (model !== undefined) car.model = model;
+    if (year !== undefined) car.year = Number(year);
+    if (category !== undefined) car.category = category;
+    if (description !== undefined) car.description = description;
+    if (features !== undefined) car.features = Array.isArray(features) ? features : [];
+    if (images !== undefined) car.images = Array.isArray(images) ? images : [];
+    if (location !== undefined) car.location = location;
+    if (city !== undefined) car.city = city;
+    if (engineCapacity !== undefined) car.engineCapacity = engineCapacity;
+    if (fuelType !== undefined) car.fuelType = fuelType;
+    if (transmission !== undefined) car.transmission = transmission;
+    if (mileage !== undefined) car.mileage = mileage;
+    if (seating !== undefined) car.seating = Number(seating);
+    if (featured !== undefined) {
+      if (!isAdmin && !isPremium) {
+        return res.status(403).json({ message: "Featured listings require a Premium plan" });
+      }
+      car.featured = Boolean(featured);
     }
 
     await car.save();
@@ -495,15 +566,10 @@ router.put("/:id/status", authMiddleware, async (req, res) => {
       return res.status(403).json({ message: "You can only update your own listings" });
     }
 
-    // Update status
+    // Update status — keep listing visible (isActive stays true)
     car.status = status;
-    if (status === 'rented') {
-      car.isRented = true;
-      car.isActive = false;
-    } else {
-      car.isRented = false;
-      car.isActive = true;
-    }
+    car.isRented = status === 'rented';
+    car.isActive = true;
 
     await car.save();
 
@@ -553,8 +619,37 @@ router.put("/:id/status", authMiddleware, async (req, res) => {
   }
 });
 
-// PUT /api/cars/:id/featured - Toggle featured status (admin only)
-router.put("/:id/featured", async (req, res) => {
+// POST /api/cars/:id/inquiry - Log renter inquiry (authenticated)
+router.post("/:id/inquiry", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    const car = await Car.findById(req.params.id);
+    if (!car) return res.status(404).json({ message: "Car not found" });
+
+    const inquirer = await User.findById(req.user.id || req.user._id).select('name email phone');
+    const { message } = req.body || {};
+
+    car.inquiries = car.inquiries || [];
+    car.inquiries.push({
+      name: inquirer?.name || 'Guest',
+      phone: inquirer?.phone || null,
+      email: inquirer?.email || null,
+      message: message || 'Contacted owner via listing',
+      userId: inquirer?._id
+    });
+    await car.save();
+
+    return res.json({ success: true, inquiries: car.inquiries });
+  } catch (err) {
+    console.error('Error logging inquiry:', err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// PUT /api/cars/:id/featured - Toggle featured (admin or Premium plan)
+router.put("/:id/featured", authMiddleware, async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -562,8 +657,11 @@ router.put("/:id/featured", async (req, res) => {
 
     const userId = req.user.id || req.user._id;
     const user = await User.findById(userId);
-    if (!user || !(user.is_admin || user.role === 'admin')) {
-      return res.status(403).json({ message: "Admin access required" });
+    const isAdmin = user && (user.is_admin || user.role === 'admin');
+    const isPremium = user && (user.membershipPlan === 'premium' || user.membershipActive);
+
+    if (!isAdmin && !isPremium) {
+      return res.status(403).json({ message: "Premium plan required to feature listings" });
     }
 
     const carId = req.params.id;
@@ -571,6 +669,13 @@ router.put("/:id/featured", async (req, res) => {
 
     if (typeof featured !== 'boolean') {
       return res.status(400).json({ message: "featured must be a boolean" });
+    }
+
+    const existing = await Car.findById(carId);
+    if (!existing) return res.status(404).json({ message: "Car not found" });
+    const carOwnerId = existing.ownerId || existing.owner;
+    if (!isAdmin && carOwnerId && carOwnerId.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "You can only update your own listings" });
     }
 
     const car = await Car.findByIdAndUpdate(

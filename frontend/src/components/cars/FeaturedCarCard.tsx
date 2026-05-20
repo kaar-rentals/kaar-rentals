@@ -43,15 +43,20 @@ const FeaturedCarCard = ({ car }: FeaturedCarCardProps) => {
           ? 'border-amber-200 ring-1 ring-amber-100' 
           : 'border-gray-100'
       }`}>
-        {/* Featured Ribbon */}
-        {car.featured && (
-          <div className="absolute top-0 right-0 z-10">
+        {/* Status / Featured badges */}
+        <div className="absolute top-0 right-0 z-10 flex flex-col items-end gap-1">
+          {(car.status === 'rented' || car.isRented) && (
+            <div className="bg-red-600 text-white px-3 py-1 text-xs font-semibold rounded-bl-lg shadow-lg">
+              Rented
+            </div>
+          )}
+          {car.featured && (
             <div className="bg-gradient-to-r from-amber-400 to-amber-500 text-white px-3 py-1 text-xs font-semibold rounded-bl-lg shadow-lg">
               <Crown className="h-3 w-3 inline mr-1" />
               Featured
             </div>
-          </div>
-        )}
+          )}
+        </div>
         {/* Image Section - 16:9 Aspect Ratio */}
         <div className="relative aspect-[16/9] overflow-hidden">
           <img 

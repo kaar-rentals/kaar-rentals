@@ -1,7 +1,9 @@
-import { Check, Sparkles, Infinity } from 'lucide-react';
+import { Check, Sparkles, Infinity, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
+import { openPlanWhatsApp } from '@/lib/whatsapp';
 
 const plans = [
   {
@@ -57,6 +59,17 @@ const plans = [
 ];
 
 const Pricing = () => {
+  const { user } = useAuth();
+
+  const handlePlanClick = (plan: typeof plans[0]) => {
+    openPlanWhatsApp({
+      planName: plan.name,
+      carsLabel: plan.cars,
+      userName: user?.name,
+      userPhone: (user as { phone?: string })?.phone,
+    });
+  };
+
   return (
     <section id="pricing" className="py-20 bg-muted/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -131,7 +144,6 @@ const Pricing = () => {
                 </ul>
 
                 <Button
-                  asChild
                   size="lg"
                   className={`w-full ${
                     plan.popular
@@ -139,8 +151,10 @@ const Pricing = () => {
                       : ''
                   }`}
                   variant={plan.popular ? 'default' : 'outline'}
+                  onClick={() => handlePlanClick(plan)}
                 >
-                  <Link to="/list-car">{plan.cta}</Link>
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  {plan.cta} via WhatsApp
                 </Button>
               </div>
             </div>
@@ -163,8 +177,20 @@ const Pricing = () => {
             <p className="text-xs text-muted-foreground mt-2">
               One-time fee · No monthly renewal for that vehicle
             </p>
-            <Button asChild variant="outline" className="mt-5">
-              <Link to="/contact">Ask About Lifetime</Link>
+            <Button
+              variant="outline"
+              className="mt-5"
+              onClick={() =>
+                openPlanWhatsApp({
+                  planName: 'Lifetime (one-time)',
+                  carsLabel: '1 car — PKR 5,999 per car',
+                  userName: user?.name,
+                  userPhone: (user as { phone?: string })?.phone,
+                })
+              }
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Ask About Lifetime on WhatsApp
             </Button>
           </div>
         </div>

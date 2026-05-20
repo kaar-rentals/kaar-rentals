@@ -29,7 +29,16 @@ const carSchema = new mongoose.Schema({
   paymentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Payment' },
   featured: { type: Boolean, default: false },
   status: { type: String, enum: ['available', 'rented'], default: 'available' },
-  owner_type: { type: String, enum: ['user', 'dealership'], default: 'user' }
+  owner_type: { type: String, enum: ['user', 'dealership'], default: 'user' },
+  viewCount: { type: Number, default: 0 },
+  inquiries: [{
+    name: { type: String },
+    phone: { type: String },
+    email: { type: String },
+    message: { type: String },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    createdAt: { type: Date, default: Date.now }
+  }]
 }, { timestamps: true });
 
 // Indexes for performance

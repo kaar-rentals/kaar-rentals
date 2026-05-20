@@ -45,6 +45,7 @@ const OwnerListingsManager = () => {
   const { toast } = useToast();
   const [cars, setCars] = useState<CarWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
   const [editCar, setEditCar] = useState<CarWithMeta | null>(null);
@@ -79,21 +80,8 @@ const OwnerListingsManager = () => {
     try {
       setLoading(true);
       setError(null);
-      try {
-        const list = await apiService.getOwnerCars(token);
-        setCars(list as CarWithMeta[]);
-      } catch {
-        // Fallback if owner/my-cars not deployed yet
-        const all = await apiService.getCars({ limit: 100 });
-        const uid = user?.id || user?._id;
-        const mine = all.filter(
-          (c) =>
-            c.ownerId === uid ||
-            c.owner?._id === uid ||
-            (c.owner as { id?: string })?.id === uid
-        );
-        setCars(mine as CarWithMeta[]);
-      }
+      const list = await apiService.getOwnerCars(token);
+      setCars(list as CarWithMeta[]);
     } catch (err) {
       console.error(err);
       setError('Could not load your listings.');
@@ -265,6 +253,17 @@ const OwnerListingsManager = () => {
       <div className="flex flex-col items-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-3" />
         <p className="text-muted-foreground text-sm">Loading your listings...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-10 space-y-4">
+        <p className="text-destructive">{error}</p>
+        <Button variant="outline" onClick={() => loadCars()}>
+          Try again
+        </Button>
       </div>
     );
   }

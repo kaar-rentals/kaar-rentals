@@ -122,8 +122,22 @@ const Profile = () => {
 
       // Own dashboard: all listings including rented
       if (!unique_id && token) {
-        const myCars = await apiService.getOwnerCars(token);
-        setListings(myCars as never[]);
+        try {
+          const myCars = await apiService.getOwnerCars(token);
+          setListings(myCars as never[]);
+        } catch {
+          const ownerId = user.unique_id || user._id;
+          const res = await fetch(
+            apiUrl(`/api/cars?owner_unique_id=${ownerId}&limit=50`),
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            setListings(
+              (data.cars || []).map((c: Record<string, unknown>) => normalizeCar(c)) as never[]
+            );
+          }
+        }
         return;
       }
 

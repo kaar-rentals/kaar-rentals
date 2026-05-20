@@ -18,16 +18,20 @@ router.get("/", async (req, res) => {
     const {
       city, category, minPrice, maxPrice, transmission, fuelType, seats, search,
       page = 1, limit = 12, offset = 0, sortBy = "createdAt", order = "desc",
-      featured, owner_unique_id
+      featured, owner_unique_id, mine
     } = req.query;
 
     // Public listings: approved + (active OR rented)
     // Owner profile by unique_id: all approved cars for that owner (any status)
+    // mine=true: authenticated owner's dashboard (all their cars)
     const relaxFilters = process.env.RELAX_CAR_FILTERS === 'true';
+    const userId = req.user?.id || req.user?._id;
 
     let filters = { isApproved: true };
 
-    if (relaxFilters) {
+    if (mine === 'true' && userId) {
+      filters = { $or: [{ ownerId: userId }, { owner: userId }] };
+    } else if (relaxFilters) {
       // Temporary: show every approved listing
       filters = { isApproved: true };
     } else if (owner_unique_id) {
@@ -35,7 +39,12 @@ router.get("/", async (req, res) => {
       if (!owner) {
         return res.json({ total: 0, page: parseInt(page), limit: parseInt(limit), offset: parseInt(offset) || 0, cars: [] });
       }
-      filters.$or = [{ ownerId: owner._id }, { owner: owner._id }];
+      filters = {
+        isApproved: true,
+        $or: [{ ownerId: owner._id }, { owner: owner._id }]
+      };
+    } else if (mine === 'true') {
+      return res.status(401).json({ message: 'Authentication required' });
     } else {
       filters.$or = [
         { isActive: true },

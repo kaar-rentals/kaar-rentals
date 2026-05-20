@@ -156,18 +156,20 @@ class ApiService {
   }
 
   async getOwnerCars(token?: string): Promise<Car[]> {
-    try {
-      const response = await fetch(apiUrl('/api/cars/owner/my-cars'), {
-        headers: getAuthHeaders(token),
-      });
-      if (!response.ok) throw new Error('Failed to fetch owner cars');
-      const data = await this.parseJsonResponse(response);
-      const list = Array.isArray(data) ? data : (data.cars || []);
-      return list.map((c: Record<string, unknown>) => normalizeCar(c));
-    } catch (error) {
-      console.error('API Error:', error);
-      throw error;
+    const headers = getAuthHeaders(token);
+
+    // Primary: dedicated owner endpoint
+    let response = await fetch(apiUrl('/api/cars/owner/my-cars'), { headers });
+    if (response.status === 404) {
+      // Fallback when backend not yet deployed with owner route
+      response = await fetch(apiUrl('/api/cars?mine=true&limit=100'), { headers });
     }
+    if (!response.ok) {
+      throw new Error(`Failed to fetch owner cars (${response.status})`);
+    }
+    const data = await this.parseJsonResponse(response);
+    const list = Array.isArray(data) ? data : (data.cars || []);
+    return list.map((c: Record<string, unknown>) => normalizeCar(c));
   }
 
   async createCar(carData: CreateCarData, token?: string): Promise<Car> {

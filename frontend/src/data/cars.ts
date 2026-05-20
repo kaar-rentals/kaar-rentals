@@ -50,20 +50,20 @@ export const dealers: Dealer[] = [
   {
     id: 'dealer-1',
     name: 'Premium Auto Dealership',
-    whatsapp: '+923090017510',
+    whatsapp: '+923245793350',
     location: 'DHA Phase 5, Karachi',
     email: 'kaar.rentals@gmail.com',
-    phone: '03090017510',
+    phone: '03245793350',
     rating: 4.8,
     description: 'Luxury car specialists with over 20 years of experience in premium automotive sales.'
   },
   {
     id: 'dealer-2',
     name: 'Elite Motors',
-    whatsapp: '+923090017510',
+    whatsapp: '+923245793350',
     location: 'Gulberg, Lahore',
     email: 'kaar.rentals@gmail.com',
-    phone: '03090017510',
+    phone: '03245793350',
     rating: 4.9,
     description: 'Your trusted partner for high-end vehicles and exceptional customer service.'
   }
@@ -96,7 +96,7 @@ export const cars: Car[] = [
       _id: 'owner-1',
       name: 'Premium Auto Dealership',
       email: 'kaar.rentals@gmail.com',
-      phone: '03090017510'
+      phone: '03245793350'
     },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -127,7 +127,7 @@ export const cars: Car[] = [
       _id: 'owner-2',
       name: 'Elite Motors',
       email: 'kaar.rentals@gmail.com',
-      phone: '03090017510'
+      phone: '03245793350'
     },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -158,7 +158,7 @@ export const cars: Car[] = [
       _id: 'owner-1',
       name: 'Premium Auto Dealership',
       email: 'kaar.rentals@gmail.com',
-      phone: '03090017510'
+      phone: '03245793350'
     },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -189,7 +189,7 @@ export const cars: Car[] = [
       _id: 'owner-2',
       name: 'Elite Motors',
       email: 'kaar.rentals@gmail.com',
-      phone: '03090017510'
+      phone: '03245793350'
     },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -220,7 +220,7 @@ export const cars: Car[] = [
       _id: 'owner-1',
       name: 'Premium Auto Dealership',
       email: 'kaar.rentals@gmail.com',
-      phone: '03090017510'
+      phone: '03245793350'
     },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()

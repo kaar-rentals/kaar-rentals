@@ -2,9 +2,10 @@
 // Environment variables must start with VITE_ in Vite
 
 export const contactConfig = {
-  phone: import.meta.env.VITE_CONTACT_PHONE || '+923090017510',
+  phone: import.meta.env.VITE_CONTACT_PHONE || '03245793350',
   email: import.meta.env.VITE_CONTACT_EMAIL || 'kaar.rentals@gmail.com',
-  whatsapp: import.meta.env.VITE_CONTACT_WHATSAPP || 'https://wa.me/923090017510',
+  whatsapp: import.meta.env.VITE_CONTACT_WHATSAPP || 'https://wa.me/923245793350',
+  whatsappNumber: import.meta.env.VITE_CONTACT_WHATSAPP_NUMBER || '+923245793350',
   addresses: [
     import.meta.env.VITE_ADDRESS_1 || 'DHA Phase 5, Karachi',
     import.meta.env.VITE_ADDRESS_2 || 'Gulberg, Lahore',

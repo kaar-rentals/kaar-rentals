@@ -249,7 +249,7 @@ This project is licensed under the MIT License.
 
 ## 🆘 Support
 
-For support, email kaar.rentals@gmail.com or contact us via WhatsApp at +923090017510.
+For support, email kaar.rentals@gmail.com or contact us via WhatsApp at +923245793350.
 
 ## 🔮 Future Features
 

@@ -35,7 +35,7 @@ const Contact = () => {
     {
       icon: MessageCircle,
       title: 'WhatsApp',
-      details: [contactConfig.whatsapp, 'Instant messaging', 'Quick booking support']
+      details: [contactConfig.whatsappNumber, 'Instant messaging', 'Quick booking support']
     },
     ...(contactConfig.showAddresses ? [{
       icon: MapPin,
@@ -162,7 +162,7 @@ const Contact = () => {
                       <span>Instagram</span>
                     </a>
                     <a 
-                      href="https://wa.me/923090017510" 
+                      href={contactConfig.whatsapp} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"

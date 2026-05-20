@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Car, MapPin, Phone, Mail, Facebook, Instagram, MessageCircle } from 'lucide-react';
+import { contactConfig } from '@/config/contact';
 
 const Footer = () => {
   return (
@@ -24,7 +25,7 @@ const Footer = () => {
               <a href="https://www.instagram.com/kaar.rentals/" target="_blank" rel="noopener noreferrer">
                 <Instagram className="h-5 w-5 hover:text-accent cursor-pointer transition-colors" />
               </a>
-              <a href="https://wa.me/923090017510" target="_blank" rel="noopener noreferrer">
+              <a href={contactConfig.whatsapp} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-5 w-5 hover:text-accent cursor-pointer transition-colors" />
               </a>
               <a href="https://www.tiktok.com/@kaar.rentals" target="_blank" rel="noopener noreferrer">
@@ -62,11 +63,11 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-accent" />
-                <a href="tel:03090017510" className="text-sm hover:text-accent transition-colors">03090017510</a>
+                <a href={`tel:${contactConfig.phone}`} className="text-sm hover:text-accent transition-colors">{contactConfig.phone}</a>
               </div>
               <div className="flex items-center space-x-2">
                 <MessageCircle className="h-4 w-4 text-accent" />
-                <a href="https://wa.me/923090017510" target="_blank" rel="noopener noreferrer" className="text-sm hover:text-accent transition-colors">+923090017510</a>
+                <a href={contactConfig.whatsapp} target="_blank" rel="noopener noreferrer" className="text-sm hover:text-accent transition-colors">{contactConfig.whatsappNumber}</a>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4 text-accent" />

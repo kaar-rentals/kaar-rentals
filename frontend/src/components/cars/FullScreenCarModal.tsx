@@ -269,7 +269,7 @@ const FullScreenCarModal = ({ car, isOpen, onClose, initialImageIndex = 0 }: Ful
                     variant="outline" 
                     className="flex-1"
                     onClick={() => {
-                      const phone = car.owner?.phone || '03090017510';
+                      const phone = car.owner?.phone || '03245793350';
                       const whatsapp = phone.replace(/[^0-9]/g, '');
                       window.open(`https://wa.me/${whatsapp}`, '_blank');
                     }}
@@ -281,7 +281,7 @@ const FullScreenCarModal = ({ car, isOpen, onClose, initialImageIndex = 0 }: Ful
                     variant="outline" 
                     className="flex-1"
                     onClick={() => {
-                      const phone = car.owner?.phone || '03090017510';
+                      const phone = car.owner?.phone || '03245793350';
                       window.open(`tel:${phone}`, '_self');
                     }}
                   >

@@ -28,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService, Car } from '@/services/api';
 import { normalizeCar } from '@/lib/normalizeCar';
+import { useListingViews } from '@/lib/useListingViews';
 
 type CarWithMeta = Car & {
   viewCount?: number;
@@ -98,6 +99,23 @@ const OwnerListingsManager = () => {
   useEffect(() => {
     loadCars();
   }, [loadCars]);
+
+  // Real-time view count updates when someone opens a listing
+  useListingViews(
+    useCallback(
+      (payload) => {
+        setCars((prev) =>
+          prev.map((c) =>
+            c._id === payload.carId
+              ? { ...c, viewCount: payload.viewCount }
+              : c
+          )
+        );
+      },
+      []
+    ),
+    true
+  );
 
   const listingStatus = (car: CarWithMeta) =>
     car.status || (car.isRented ? 'rented' : 'available');

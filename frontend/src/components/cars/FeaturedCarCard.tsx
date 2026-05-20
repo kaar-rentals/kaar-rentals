@@ -1,4 +1,4 @@
-import { Heart, Star, User, Fuel, Settings, ChevronLeft, ChevronRight, Shield, Crown, CheckCircle, Camera, Award } from 'lucide-react';
+import { Heart, Star, User, Fuel, Settings, ChevronLeft, ChevronRight, Shield, Crown, CheckCircle, Camera, Award, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Car } from '@/services/api';
@@ -189,7 +189,7 @@ const FeaturedCarCard = ({ car }: FeaturedCarCardProps) => {
           </div>
 
           {/* Primary Specifications */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             <div className="text-center">
               <div className="text-sm font-semibold text-slate-900">{car.seating || 'N/A'}</div>
               <div className="text-xs text-slate-500">Seats</div>
@@ -201,6 +201,13 @@ const FeaturedCarCard = ({ car }: FeaturedCarCardProps) => {
             <div className="text-center">
               <div className="text-sm font-semibold text-slate-900">{car.mileage || 'N/A'}</div>
               <div className="text-xs text-slate-500">Mileage</div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm font-semibold text-slate-900 flex items-center justify-center gap-0.5">
+                <Eye className="h-3.5 w-3.5 text-slate-500" />
+                {(car.viewCount ?? 0).toLocaleString()}
+              </div>
+              <div className="text-xs text-slate-500">Views</div>
             </div>
           </div>
 

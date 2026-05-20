@@ -35,6 +35,7 @@ export function normalizeCar(raw: Record<string, unknown>): Car {
     owner: owner ?? (raw.owner as Car['owner']),
     pricePerDay: Number(raw.pricePerDay ?? raw.price ?? 0),
     price: Number(raw.price ?? raw.pricePerDay ?? 0),
+    viewCount: Number(raw.viewCount ?? 0),
   };
 }
 

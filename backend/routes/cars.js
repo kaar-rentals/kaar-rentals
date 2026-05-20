@@ -2,7 +2,32 @@ const express = require("express");
 const router = express.Router();
 const Car = require("../models/Car");
 const User = require("../models/User");
-const { notifyListingEvent } = require("../utils/socket");
+const { notifyListingEvent, notifyViewUpdate } = require("../utils/socket");
+
+/** Increment view count and emit real-time update */
+async function recordListingView(carId) {
+  const updated = await Car.findByIdAndUpdate(
+    carId,
+    { $inc: { viewCount: 1 } },
+    { new: true }
+  )
+    .populate('ownerId', 'unique_id')
+    .lean();
+
+  if (!updated) return null;
+
+  const owner = updated.ownerId || updated.owner;
+  const owner_unique_id =
+    owner && typeof owner === 'object' ? owner.unique_id : null;
+
+  notifyViewUpdate({
+    carId: String(updated._id),
+    viewCount: updated.viewCount || 0,
+    owner_unique_id,
+  });
+
+  return updated.viewCount || 0;
+}
 const authMiddleware = require("../middleware/auth");
 const isAdmin = require("../middleware/isAdmin");
 
@@ -216,12 +241,26 @@ router.get("/owner/my-cars", authMiddleware, async (req, res) => {
   }
 });
 
+// POST /api/cars/:id/view - Record a listing view (real-time broadcast to owner dashboard)
+router.post("/:id/view", async (req, res) => {
+  try {
+    const car = await Car.findById(req.params.id).select('_id isApproved');
+    if (!car) return res.status(404).json({ message: 'Car not found' });
+    if (!car.isApproved) {
+      return res.status(404).json({ message: 'Car not found' });
+    }
+
+    const viewCount = await recordListingView(req.params.id);
+    return res.json({ carId: req.params.id, viewCount });
+  } catch (err) {
+    console.error('Error recording view:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // GET /api/cars/:id - Include owner name and location when authenticated
 router.get("/:id", async (req, res) => {
   try {
-    // Track listing views (non-blocking)
-    Car.findByIdAndUpdate(req.params.id, { $inc: { viewCount: 1 } }).catch(() => {});
-
     let car = await Car.findById(req.params.id)
       .populate('ownerId', req.user ? 'name email phone unique_id location' : 'unique_id')
       .lean();

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Fuel, Settings, MapPin, Phone, MessageCircle, Mail, ChevronLeft, ChevronRight, Heart, AlertCircle, LogIn, X } from 'lucide-react';
+import { ArrowLeft, User, Fuel, Settings, MapPin, Phone, MessageCircle, Mail, ChevronLeft, ChevronRight, Heart, AlertCircle, LogIn, X, Eye } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { cars, dealers } from '@/data/cars';
 import { apiUrl } from '@/lib/apiBase';
 import { normalizeCar, getCarOwnerId } from '@/lib/normalizeCar';
 import { usePageSeo } from '@/lib/usePageSeo';
+import { useListingViews } from '@/lib/useListingViews';
 
 const PLACEHOLDER_IMAGE = '/placeholder-car.svg';
 
@@ -33,11 +34,44 @@ const CarDetails = () => {
   const [editingPrice, setEditingPrice] = useState(false);
   const [priceInput, setPriceInput] = useState('');
   const [savingPrice, setSavingPrice] = useState(false);
+  const [viewCount, setViewCount] = useState(0);
+  const viewRecordedFor = useRef<string | null>(null);
   const dealer = dealers[0]; // For demo, using first dealer
+
+  const handleViewUpdate = useCallback(
+    (payload: { carId: string; viewCount: number }) => {
+      if (payload.carId === id) {
+        setViewCount(payload.viewCount);
+        setCar((prev) =>
+          prev ? { ...prev, viewCount: payload.viewCount } : prev
+        );
+      }
+    },
+    [id]
+  );
+
+  useListingViews(handleViewUpdate, !!id);
 
   useEffect(() => {
     loadCar();
   }, [id, user]); // Re-fetch when user changes (login/logout)
+
+  // Record a view when listing loads (once per car id per session)
+  useEffect(() => {
+    if (!car?._id || viewRecordedFor.current === car._id) return;
+    viewRecordedFor.current = car._id;
+    setViewCount(car.viewCount ?? 0);
+
+    apiService
+      .recordCarView(car._id)
+      .then((count) => {
+        setViewCount(count);
+        setCar((prev) => (prev ? { ...prev, viewCount: count } : prev));
+      })
+      .catch(() => {
+        /* non-blocking */
+      });
+  }, [car?._id]);
 
   const setCarNormalized = (raw: Record<string, unknown>) => {
     setCar(normalizeCar(raw));
@@ -463,10 +497,15 @@ const CarDetails = () => {
                       </Badge>
                     )}
                   </div>
-                  <div className="flex items-center space-x-4 text-gray-600 mb-4">
+                  <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-gray-600 mb-4">
                     <span className="text-lg">{car.year}</span>
                     <span>•</span>
                     <span className="text-lg">{car.engineCapacity}</span>
+                    <span>•</span>
+                    <span className="text-lg flex items-center gap-1.5">
+                      <Eye className="h-4 w-4" />
+                      {viewCount.toLocaleString()} views
+                    </span>
                     {(car.city || car.location) && (
                       <>
                         <span>•</span>

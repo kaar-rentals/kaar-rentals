@@ -27,6 +27,14 @@ module.exports = {
     }
     const owner_unique_id = listing.owner_unique_id || listing.owner?.unique_id || listing.ownerId?.unique_id;
     io.emit(`listing:${type}`, { listing, owner_unique_id });
+  },
+  /** Broadcast updated view count to all clients (owner dashboard updates live) */
+  notifyViewUpdate: (payload) => {
+    if (!io) {
+      console.warn('Socket.io not initialized, cannot emit view update.');
+      return;
+    }
+    io.emit('listing:view', payload);
   }
 };
 

@@ -56,6 +56,7 @@ interface Car {
     phone?: string;
     location?: string;
   };
+  viewCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -226,6 +227,18 @@ class ApiService {
     const raw = await this.parseJsonResponse(response);
     const car = raw._id ? raw : raw;
     return normalizeCar(car as Record<string, unknown>);
+  }
+
+  async recordCarView(id: string): Promise<number> {
+    const response = await fetch(apiUrl(`/api/cars/${id}/view`), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to record view');
+    }
+    const data = await this.parseJsonResponse(response);
+    return Number(data.viewCount ?? 0);
   }
 
   async logCarInquiry(id: string, message?: string, token?: string): Promise<void> {

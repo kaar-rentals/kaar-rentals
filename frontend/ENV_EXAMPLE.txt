@@ -1,6 +1,7 @@
 Frontend Vite environment variables (copy into Vercel):
 
-VITE_API_URL=https://kaar.rentals/api
+# Use site origin (Vercel rewrites /api → backend) OR your Render backend URL — not /api/api
+VITE_API_URL=https://kaar.rentals
 VITE_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
 VITE_SHOW_TEST_CREDENTIALS=true
 

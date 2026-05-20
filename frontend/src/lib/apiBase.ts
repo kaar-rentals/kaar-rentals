@@ -2,18 +2,17 @@
  * Centralized API base URL helper.
  *
  * Convention:
- * - `VITE_API_URL` should be the BACKEND ORIGIN (no trailing slash), e.g.
- *   - "https://your-backend.up.railway.app"
- *   - "https://api.kaar.rentals"
- * - If `VITE_API_URL` is empty/undefined, requests will be relative ("/api/..."),
- *   so Vercel rewrites (or a same-origin reverse proxy) can handle routing.
+ * - `VITE_API_URL` may be the backend origin OR origin + `/api` (both work).
+ *   Examples: `https://your-backend.onrender.com` or `https://kaar.rentals/api`
+ * - If empty, requests use relative paths (`/api/...`) for Vercel rewrites.
  */
 const RAW_API_BASE =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
-    ? String(import.meta.env.VITE_API_URL)
+    ? String(import.meta.env.VITE_API_URL).trim()
     : '';
 
-export const API_ORIGIN = RAW_API_BASE.replace(/\/+$/, '');
+/** Backend origin without trailing slash or duplicate `/api` suffix */
+export const API_ORIGIN = RAW_API_BASE.replace(/\/+$/, '').replace(/\/api$/i, '');
 
 export function joinUrl(base: string, path: string): string {
   const p = path.startsWith('/') ? path : `/${path}`;
@@ -21,8 +20,9 @@ export function joinUrl(base: string, path: string): string {
   return `${base.replace(/\/+$/, '')}${p}`;
 }
 
-/** Build a URL to the backend, including the "/api" prefix. */
+/** Build a URL to the backend, including exactly one `/api` prefix. */
 export function apiUrl(path: string): string {
-  return joinUrl(API_ORIGIN, path);
+  const p = path.startsWith('/') ? path : `/${path}`;
+  const apiPath = p.startsWith('/api') ? p : `/api${p}`;
+  return joinUrl(API_ORIGIN, apiPath);
 }
-

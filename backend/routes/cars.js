@@ -15,16 +15,40 @@ router.get("/", async (req, res) => {
       featured, owner_unique_id
     } = req.query;
 
-    // Show approved listings; include rented (status) even if legacy isActive was false
-    const filters = {
-      isApproved: true,
-      $or: [{ isActive: true }, { status: 'rented' }]
-    };
-    
-    // Optional status filter if explicitly requested
-    if (req.query.status) {
-      filters.status = req.query.status;
+    // Build filters with $and so search/owner clauses don't overwrite visibility $or
+    const andConditions = [{ isApproved: true }];
+
+    // Public browse: show active + rented (legacy isActive:false rented still visible)
+    if (!owner_unique_id) {
+      andConditions.push({
+        $or: [{ isActive: true }, { status: 'rented' }]
+      });
     }
+
+    if (search) {
+      andConditions.push({
+        $or: [
+          { brand: { $regex: search, $options: "i" } },
+          { model: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } }
+        ]
+      });
+    }
+
+    if (owner_unique_id) {
+      const owner = await User.findOne({ unique_id: owner_unique_id });
+      if (owner) {
+        andConditions.push({
+          $or: [{ ownerId: owner._id }, { owner: owner._id }]
+        });
+      } else {
+        return res.json({ total: 0, page: parseInt(page), limit: parseInt(limit), offset: parseInt(offset) || 0, cars: [] });
+      }
+    }
+
+    const filters = { $and: andConditions };
+
+    if (req.query.status) filters.status = req.query.status;
     if (city) filters.city = city;
     if (category) filters.category = category;
     if (transmission) filters.transmission = transmission;
@@ -37,24 +61,6 @@ router.get("/", async (req, res) => {
       filters.pricePerDay = {};
       if (minPrice) filters.pricePerDay.$gte = parseInt(minPrice);
       if (maxPrice) filters.pricePerDay.$lte = parseInt(maxPrice);
-    }
-    if (search) {
-      filters.$or = [
-        { brand: { $regex: search, $options: "i" } },
-        { model: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } }
-      ];
-    }
-
-    // Filter by owner_unique_id if provided (show all statuses including rented)
-    if (owner_unique_id) {
-      const owner = await User.findOne({ unique_id: owner_unique_id });
-      if (owner) {
-        filters.$or = [{ ownerId: owner._id }, { owner: owner._id }];
-        delete filters.isActive; // Keep rented listings visible on owner profile
-      } else {
-        return res.json({ total: 0, page: parseInt(page), limit: parseInt(limit), offset: parseInt(offset) || 0, cars: [] });
-      }
     }
 
     const skip = offset ? parseInt(offset) : (Math.max(1, parseInt(page)) - 1) * parseInt(limit);

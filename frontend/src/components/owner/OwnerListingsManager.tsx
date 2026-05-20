@@ -78,10 +78,25 @@ const OwnerListingsManager = () => {
     if (!token) return;
     try {
       setLoading(true);
-      const list = await apiService.getOwnerCars(token);
-      setCars(list as CarWithMeta[]);
+      setError(null);
+      try {
+        const list = await apiService.getOwnerCars(token);
+        setCars(list as CarWithMeta[]);
+      } catch {
+        // Fallback if owner/my-cars not deployed yet
+        const all = await apiService.getCars({ limit: 100 });
+        const uid = user?.id || user?._id;
+        const mine = all.filter(
+          (c) =>
+            c.ownerId === uid ||
+            c.owner?._id === uid ||
+            (c.owner as { id?: string })?.id === uid
+        );
+        setCars(mine as CarWithMeta[]);
+      }
     } catch (err) {
       console.error(err);
+      setError('Could not load your listings.');
       toast({
         title: 'Could not load listings',
         description: 'Please refresh or sign in again.',
@@ -90,7 +105,7 @@ const OwnerListingsManager = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, toast]);
+  }, [token, toast, user]);
 
   useEffect(() => {
     loadCars();

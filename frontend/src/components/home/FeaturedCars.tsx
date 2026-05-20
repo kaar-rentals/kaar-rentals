@@ -29,15 +29,13 @@ const FeaturedCars = () => {
         }
       }
       
-      // Fallback: Get all cars and filter for featured ones
-      const carsData = await apiService.getCars();
+      // Fallback: featured first, otherwise show latest approved listings
+      const carsData = await apiService.getCars({ limit: 12 });
       const carsArray = Array.isArray(carsData) ? carsData : (carsData?.cars || []);
-      const featuredCars = carsArray.filter((car: Car) => car.featured === true);
-      if (featuredCars.length > 0) {
-        setFeaturedCars(featuredCars.slice(0, 6));
-      } else {
-        setFeaturedCars([]);
-      }
+      const featuredOnly = carsArray.filter((car: Car) => car.featured === true);
+      setFeaturedCars(
+        (featuredOnly.length > 0 ? featuredOnly : carsArray).slice(0, 6)
+      );
     } catch (error) {
       console.error('Error loading featured cars:', error);
       setFeaturedCars([]);

@@ -24,5 +24,16 @@ export function joinUrl(base: string, path: string): string {
 export function apiUrl(path: string): string {
   const p = path.startsWith('/') ? path : `/${path}`;
   const apiPath = p.startsWith('/api') ? p : `/api${p}`;
+  // Prefer relative /api on production host (Vercel rewrite) when env points at same site
+  if (!API_ORIGIN) return apiPath;
   return joinUrl(API_ORIGIN, apiPath);
+}
+
+/** Resolved URL for debugging in components */
+export function debugApiUrl(path: string): string {
+  const url = apiUrl(path);
+  if (typeof console !== 'undefined') {
+    console.log('[apiUrl]', path, '→', url);
+  }
+  return url;
 }

@@ -18,27 +18,33 @@ const FeaturedCars = () => {
   const loadFeaturedCars = async () => {
     try {
       setLoading(true);
-      // Fetch featured cars with limit
-      const response = await fetch(apiUrl('/api/cars?featured=true&limit=6'));
-      if (response.ok) {
-        const data = await response.json();
-        const cars = data.cars || [];
-        if (cars.length > 0) {
-          setFeaturedCars(cars.slice(0, 6));
-          return;
-        }
+      const url = apiUrl('/api/cars?limit=12');
+      console.log('[FeaturedCars] fetching:', url);
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error('[FeaturedCars] API error:', response.status, response.statusText);
+        throw new Error(`HTTP ${response.status}`);
       }
-      
-      // Fallback: featured first, otherwise show latest approved listings
-      const carsData = await apiService.getCars({ limit: 12 });
-      const carsArray = Array.isArray(carsData) ? carsData : (carsData?.cars || []);
+
+      const data = await response.json();
+      const carsArray: Car[] = data.cars || [];
+      console.log('[FeaturedCars] received', carsArray.length, 'cars', data);
+
       const featuredOnly = carsArray.filter((car: Car) => car.featured === true);
       setFeaturedCars(
         (featuredOnly.length > 0 ? featuredOnly : carsArray).slice(0, 6)
       );
     } catch (error) {
-      console.error('Error loading featured cars:', error);
-      setFeaturedCars([]);
+      console.error('[FeaturedCars] Error loading featured cars:', error);
+      try {
+        const carsData = await apiService.getCars({ limit: 12 });
+        const fallback = Array.isArray(carsData) ? carsData : [];
+        console.log('[FeaturedCars] fallback via apiService:', fallback.length);
+        setFeaturedCars(fallback.slice(0, 6));
+      } catch {
+        setFeaturedCars([]);
+      }
     } finally {
       setLoading(false);
     }

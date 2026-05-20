@@ -9,58 +9,92 @@ const isAdmin = require("../middleware/isAdmin");
 // GET /api/cars - Support pagination, featured filter, owner info based on auth
 router.get("/", async (req, res) => {
   try {
+    // Repair legacy listings hidden when status was set to rented (non-blocking)
+    Car.updateMany(
+      { isApproved: true, isActive: false },
+      { $set: { isActive: true } }
+    ).catch(() => {});
+
     const {
       city, category, minPrice, maxPrice, transmission, fuelType, seats, search,
       page = 1, limit = 12, offset = 0, sortBy = "createdAt", order = "desc",
       featured, owner_unique_id
     } = req.query;
 
-    // Build filters with $and so search/owner clauses don't overwrite visibility $or
-    const andConditions = [{ isApproved: true }];
+    // Public listings: approved + (active OR rented)
+    // Owner profile by unique_id: all approved cars for that owner (any status)
+    const relaxFilters = process.env.RELAX_CAR_FILTERS === 'true';
 
-    // Public browse: show active + rented (legacy isActive:false rented still visible)
-    if (!owner_unique_id) {
-      andConditions.push({
-        $or: [{ isActive: true }, { status: 'rented' }]
-      });
+    let filters = { isApproved: true };
+
+    if (relaxFilters) {
+      // Temporary: show every approved listing
+      filters = { isApproved: true };
+    } else if (owner_unique_id) {
+      const owner = await User.findOne({ unique_id: owner_unique_id });
+      if (!owner) {
+        return res.json({ total: 0, page: parseInt(page), limit: parseInt(limit), offset: parseInt(offset) || 0, cars: [] });
+      }
+      filters.$or = [{ ownerId: owner._id }, { owner: owner._id }];
+    } else {
+      filters.$or = [
+        { isActive: true },
+        { isRented: true },
+        { status: 'rented' } // legacy/synced status field
+      ];
     }
 
     if (search) {
-      andConditions.push({
-        $or: [
-          { brand: { $regex: search, $options: "i" } },
-          { model: { $regex: search, $options: "i" } },
-          { description: { $regex: search, $options: "i" } }
+      filters = {
+        $and: [
+          filters,
+          {
+            $or: [
+              { brand: { $regex: search, $options: "i" } },
+              { model: { $regex: search, $options: "i" } },
+              { description: { $regex: search, $options: "i" } }
+            ]
+          }
         ]
-      });
+      };
     }
 
-    if (owner_unique_id) {
-      const owner = await User.findOne({ unique_id: owner_unique_id });
-      if (owner) {
-        andConditions.push({
-          $or: [{ ownerId: owner._id }, { owner: owner._id }]
-        });
-      } else {
-        return res.json({ total: 0, page: parseInt(page), limit: parseInt(limit), offset: parseInt(offset) || 0, cars: [] });
-      }
+    if (req.query.status) {
+      if (filters.$and) filters.$and.push({ status: req.query.status });
+      else filters.status = req.query.status;
     }
-
-    const filters = { $and: andConditions };
-
-    if (req.query.status) filters.status = req.query.status;
-    if (city) filters.city = city;
-    if (category) filters.category = category;
-    if (transmission) filters.transmission = transmission;
-    if (fuelType) filters.fuelType = fuelType;
-    if (seats) filters.seating = parseInt(seats);
+    if (city) {
+      if (filters.$and) filters.$and.push({ city });
+      else filters.city = city;
+    }
+    if (category) {
+      if (filters.$and) filters.$and.push({ category });
+      else filters.category = category;
+    }
+    if (transmission) {
+      if (filters.$and) filters.$and.push({ transmission });
+      else filters.transmission = transmission;
+    }
+    if (fuelType) {
+      if (filters.$and) filters.$and.push({ fuelType });
+      else filters.fuelType = fuelType;
+    }
+    if (seats) {
+      const seatFilter = { seating: parseInt(seats) };
+      if (filters.$and) filters.$and.push(seatFilter);
+      else filters.seating = parseInt(seats);
+    }
     if (featured !== undefined) {
-      filters.featured = featured === 'true' || featured === true;
+      const feat = { featured: featured === 'true' || featured === true };
+      if (filters.$and) filters.$and.push(feat);
+      else Object.assign(filters, feat);
     }
     if (minPrice || maxPrice) {
-      filters.pricePerDay = {};
-      if (minPrice) filters.pricePerDay.$gte = parseInt(minPrice);
-      if (maxPrice) filters.pricePerDay.$lte = parseInt(maxPrice);
+      const priceFilter = { pricePerDay: {} };
+      if (minPrice) priceFilter.pricePerDay.$gte = parseInt(minPrice);
+      if (maxPrice) priceFilter.pricePerDay.$lte = parseInt(maxPrice);
+      if (filters.$and) filters.$and.push(priceFilter);
+      else filters.pricePerDay = priceFilter.pricePerDay;
     }
 
     const skip = offset ? parseInt(offset) : (Math.max(1, parseInt(page)) - 1) * parseInt(limit);

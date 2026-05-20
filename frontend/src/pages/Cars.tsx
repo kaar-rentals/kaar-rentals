@@ -34,13 +34,25 @@ const Cars = () => {
     try {
       setLoading(true);
       const qs = new URLSearchParams({ ...query, page, limit: 12 }).toString();
-      const headers = { "Content-Type": "application/json" };
+      const url = apiUrl(`/api/cars?${qs}`);
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(apiUrl(`/api/cars?${qs}`), { headers });
+
+      console.log('[Cars] fetching:', url);
+      const res = await fetch(url, { headers });
+
+      if (!res.ok) {
+        console.error('[Cars] API error:', res.status, await res.text());
+        setCars([]);
+        return;
+      }
+
       const json = await res.json();
-      setCars(json.cars || []);
+      const list = json.cars || [];
+      console.log('[Cars] received', list.length, 'cars', json);
+      setCars(list);
     } catch (error) {
-      console.error('Error loading cars:', error);
+      console.error('[Cars] Error loading cars:', error);
       setCars([]);
     } finally {
       setLoading(false);

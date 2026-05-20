@@ -12,6 +12,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { cars, dealers } from '@/data/cars';
 import { apiUrl } from '@/lib/apiBase';
+import { normalizeCar, getCarOwnerId } from '@/lib/normalizeCar';
+import { usePageSeo } from '@/lib/usePageSeo';
+
+const PLACEHOLDER_IMAGE = '/placeholder-car.svg';
 
 const CarDetails = () => {
   const { id } = useParams();
@@ -34,6 +38,10 @@ const CarDetails = () => {
   useEffect(() => {
     loadCar();
   }, [id, user]); // Re-fetch when user changes (login/logout)
+
+  const setCarNormalized = (raw: Record<string, unknown>) => {
+    setCar(normalizeCar(raw));
+  };
 
   const loadCar = async () => {
     try {
@@ -58,10 +66,14 @@ const CarDetails = () => {
         const maybeCars = await apiService.getCars();
         const carsArray = Array.isArray(maybeCars)
           ? maybeCars
-          : (Array.isArray((maybeCars as any)?.data) ? (maybeCars as any).data : []);
+          : (Array.isArray((maybeCars as any)?.cars)
+            ? (maybeCars as any).cars
+            : Array.isArray((maybeCars as any)?.data)
+              ? (maybeCars as any).data
+              : []);
         const foundCar = carsArray.find((c: any) => c?._id === id || c?.id === id);
         if (foundCar) {
-          setCar(foundCar);
+          setCarNormalized(foundCar as Record<string, unknown>);
           return;
         }
       } catch (e) {
@@ -71,7 +83,7 @@ const CarDetails = () => {
       // Static data fallback
       const staticCar = cars.find(c => c.id === id);
       if (staticCar) {
-        setCar(staticCar as any);
+        setCarNormalized(staticCar as unknown as Record<string, unknown>);
       } else {
         setError('Listing not found');
       }
@@ -96,90 +108,38 @@ const CarDetails = () => {
   };
 
   const getCurrentImage = () => {
-    if (!car) return '/placeholder-car.jpg';
+    if (!car) return PLACEHOLDER_IMAGE;
     if (car.images && car.images.length > 0) {
       return car.images[currentImageIndex];
     }
-    return car.image || '/placeholder-car.jpg';
+    return car.image || PLACEHOLDER_IMAGE;
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading car details...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !car) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="mb-6">
-            <div className="mx-auto w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-4">
-              <AlertCircle className="h-12 w-12 text-red-600" />
-            </div>
-            <h1 className="text-2xl font-bold mb-2 text-gray-900">
-              {error || 'Listing not found'}
-            </h1>
-            <p className="text-gray-600 mb-6">
-              {error === 'Listing not found' 
-                ? 'The car listing you\'re looking for doesn\'t exist or may have been removed.'
-                : 'Something went wrong while loading the listing details.'
-              }
-            </p>
-          </div>
-          <div className="space-x-4">
-            <Link to="/cars">
-              <Button>Browse All Cars</Button>
-            </Link>
-            <Button variant="outline" onClick={() => window.location.reload()}>
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // SEO: dynamic title/description for each car
-  useEffect(() => {
-    if (!car) return;
-    const city = car.city || car.location || 'Pakistan';
-    const price = (car.pricePerDay || car.price || 0).toLocaleString();
-    document.title = `${car.brand} ${car.model} ${car.year} for rent in ${city} – Kaar.Rentals`;
-    const desc = `Rent a ${car.year} ${car.brand} ${car.model} in ${city} for PKR ${price} per ${car.priceType === 'monthly' ? 'month' : 'day'}. Book verified cars from trusted owners on Kaar.Rentals.`;
-    let meta = document.querySelector("meta[name='description']");
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.setAttribute('name', 'description');
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute('content', desc);
-  }, [car]);
+  const cityLabel = car?.city || car?.location || 'Pakistan';
+  const seoTitle = car
+    ? `${car.brand} ${car.model} ${car.year} for rent in ${cityLabel} – Kaar.Rentals`
+    : 'Car Details – Kaar.Rentals';
+  const seoDescription = car
+    ? `Rent a ${car.year} ${car.brand} ${car.model} in ${cityLabel} for PKR ${(car.pricePerDay || car.price || 0).toLocaleString()} per ${car.priceType === 'monthly' ? 'month' : 'day'}. Book verified cars from trusted owners on Kaar.Rentals.`
+    : 'View car rental listings on Kaar.Rentals.';
+  usePageSeo(seoTitle, seoDescription);
 
   const currentUserId = user?.id || (user as any)?._id;
   const isAdmin = !!user && (user.is_admin || user.role === 'admin');
+  const ownerId = car ? getCarOwnerId(car) : null;
   const isOwner =
-    !!currentUserId &&
-    car &&
-    (
-      (car as any).ownerId === currentUserId ||
-      (car.owner && typeof car.owner === 'object' &&
-        ((car.owner as any)._id === currentUserId || (car.owner as any).id === currentUserId))
-    );
+    !!currentUserId && !!ownerId && String(ownerId) === String(currentUserId);
   const canManageListing = isAdmin || isOwner;
 
   const handleStartEditPrice = () => {
+    if (!car) return;
     const currentPrice = car.pricePerDay || car.price || 0;
     setPriceInput(currentPrice ? String(currentPrice) : '');
     setEditingPrice(true);
   };
 
   const handleSavePrice = async () => {
+    if (!car) return;
     try {
       if (!token) {
         toast({
@@ -202,7 +162,7 @@ const CarDetails = () => {
 
       setSavingPrice(true);
       const updatedCar = await apiService.updateCarPrice(car._id, value, token);
-      setCar(updatedCar);
+      setCar(normalizeCar(updatedCar as unknown as Record<string, unknown>));
 
       toast({
         title: 'Price Updated',
@@ -220,6 +180,57 @@ const CarDetails = () => {
       setSavingPrice(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="pt-16 flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading car details...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !car) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="pt-16 flex items-center justify-center min-h-[60vh]">
+          <div className="text-center px-4">
+            <div className="mb-6">
+              <div className="mx-auto w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="h-12 w-12 text-red-600" />
+              </div>
+              <h1 className="text-2xl font-bold mb-2 text-gray-900">
+                {error || 'Listing not found'}
+              </h1>
+              <p className="text-gray-600 mb-6">
+                {error === 'Listing not found'
+                  ? "The car listing you're looking for doesn't exist or may have been removed."
+                  : 'Something went wrong while loading the listing details.'}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <Link to="/cars">
+                <Button>Browse All Cars</Button>
+              </Link>
+              <Button variant="outline" onClick={() => loadCar()}>
+                Try Again
+              </Button>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const features = car.features || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -496,7 +507,7 @@ const CarDetails = () => {
                   <div className="premium-card p-8">
                     <h2 className="text-2xl font-bold mb-6">Features & Equipment</h2>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {car.features.map((feature, index) => (
+                      {features.map((feature, index) => (
                         <div key={index} className="flex items-center space-x-2">
                           <div className="w-2 h-2 bg-accent rounded-full"></div>
                           <span className="text-sm">{feature}</span>
@@ -631,7 +642,7 @@ const CarDetails = () => {
                               });
                               if (response.ok) {
                                 const updatedCar = await response.json();
-                                setCar(updatedCar);
+                                setCar(normalizeCar(updatedCar as Record<string, unknown>));
                                 toast({
                                   title: "Status Updated",
                                   description: `Listing marked as ${newStatus}`,

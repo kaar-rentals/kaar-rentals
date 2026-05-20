@@ -69,11 +69,14 @@ router.get("/", async (req, res) => {
     cars = cars.map(car => {
       const owner = car.ownerId || car.owner; // Support both ownerId and legacy owner
       if (owner && typeof owner === 'object') {
+        const ownerIdStr = owner._id ? String(owner._id) : null;
         if (req.user) {
           // Authenticated: include name and location
           return {
             ...car,
+            ownerId: ownerIdStr,
             owner: {
+              _id: ownerIdStr,
               unique_id: owner.unique_id || null,
               name: owner.name || null,
               location: owner.location || null,
@@ -85,7 +88,9 @@ router.get("/", async (req, res) => {
           // Unauthenticated: only unique_id
           return {
             ...car,
+            ownerId: ownerIdStr,
             owner: {
+              _id: ownerIdStr,
               unique_id: owner.unique_id || null,
               name: null,
               location: null,
@@ -126,9 +131,12 @@ router.get("/:id", async (req, res) => {
     // Format owner data based on authentication
     const owner = car.ownerId || car.owner; // Support both ownerId and legacy owner
     if (owner && typeof owner === 'object') {
+      const ownerIdStr = owner._id ? String(owner._id) : null;
+      car.ownerId = ownerIdStr;
       if (req.user) {
         // Authenticated: include name and location
         car.owner = {
+          _id: ownerIdStr,
           unique_id: owner.unique_id || null,
           name: owner.name || null,
           location: owner.location || null,
@@ -138,6 +146,7 @@ router.get("/:id", async (req, res) => {
       } else {
         // Unauthenticated: only unique_id
         car.owner = {
+          _id: ownerIdStr,
           unique_id: owner.unique_id || null,
           name: null,
           location: null,

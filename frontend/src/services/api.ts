@@ -1,4 +1,5 @@
 import { apiUrl } from '@/lib/apiBase';
+import { normalizeCar } from '@/lib/normalizeCar';
 
 // Helper to get auth token from localStorage
 function getAuthToken(): string | null {
@@ -27,7 +28,10 @@ interface Car {
   year: number;
   category: 'Sedan' | 'SUV' | 'Hatchback';
   pricePerDay: number;
+  price?: number;
+  priceType?: 'daily' | 'monthly';
   images: string[];
+  image?: string;
   location: string;
   city: string;
   engineCapacity: string;
@@ -40,14 +44,17 @@ interface Car {
   isActive: boolean;
   isRented: boolean;
   isApproved: boolean;
+  status?: 'available' | 'rented';
   featured?: boolean;
   verified?: boolean;
   paymentStatus: 'PENDING' | 'PAID' | 'FAILED';
-  owner: {
+  ownerId?: string;
+  owner?: {
     _id: string;
     name: string;
     email: string;
     phone?: string;
+    location?: string;
   };
   createdAt: string;
   updatedAt: string;
@@ -140,7 +147,8 @@ class ApiService {
         headers: getAuthHeaders()
       });
       if (!response.ok) throw new Error('Failed to fetch car');
-      return await this.parseJsonResponse(response);
+      const raw = await this.parseJsonResponse(response);
+      return normalizeCar(raw as Record<string, unknown>);
     } catch (error) {
       console.error('API Error:', error);
       throw error;
@@ -211,7 +219,8 @@ class ApiService {
         body: JSON.stringify({ pricePerDay }),
       });
       if (!response.ok) throw new Error('Failed to update car price');
-      return await this.parseJsonResponse(response);
+      const raw = await this.parseJsonResponse(response);
+      return normalizeCar(raw as Record<string, unknown>);
     } catch (error) {
       console.error('API Error:', error);
       throw error;
@@ -253,7 +262,8 @@ class ApiService {
         throw new Error(`Failed to update car status: ${errorText || response.statusText}`);
       }
       
-      return await this.parseJsonResponse(response);
+      const raw = await this.parseJsonResponse(response);
+      return normalizeCar(raw as Record<string, unknown>);
     } catch (error) {
       console.error('API Error:', error);
       throw error;

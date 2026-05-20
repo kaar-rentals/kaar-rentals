@@ -29,7 +29,7 @@ const FeaturedCarCard = ({ car }: FeaturedCarCardProps) => {
     if (car.images && car.images.length > 0) {
       return car.images[currentImageIndex];
     }
-    return car.image || '/placeholder-car.jpg';
+    return car.image || '/placeholder-car.svg';
   };
 
   return (

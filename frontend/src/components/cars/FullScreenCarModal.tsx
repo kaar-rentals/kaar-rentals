@@ -54,7 +54,7 @@ const FullScreenCarModal = ({ car, isOpen, onClose, initialImageIndex = 0 }: Ful
     if (car.images && car.images.length > 0) {
       return car.images[currentImageIndex];
     }
-    return car.image || '/placeholder-car.jpg';
+    return car.image || '/placeholder-car.svg';
   };
 
   if (!isOpen) return null;

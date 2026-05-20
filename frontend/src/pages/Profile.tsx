@@ -307,14 +307,13 @@ const Profile = () => {
       return true;
     }
 
-    // For public profiles (/profile/:unique_id), fall back to owner field on listing
+    const listingOwnerId =
+      typeof listing.ownerId === 'string'
+        ? listing.ownerId
+        : listing.owner?._id || listing.owner?.id;
     return (
-      listing.owner &&
-      (
-        listing.owner._id === authUser._id ||
-        listing.owner.id === authUser._id ||
-        listing.owner.toString() === authUser._id
-      )
+      !!listingOwnerId &&
+      String(listingOwnerId) === String(authUser._id || authUser.id)
     );
   };
 
@@ -591,7 +590,7 @@ const Profile = () => {
                       <Link to={`/car/${listing._id}`}>
                         <div className="w-full h-48 bg-muted shrink-0 overflow-hidden">
                           <img
-                            src={listing.images?.[0] || "/placeholder-car.png"}
+                            src={listing.images?.[0] || "/placeholder-car.svg"}
                             alt={`${listing.brand} ${listing.model}`}
                             className="h-full w-full object-cover"
                             loading="lazy"

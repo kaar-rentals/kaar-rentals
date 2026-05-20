@@ -287,7 +287,7 @@ const BookCar = () => {
                 <div className="premium-card p-6">
                   <h3 className="text-lg font-semibold mb-4">Included Features</h3>
                   <ul className="space-y-2 text-sm">
-                    {car.features.slice(0, 5).map((feature, index) => (
+                    {(car.features || []).slice(0, 5).map((feature, index) => (
                       <li key={index} className="flex items-center space-x-2">
                         <div className="w-1.5 h-1.5 bg-accent rounded-full"></div>
                         <span>{feature}</span>

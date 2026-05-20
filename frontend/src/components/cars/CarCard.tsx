@@ -14,7 +14,7 @@ const CarCard = ({ car }: CarCardProps) => {
       {/* Image Section */}
       <div className="relative">
         <img 
-          src={car.images?.[0] || car.image || '/placeholder-car.jpg'} 
+          src={car.images?.[0] || car.image || '/placeholder-car.svg'} 
           alt={`${car.brand} ${car.model}`}
           className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
         />

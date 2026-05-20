@@ -104,7 +104,7 @@ const UserListingsPage = () => {
               <div className="flex">
                 <div className="w-32 h-28 bg-muted shrink-0 overflow-hidden">
                   <img
-                    src={listing.image_url || "/placeholder-car.png"}
+                    src={listing.image_url || "/placeholder-car.svg"}
                     alt={listing.title || "Listed car"}
                     className="h-full w-full object-cover"
                     loading="lazy"

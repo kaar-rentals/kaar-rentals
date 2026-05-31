@@ -59,7 +59,7 @@ const Logo = ({ variant = 'default', className }: LogoProps) => {
           'text-lg sm:text-xl font-bold whitespace-nowrap',
           isFooter
             ? 'text-primary-foreground dark:text-card-foreground'
-            : 'text-gradient'
+            : 'text-accent'
         )}
       >
         Kaar.Rentals

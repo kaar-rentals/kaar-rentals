@@ -122,7 +122,7 @@ const About = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div className="space-y-6">
                 <h2 className="text-4xl font-bold text-foreground">
-                  Our <span className="text-gradient">Story</span>
+                  Our <span className="text-accent">Story</span>
                 </h2>
                 <p className="text-lg text-muted-foreground">
                 At Kaar Rentals, we make car hiring simple, reliable, and affordable. Whether you need a vehicle for a business trip, a weekend getaway, or daily use, we offer a wide range of well-maintained cars to suit your needs.
@@ -164,7 +164,7 @@ const About = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-4xl font-bold text-foreground mb-4">
-                By the <span className="text-gradient">Numbers</span>
+                By the <span className="text-accent">Numbers</span>
               </h2>
             </div>
             <div ref={statsRef} className="grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -193,7 +193,7 @@ const About = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold text-foreground mb-4">
-                Our <span className="text-gradient">Values</span>
+                Our <span className="text-accent">Values</span>
               </h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                 The principles that guide everything we do

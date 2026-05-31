@@ -166,28 +166,22 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-hover);
   }
 
-  /* Homepage dark mode — gold text and icons */
+  /* Homepage dark mode — white text, gold accents & icons */
   .dark .home-page .text-foreground {
-    color: hsl(var(--accent));
+    color: hsl(0 0% 98%);
   }
 
   .dark .home-page .text-muted-foreground {
-    color: hsl(var(--accent) / 0.72);
+    color: hsl(0 0% 100% / 0.72);
   }
 
   .dark .home-page [class*="text-foreground/"] {
-    color: hsl(var(--accent) / 0.78);
+    color: hsl(0 0% 100% / 0.82);
   }
 
-  .dark .home-page .text-primary {
+  .dark .home-page .text-primary,
+  .dark .home-page .text-accent {
     color: hsl(var(--accent));
-  }
-
-  .dark .home-page .text-gradient {
-    background: var(--gradient-gold);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
   }
 
   .dark .home-page svg.lucide {
@@ -213,6 +207,16 @@ All colors MUST be HSL.
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  /* Dark theme: solid gold instead of gradient text */
+  .dark .text-gradient,
+  .dark .text-gradient-gold {
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: currentColor;
+    background-clip: unset;
+    color: hsl(var(--accent));
   }
 
   .bg-gradient-hero {

@@ -49,7 +49,7 @@ const PricingPage = () => {
             <div className="premium-card p-8 space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-foreground mb-2">
-                  Contact us on <span className="text-gradient">WhatsApp</span>
+                  Contact us on <span className="text-accent">WhatsApp</span>
                 </h2>
                 <p className="text-muted-foreground text-sm">
                   Fill in your details and we will open WhatsApp with your message ready to send.

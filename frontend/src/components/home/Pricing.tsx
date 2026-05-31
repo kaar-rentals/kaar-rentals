@@ -75,7 +75,7 @@ const Pricing = () => {
         {/* Section header */}
         <div className="text-center mb-8 fade-in">
           <h2 className="text-4xl font-bold text-foreground mb-4">
-            Listing <span className="text-gradient">Plans</span>
+            Listing <span className="text-accent">Plans</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Simple monthly pricing to list your cars on Kaar.Rentals. Choose the plan that fits your fleet.

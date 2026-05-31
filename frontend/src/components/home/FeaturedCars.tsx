@@ -45,7 +45,7 @@ const FeaturedCars = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16 fade-in">
           <h2 className="text-4xl font-bold text-foreground mb-4">
-            Featured <span className="text-gradient">Vehicles</span>
+            Featured <span className="text-accent">Vehicles</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Discover our handpicked selection of premium vehicles, each offering 
@@ -74,7 +74,7 @@ const FeaturedCars = () => {
           <Link to="/cars">
             <Button 
               size="lg" 
-              className="bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-accent dark:text-accent-foreground dark:hover:bg-accent/90"
             >
               View All Cars
               <ArrowRight className="ml-2 h-5 w-5" />

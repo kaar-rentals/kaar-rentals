@@ -92,7 +92,7 @@ const Header = () => {
                   </Button>
                 </Link>
                 <Link to="/auth">
-                  <Button className="bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary">
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-accent dark:text-accent-foreground dark:hover:bg-accent/90">
                     Sign In
                   </Button>
                 </Link>
@@ -171,7 +171,7 @@ const Header = () => {
                       </Button>
                     </Link>
                     <Link to="/auth" className="block">
-                      <Button className="w-full bg-gradient-to-r from-primary to-primary-dark">
+                      <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-accent dark:text-accent-foreground dark:hover:bg-accent/90">
                         Sign In
                       </Button>
                     </Link>

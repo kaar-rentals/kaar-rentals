@@ -96,7 +96,7 @@ const Categories = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16 fade-in">
           <h2 className="text-4xl font-bold text-foreground mb-4">
-            Browse by <span className="text-gradient">Category</span>
+            Browse by <span className="text-accent">Category</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Find the perfect vehicle for your needs from our diverse collection

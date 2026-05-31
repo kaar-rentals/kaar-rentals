@@ -111,7 +111,7 @@ const Cars = () => {
 
             <h1 className="text-5xl md:text-6xl font-bold text-slate-900 dark:text-foreground mb-6 leading-tight">
               Discover Your
-              <span className="block bg-gradient-to-r from-accent via-primary to-accent bg-clip-text text-transparent">
+              <span className="block text-accent">
                 Perfect Ride
               </span>
             </h1>

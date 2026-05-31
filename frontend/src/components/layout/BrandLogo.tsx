@@ -28,7 +28,7 @@ const BrandLogoLink = ({ variant = 'header', className }: BrandLogoLinkProps) =>
         className={cn(
           'block w-auto object-contain',
           isFooter
-            ? 'h-24 sm:h-28 md:h-32'
+            ? 'h-12 sm:h-14 md:h-16'
             : 'h-14 sm:h-16 md:h-[4.5rem]'
         )}
         decoding="async"

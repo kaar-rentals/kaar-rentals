@@ -1,9 +1,42 @@
+import { useEffect, useState } from 'react';
 import { ArrowRight, Star, Users, Car } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { apiUrl } from '@/lib/apiBase';
 import heroBg from '@/assets/hero-bg.jpg';
 
+const StatIcon = ({ children }: { children: React.ReactNode }) => (
+  <div className="flex items-center justify-center w-12 h-12 rounded-full mb-2 mx-auto bg-zinc-500/90 dark:bg-zinc-600 border border-accent/50 shadow-sm">
+    {children}
+  </div>
+);
+
 const Hero = () => {
+  const [carCount, setCarCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // All approved public listings (not featured-only)
+    fetch(apiUrl('/api/cars?limit=1'))
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!cancelled) {
+          setCarCount(typeof json?.total === 'number' ? json.total : 0);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setCarCount(0);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const carCountLabel =
+    carCount === null ? '…' : carCount > 0 ? `${carCount}+` : '0';
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
@@ -49,23 +82,23 @@ const Hero = () => {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-8 pt-8">
               <div className="text-center">
-                <div className="flex items-center justify-center w-12 h-12 bg-accent/20 rounded-full mb-2 mx-auto">
+                <StatIcon>
                   <Car className="h-6 w-6 text-accent" />
-                </div>
-                <div className="text-2xl font-bold text-foreground">500+</div>
-                <div className="text-sm text-foreground/70">Premium Cars</div>
+                </StatIcon>
+                <div className="text-2xl font-bold text-foreground">{carCountLabel}</div>
+                <div className="text-sm text-foreground/70">Available Cars</div>
               </div>
               <div className="text-center">
-                <div className="flex items-center justify-center w-12 h-12 bg-accent/20 rounded-full mb-2 mx-auto">
+                <StatIcon>
                   <Users className="h-6 w-6 text-accent" />
-                </div>
-                <div className="text-2xl font-bold text-foreground">10K+</div>
+                </StatIcon>
+                <div className="text-2xl font-bold text-foreground">1K+</div>
                 <div className="text-sm text-foreground/70">Happy Customers</div>
               </div>
               <div className="text-center">
-                <div className="flex items-center justify-center w-12 h-12 bg-accent/20 rounded-full mb-2 mx-auto">
-                  <Star className="h-6 w-6 text-accent" />
-                </div>
+                <StatIcon>
+                  <Star className="h-6 w-6 text-accent fill-accent" />
+                </StatIcon>
                 <div className="text-2xl font-bold text-foreground">4.9</div>
                 <div className="text-sm text-foreground/70">Rating</div>
               </div>

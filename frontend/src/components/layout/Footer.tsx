@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import { Car, Phone, Mail, Facebook, Instagram, MessageCircle } from 'lucide-react';
+import { Phone, Mail, Facebook, Instagram, MessageCircle } from 'lucide-react';
 import { contactConfig } from '@/config/contact';
+import BrandFaviconLink from '@/components/layout/BrandFavicon';
 
 const Footer = () => {
   return (
@@ -9,14 +10,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="bg-gradient-to-r from-primary to-accent p-2 rounded-lg">
-                <Car className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-primary-foreground dark:text-card-foreground">
-                Kaar.Rentals
-              </span>
-            </Link>
+            <BrandFaviconLink />
             <p className="text-primary-foreground/70 dark:text-muted-foreground">
               Premium car rental service offering luxury vehicles with exceptional customer experience.
             </p>

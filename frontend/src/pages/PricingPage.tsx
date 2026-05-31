@@ -41,7 +41,7 @@ const PricingPage = () => {
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="pt-16">
+      <main className="pt-20">
         <Pricing />
 
         <section className="py-16 bg-background">

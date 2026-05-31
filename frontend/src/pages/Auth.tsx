@@ -86,7 +86,7 @@ const Auth = () => {
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="pt-16">
+      <main className="pt-20">
         <div className="max-w-md mx-auto px-4 py-12">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">

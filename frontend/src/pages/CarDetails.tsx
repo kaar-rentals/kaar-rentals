@@ -219,7 +219,7 @@ const CarDetails = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="pt-16 flex items-center justify-center min-h-[60vh]">
+        <main className="pt-20 flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading car details...</p>
@@ -234,7 +234,7 @@ const CarDetails = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="pt-16 flex items-center justify-center min-h-[60vh]">
+        <main className="pt-20 flex items-center justify-center min-h-[60vh]">
           <div className="text-center px-4">
             <div className="mb-6">
               <div className="mx-auto w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-4">
@@ -294,7 +294,7 @@ const CarDetails = () => {
         }}
       />
       <Header />
-      <main className="pt-16">
+      <main className="pt-20">
         {/* Breadcrumb */}
         <section className="py-4 bg-white border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

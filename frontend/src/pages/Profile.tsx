@@ -411,7 +411,7 @@ const Profile = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="flex-1 pt-16 flex items-center justify-center">
+        <main className="flex-1 pt-20 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </main>
         <Footer />
@@ -422,7 +422,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 pt-16">
+      <main className="flex-1 pt-20">
         <div className="max-w-6xl mx-auto px-4 py-6 md:py-10 space-y-6">
           <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>

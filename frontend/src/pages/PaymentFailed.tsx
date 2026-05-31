@@ -54,7 +54,7 @@ const PaymentFailed = () => {
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="pt-16">
+      <main className="pt-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* Main Error Card */}
           <Card className="border-red-200 bg-red-50/50">

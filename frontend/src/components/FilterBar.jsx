@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 import citiesData from "@/data/cities.json";
 
+const inputClassName =
+  "px-3 py-2 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder:text-zinc-500";
+
+const selectClassName =
+  "px-3 py-2 rounded-md border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-100";
+
 export default function FilterBar({
   onApply,
   initialFilters = {},
@@ -41,48 +47,27 @@ export default function FilterBar({
     onApply(buildQuery());
   }
 
-  const selectStyle = (isActive) => ({
-    padding: "0.5rem",
-    border: isActive ? "2px solid #3b82f6" : "1px solid #d1d5db",
-    borderRadius: "6px",
-    backgroundColor: isActive ? "#eff6ff" : "white",
-    fontWeight: isActive ? "600" : "normal",
-  });
+  const categorySelectClass =
+    activeCategory && category === activeCategory
+      ? `${selectClassName} border-primary ring-2 ring-primary/30 bg-primary/5 dark:bg-primary/10 dark:border-primary`
+      : selectClassName;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "1rem",
-        padding: "1rem",
-        backgroundColor: "#f9fafb",
-        borderRadius: "8px",
-        marginBottom: "1rem",
-      }}
-    >
+    <div className="flex flex-wrap gap-4 p-4 bg-muted/60 dark:bg-zinc-900/80 border border-border dark:border-zinc-800 rounded-lg mb-4">
       <input
+        type="search"
         placeholder="Search brand or model"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && apply()}
-        style={{
-          padding: "0.5rem",
-          border: "1px solid #d1d5db",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "200px",
-        }}
+        className={`${inputClassName} flex-1 min-w-[200px]`}
+        aria-label="Search brand or model"
       />
       <select
         value={city}
         onChange={(e) => setCity(e.target.value)}
-        style={{
-          padding: "0.5rem",
-          border: "1px solid #d1d5db",
-          borderRadius: "6px",
-          backgroundColor: "white",
-        }}
+        className={selectClassName}
+        aria-label="Filter by city"
       >
         <option value="">All cities</option>
         {citiesData.map((cityName) => (
@@ -95,7 +80,7 @@ export default function FilterBar({
         value={category}
         onChange={(e) => setCategory(e.target.value)}
         aria-label="Vehicle category"
-        style={selectStyle(Boolean(activeCategory && category === activeCategory))}
+        className={categorySelectClass}
       >
         <option value="">All types</option>
         <option value="Sedan">Sedan</option>
@@ -103,38 +88,25 @@ export default function FilterBar({
         <option value="Hatchback">Hatchback</option>
       </select>
       <input
+        type="number"
         placeholder="Min PKR/day"
         value={minPrice}
         onChange={(e) => setMinPrice(e.target.value)}
-        style={{
-          padding: "0.5rem",
-          border: "1px solid #d1d5db",
-          borderRadius: "6px",
-          width: "120px",
-        }}
+        className={`${inputClassName} w-[120px]`}
+        aria-label="Minimum price per day"
       />
       <input
+        type="number"
         placeholder="Max PKR/day"
         value={maxPrice}
         onChange={(e) => setMaxPrice(e.target.value)}
-        style={{
-          padding: "0.5rem",
-          border: "1px solid #d1d5db",
-          borderRadius: "6px",
-          width: "120px",
-        }}
+        className={`${inputClassName} w-[120px]`}
+        aria-label="Maximum price per day"
       />
       <button
+        type="button"
         onClick={apply}
-        style={{
-          padding: "0.5rem 1rem",
-          backgroundColor: "#3b82f6",
-          color: "white",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
-          fontWeight: "500",
-        }}
+        className="px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background transition-colors dark:focus:ring-offset-zinc-950"
       >
         Apply
       </button>

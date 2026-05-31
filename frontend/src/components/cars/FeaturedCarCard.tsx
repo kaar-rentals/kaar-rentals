@@ -1,5 +1,4 @@
-import { Heart, Star, User, Fuel, Settings, ChevronLeft, ChevronRight, Shield, Crown, CheckCircle, Camera, Award, Eye } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Heart, ChevronLeft, ChevronRight, Shield, Crown, CheckCircle, Camera, Award, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Car } from '@/services/api';
 import { Link } from 'react-router-dom';
@@ -33,17 +32,18 @@ const FeaturedCarCard = ({ car }: FeaturedCarCardProps) => {
   };
 
   return (
-    <Link 
+    <Link
       to={`/car/${car._id || car.id}/details`}
       className="block group"
       aria-label={`View details for ${car.brand} ${car.model} - ${car.year} ${car.category}`}
     >
-      <div className={`bg-white rounded-xl shadow-sm border overflow-hidden group-hover:shadow-2xl group-hover:scale-[1.02] group-hover:-translate-y-1 transition-all duration-200 ease-out relative ${
-        car.featured 
-          ? 'border-amber-200 ring-1 ring-amber-100' 
-          : 'border-gray-100'
-      }`}>
-        {/* Status / Featured badges */}
+      <div
+        className={`bg-card text-card-foreground rounded-xl shadow-sm border overflow-hidden group-hover:shadow-2xl group-hover:scale-[1.02] group-hover:-translate-y-1 transition-all duration-200 ease-out relative dark:bg-zinc-900 dark:border-zinc-800 dark:shadow-zinc-950/50 ${
+          car.featured
+            ? 'border-amber-200 ring-1 ring-amber-100 dark:border-amber-800/60 dark:ring-amber-900/40'
+            : 'border-border'
+        }`}
+      >
         <div className="absolute top-0 right-0 z-10 flex flex-col items-end gap-1">
           {(car.status === 'rented' || car.isRented) && (
             <div className="bg-red-600 text-white px-3 py-1 text-xs font-semibold rounded-bl-lg shadow-lg">
@@ -57,59 +57,57 @@ const FeaturedCarCard = ({ car }: FeaturedCarCardProps) => {
             </div>
           )}
         </div>
-        {/* Image Section - 16:9 Aspect Ratio */}
-        <div className="relative aspect-[16/9] overflow-hidden">
-          <img 
-            src={getCurrentImage()} 
+
+        <div className="relative aspect-[16/9] overflow-hidden bg-muted dark:bg-zinc-800">
+          <img
+            src={getCurrentImage()}
             alt={`${car.brand} ${car.model} ${car.year} - ${car.category} car for rent`}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             role="img"
           />
-          
-          {/* Image Carousel Navigation */}
+
           {car.images && car.images.length > 1 && (
             <>
               <button
+                type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   prevImage();
                 }}
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-card/90 hover:bg-card dark:bg-zinc-900/90 dark:hover:bg-zinc-800 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
                 aria-label={`Previous image of ${car.brand} ${car.model}`}
                 tabIndex={0}
               >
-                <ChevronLeft className="h-4 w-4 text-gray-800" />
+                <ChevronLeft className="h-4 w-4 text-foreground" />
               </button>
               <button
+                type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   nextImage();
                 }}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-card/90 hover:bg-card dark:bg-zinc-900/90 dark:hover:bg-zinc-800 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
                 aria-label={`Next image of ${car.brand} ${car.model}`}
                 tabIndex={0}
               >
-                <ChevronRight className="h-4 w-4 text-gray-800" />
+                <ChevronRight className="h-4 w-4 text-foreground" />
               </button>
-              
-              {/* Image Counter */}
+
               <div className="absolute bottom-3 right-3 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-medium">
                 {currentImageIndex + 1}/{car.images.length}
               </div>
             </>
           )}
-          
-          {/* Brand Badge - Top Left */}
+
           <div className="absolute top-4 left-4">
-            <Badge className="bg-slate-900/90 text-white px-3 py-1.5 text-sm font-semibold backdrop-blur-sm">
+            <Badge className="bg-slate-900/90 text-white px-3 py-1.5 text-sm font-semibold backdrop-blur-sm dark:bg-zinc-950/90">
               {car.brand}
             </Badge>
           </div>
 
-          {/* Photo Verification Marker */}
           {car.images && car.images.length > 0 && (
             <div className="absolute top-4 left-20">
               <div className="bg-green-500/90 text-white px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm flex items-center gap-1">
@@ -119,31 +117,36 @@ const FeaturedCarCard = ({ car }: FeaturedCarCardProps) => {
             </div>
           )}
 
-          {/* Heart Icon and Category - Top Right */}
           <div className="absolute top-4 right-4 flex gap-2">
-            <button 
+            <button
+              type="button"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 setIsFavorited(!isFavorited);
               }}
-              className="bg-white/90 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              aria-label={isFavorited ? `Remove ${car.brand} ${car.model} from favorites` : `Add ${car.brand} ${car.model} to favorites`}
+              className="bg-card/90 backdrop-blur-sm dark:bg-zinc-900/90 rounded-full p-2 hover:bg-card dark:hover:bg-zinc-800 transition-colors shadow-lg focus:outline-none focus:ring-2 focus:ring-ring"
+              aria-label={
+                isFavorited
+                  ? `Remove ${car.brand} ${car.model} from favorites`
+                  : `Add ${car.brand} ${car.model} to favorites`
+              }
               tabIndex={0}
             >
-              <Heart className={`h-4 w-4 ${isFavorited ? 'text-red-500 fill-current' : 'text-gray-700'}`} />
+              <Heart
+                className={`h-4 w-4 ${isFavorited ? 'text-red-500 fill-current' : 'text-muted-foreground'}`}
+              />
             </button>
-            <Badge className="bg-slate-900/90 text-white px-3 py-1.5 text-sm font-semibold backdrop-blur-sm">
+            <Badge className="bg-slate-900/90 text-white px-3 py-1.5 text-sm font-semibold backdrop-blur-sm dark:bg-zinc-950/90">
               {car.category}
             </Badge>
           </div>
 
-          {/* Availability Status Badge - Bottom Left */}
           <div className="absolute bottom-4 left-4">
-            <Badge 
+            <Badge
               className={`px-3 py-1.5 text-sm font-semibold backdrop-blur-sm ${
-                car.isRented 
-                  ? 'bg-red-500/90 text-white' 
+                car.isRented
+                  ? 'bg-red-500/90 text-white'
                   : 'bg-green-500/90 text-white'
               }`}
             >
@@ -152,35 +155,43 @@ const FeaturedCarCard = ({ car }: FeaturedCarCardProps) => {
           </div>
         </div>
 
-        {/* Content Section - Premium Typography */}
         <div className="p-6 space-y-4">
-          {/* Header */}
           <div className="space-y-3">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-slate-900 leading-tight">
+                <h3 className="text-lg font-bold text-foreground leading-tight">
                   {car.brand} {car.model}
                 </h3>
-                <p className="text-sm text-slate-600 mt-1">{car.year || 'N/A'} • {car.engineCapacity || 'N/A'}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {car.year || 'N/A'} • {car.engineCapacity || 'N/A'}
+                </p>
               </div>
             </div>
-            
-            {/* Credibility Badges */}
+
             <div className="flex flex-wrap gap-2">
               {car.verified && (
-                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                <Badge
+                  variant="outline"
+                  className="text-xs bg-green-50 text-green-700 border-green-200 dark:bg-green-950/50 dark:text-green-400 dark:border-green-800"
+                >
                   <CheckCircle className="h-3 w-3 mr-1" />
                   Verified Owner
                 </Badge>
               )}
               {car.featured && (
-                <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+                <Badge
+                  variant="outline"
+                  className="text-xs bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-800"
+                >
                   <Award className="h-3 w-3 mr-1" />
                   Premium Listing
                 </Badge>
               )}
               {car.owner && (
-                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                <Badge
+                  variant="outline"
+                  className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-400 dark:border-blue-800"
+                >
                   <Shield className="h-3 w-3 mr-1" />
                   Trusted Seller
                 </Badge>
@@ -188,64 +199,73 @@ const FeaturedCarCard = ({ car }: FeaturedCarCardProps) => {
             </div>
           </div>
 
-          {/* Primary Specifications */}
           <div className="grid grid-cols-4 gap-2">
             <div className="text-center">
-              <div className="text-sm font-semibold text-slate-900">{car.seating || 'N/A'}</div>
-              <div className="text-xs text-slate-500">Seats</div>
+              <div className="text-sm font-semibold text-foreground">{car.seating || 'N/A'}</div>
+              <div className="text-xs text-muted-foreground">Seats</div>
             </div>
             <div className="text-center">
-              <div className="text-sm font-semibold text-slate-900">{(car.transmission || 'N/A').slice(0, 4)}</div>
-              <div className="text-xs text-slate-500">Trans</div>
+              <div className="text-sm font-semibold text-foreground">
+                {(car.transmission || 'N/A').slice(0, 4)}
+              </div>
+              <div className="text-xs text-muted-foreground">Trans</div>
             </div>
             <div className="text-center">
-              <div className="text-sm font-semibold text-slate-900">{car.mileage || 'N/A'}</div>
-              <div className="text-xs text-slate-500">Mileage</div>
+              <div className="text-sm font-semibold text-foreground">{car.mileage || 'N/A'}</div>
+              <div className="text-xs text-muted-foreground">Mileage</div>
             </div>
             <div className="text-center">
-              <div className="text-sm font-semibold text-slate-900 flex items-center justify-center gap-0.5">
-                <Eye className="h-3.5 w-3.5 text-slate-500" />
+              <div className="text-sm font-semibold text-foreground flex items-center justify-center gap-0.5">
+                <Eye className="h-3.5 w-3.5 text-muted-foreground" />
                 {(car.viewCount ?? 0).toLocaleString()}
               </div>
-              <div className="text-xs text-slate-500">Views</div>
+              <div className="text-xs text-muted-foreground">Views</div>
             </div>
           </div>
 
-          {/* Description */}
           {car.description && (
-            <div className="text-sm text-slate-600 leading-relaxed">
-              <p className="line-clamp-2">
-                {car.description}
-              </p>
+            <div className="text-sm text-muted-foreground leading-relaxed">
+              <p className="line-clamp-2">{car.description}</p>
             </div>
           )}
 
-          {/* Key Features */}
           <div className="flex flex-wrap gap-2">
             {(car.features || []).slice(0, 3).map((feature, index) => (
-              <Badge key={index} variant="outline" className="text-xs bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 px-3 py-1">
+              <Badge
+                key={index}
+                variant="outline"
+                className="text-xs bg-muted text-foreground border-border hover:bg-muted/80 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-700 px-3 py-1"
+              >
                 {feature}
               </Badge>
             ))}
             {car.features && car.features.length > 3 && (
-              <Badge variant="outline" className="text-xs bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 px-3 py-1">
+              <Badge
+                variant="outline"
+                className="text-xs bg-muted text-foreground border-border hover:bg-muted/80 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-700 px-3 py-1"
+              >
                 +{car.features.length - 3} more
               </Badge>
             )}
           </div>
 
-          {/* Price and Status */}
-          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+          <div className="flex items-center justify-between pt-3 border-t border-border dark:border-zinc-800">
             <div>
-              <div className="text-xl font-bold text-slate-900">
+              <div className="text-xl font-bold text-foreground">
                 PKR {(car.pricePerDay || car.price || 0).toLocaleString()}
-                <span className="text-sm text-slate-600 font-normal">/day</span>
+                <span className="text-sm text-muted-foreground font-normal">/day</span>
               </div>
-              <p className="text-xs text-slate-500">{car.location || 'Location not specified'}</p>
+              <p className="text-xs text-muted-foreground">
+                {car.location || 'Location not specified'}
+              </p>
             </div>
-            
+
             <div className="text-right">
-              <div className={`text-xs font-semibold ${car.isRented ? 'text-red-600' : 'text-green-600'}`}>
+              <div
+                className={`text-xs font-semibold ${
+                  car.isRented ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                }`}
+              >
                 {car.isRented ? 'Rented' : 'Available'}
               </div>
             </div>

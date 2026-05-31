@@ -1,5 +1,9 @@
 const PageLoader = ({ message = 'Loading...' }: { message?: string }) => (
-  <div className="text-center py-12" role="status" aria-live="polite">
+  <div
+    className="text-center py-12 rounded-xl bg-muted/20 dark:bg-zinc-900/40 border border-border dark:border-zinc-800"
+    role="status"
+    aria-live="polite"
+  >
     <img
       src="/logo-icon.svg"
       alt=""

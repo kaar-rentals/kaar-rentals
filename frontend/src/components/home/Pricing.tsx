@@ -98,9 +98,7 @@ const Pricing = () => {
           {plans.map((plan, index) => (
             <div
               key={plan.id}
-              className={`relative flex flex-col h-full ${
-                plan.popular ? 'md:-mt-2 md:mb-2' : ''
-              }`}
+              className="relative flex flex-col h-full"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               {plan.popular && (
@@ -112,10 +110,10 @@ const Pricing = () => {
               )}
 
               <div
-                className={`premium-card flex flex-col h-full p-8 ${
+                className={`premium-card flex flex-col h-full p-8 transition-all duration-300 ${
                   plan.popular
-                    ? 'ring-2 ring-accent shadow-lg border-accent/40'
-                    : ''
+                    ? 'border border-accent/25 hover:border-accent/50 hover:ring-2 hover:ring-accent/40'
+                    : 'hover:border-primary/20'
                 }`}
               >
                 <div className="mb-6">

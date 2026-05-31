@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { openPlanWhatsApp } from '@/lib/whatsapp';
-import { cn } from '@/lib/utils';
 
 const plans = [
   {
@@ -71,7 +70,7 @@ const Pricing = () => {
   };
 
   return (
-    <section id="pricing" className="py-20 bg-muted/30">
+    <section id="pricing" className="py-20 bg-muted/30 overflow-visible">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <div className="text-center mb-8 fade-in">
@@ -93,27 +92,26 @@ const Pricing = () => {
           </div>
         </div>
 
-        {/* Pricing cards — pt-5 reserves space for the absolute badge without affecting card height */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch slide-up pt-5">
+        {/* Pricing cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch slide-up overflow-visible pt-4">
           {plans.map((plan, index) => (
             <div
               key={plan.id}
-              className="relative flex min-w-0 flex-col h-full"
+              className="relative flex flex-col h-full min-w-0"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               {plan.popular && (
-                <div className="pointer-events-none absolute -top-5 left-1/2 z-10 -translate-x-1/2">
-                  <Badge className="bg-gradient-gold text-accent-foreground border-0 px-4 py-1 text-xs font-bold shadow-md whitespace-nowrap">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                  <Badge className="bg-gradient-gold text-accent-foreground border-0 px-4 py-1 text-xs font-bold shadow-md">
                     Most Popular
                   </Badge>
                 </div>
               )}
 
               <div
-                className={cn(
-                  'premium-card flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden p-8',
-                  plan.popular && 'border border-accent/40'
-                )}
+                className={`premium-card flex flex-col h-full p-8 min-w-0 ${
+                  plan.popular ? 'border-2 border-accent' : ''
+                }`}
               >
                 <div className="mb-6">
                   <h3 className="text-2xl font-bold text-foreground">{plan.name}</h3>
@@ -129,7 +127,7 @@ const Pricing = () => {
 
                 <p className="text-sm text-muted-foreground mb-6">{plan.description}</p>
 
-                <ul className="mb-8 flex-grow space-y-3">
+                <ul className="space-y-3 mb-8 flex-grow">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-3 text-sm text-foreground">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/15">
@@ -142,15 +140,16 @@ const Pricing = () => {
 
                 <Button
                   size="lg"
+                  className={`w-full max-w-full ${
+                    plan.popular
+                      ? 'bg-gradient-gold text-accent-foreground hover:opacity-90'
+                      : ''
+                  }`}
                   variant={plan.popular ? 'default' : 'outline'}
-                  className={cn(
-                    'mt-auto w-full max-w-full min-w-0 whitespace-normal h-auto min-h-11 text-sm leading-snug',
-                    plan.popular && 'bg-gradient-gold text-accent-foreground hover:opacity-90'
-                  )}
                   onClick={() => handlePlanClick(plan)}
                 >
-                  <MessageCircle className="mr-2 h-4 w-4 shrink-0" />
-                  <span className="text-center">{plan.cta} via WhatsApp</span>
+                  <MessageCircle className="h-4 w-4 mr-2 shrink-0" />
+                  {plan.cta} via WhatsApp
                 </Button>
               </div>
             </div>

@@ -5,9 +5,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { openPlanWhatsApp } from '@/lib/whatsapp';
 import { cn } from '@/lib/utils';
 
-/** Shared card shell — identical default + hover for every plan (no featured overrides on the card). */
+/** Shared card shell — identical layout for every plan. */
 const PLAN_CARD_CLASS =
-  'flex flex-col h-full p-8 rounded-xl bg-gradient-to-br from-card to-muted border border-border [box-shadow:var(--shadow-card)] transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:[box-shadow:var(--shadow-hover)]';
+  'flex flex-col h-full w-full min-w-0 overflow-hidden p-8 rounded-xl bg-gradient-to-br from-card to-muted border border-border [box-shadow:var(--shadow-card)] transition-[box-shadow] duration-300 hover:[box-shadow:var(--shadow-hover)]';
+
+const PLAN_BUTTON_CLASS =
+  'w-full max-w-full min-w-0 whitespace-normal h-auto min-h-11 py-2.5 text-sm leading-snug';
 
 const plans = [
   {
@@ -102,33 +105,39 @@ const Pricing = () => {
           {plans.map((plan, index) => (
             <div
               key={plan.id}
-              className="relative flex flex-col h-full"
+              className="min-w-0 flex flex-col h-full"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-gradient-gold text-accent-foreground border-0 px-4 py-1 text-xs font-bold">
-                    Most Popular
-                  </Badge>
+              <div
+                className={cn(
+                  PLAN_CARD_CLASS,
+                  plan.popular && 'border-accent/40'
+                )}
+              >
+                {/* Reserved badge row — same height on every card for alignment */}
+                <div className="mb-4 flex h-7 shrink-0 items-center justify-center">
+                  {plan.popular && (
+                    <Badge className="bg-gradient-gold text-accent-foreground border-0 px-4 py-1 text-xs font-bold">
+                      Most Popular
+                    </Badge>
+                  )}
                 </div>
-              )}
 
-              <div className={PLAN_CARD_CLASS}>
-                <div className="mb-6">
+                <div className="mb-6 shrink-0">
                   <h3 className="text-2xl font-bold text-foreground">{plan.name}</h3>
                   <p className="text-sm text-muted-foreground mt-1">{plan.cars}</p>
                 </div>
 
-                <div className="mb-2">
+                <div className="mb-2 shrink-0">
                   <span className="text-4xl font-bold text-foreground">
                     PKR {plan.price.toLocaleString()}
                   </span>
                   <span className="text-muted-foreground text-lg">/month</span>
                 </div>
 
-                <p className="text-sm text-muted-foreground mb-6">{plan.description}</p>
+                <p className="text-sm text-muted-foreground mb-6 shrink-0">{plan.description}</p>
 
-                <ul className="space-y-3 mb-8 flex-grow">
+                <ul className="mb-8 min-h-0 flex-1 space-y-3">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-3 text-sm text-foreground">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/15">
@@ -139,18 +148,21 @@ const Pricing = () => {
                   ))}
                 </ul>
 
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className={cn(
-                    'w-full',
-                    plan.popular && 'border-accent/50 text-accent hover:bg-accent/10 hover:text-accent-foreground'
-                  )}
-                  onClick={() => handlePlanClick(plan)}
-                >
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  {plan.cta} via WhatsApp
-                </Button>
+                <div className="mt-auto w-full min-w-0 shrink-0">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className={cn(
+                      PLAN_BUTTON_CLASS,
+                      plan.popular &&
+                        'border-accent/50 text-accent hover:bg-accent/10 hover:text-accent-foreground'
+                    )}
+                    onClick={() => handlePlanClick(plan)}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2 shrink-0" />
+                    <span className="text-center">{plan.cta} via WhatsApp</span>
+                  </Button>
+                </div>
               </div>
             </div>
           ))}

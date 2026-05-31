@@ -31,6 +31,25 @@ async function recordListingView(carId) {
 const authMiddleware = require("../middleware/auth");
 const isAdmin = require("../middleware/isAdmin");
 
+const VALID_CATEGORIES = ['Sedan', 'SUV', 'Hatchback'];
+
+/** Map URL slugs (sedan, suv) and legacy values to schema enum. */
+function normalizeCategoryQuery(category) {
+  if (!category) return null;
+  const map = {
+    sedan: 'Sedan',
+    sedans: 'Sedan',
+    suv: 'SUV',
+    suvs: 'SUV',
+    hatchback: 'Hatchback',
+    hatchbacks: 'Hatchback',
+  };
+  const key = String(category).trim().toLowerCase();
+  if (map[key]) return map[key];
+  if (VALID_CATEGORIES.includes(category)) return category;
+  return null;
+}
+
 // GET /api/cars - Support pagination, featured filter, owner info based on auth
 router.get("/", async (req, res) => {
   try {
@@ -102,8 +121,12 @@ router.get("/", async (req, res) => {
       else filters.city = city;
     }
     if (category) {
-      if (filters.$and) filters.$and.push({ category });
-      else filters.category = category;
+      const normalizedCategory = normalizeCategoryQuery(category);
+      if (normalizedCategory) {
+        const categoryFilter = { category: normalizedCategory };
+        if (filters.$and) filters.$and.push(categoryFilter);
+        else filters.category = normalizedCategory;
+      }
     }
     if (transmission) {
       if (filters.$and) filters.$and.push({ transmission });

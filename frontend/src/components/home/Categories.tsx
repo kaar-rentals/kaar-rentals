@@ -1,4 +1,10 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  type CarCategory,
+  fetchCategoryCounts,
+  formatCategoryCount,
+} from '@/lib/categoryFilters';
 
 type CategoryImage = {
   src: string;
@@ -9,7 +15,7 @@ type Category = {
   name: string;
   label: string;
   description: string;
-  count: string;
+  category: CarCategory;
   href: string;
   images: CategoryImage[];
 };
@@ -19,7 +25,7 @@ const categories: Category[] = [
     name: 'Sedans',
     label: 'Browse sedan vehicles',
     description: 'Elegant and comfortable for business and leisure',
-    count: '150+ vehicles',
+    category: 'Sedan',
     href: '/cars?category=sedan',
     images: [
       {
@@ -36,7 +42,7 @@ const categories: Category[] = [
     name: 'SUVs',
     label: 'Browse SUV vehicles',
     description: 'Spacious and powerful for family adventures',
-    count: '200+ vehicles',
+    category: 'SUV',
     href: '/cars?category=suv',
     images: [
       {
@@ -53,7 +59,7 @@ const categories: Category[] = [
     name: 'Hatchbacks',
     label: 'Browse hatchback vehicles',
     description: 'Compact and efficient for city driving',
-    count: '100+ vehicles',
+    category: 'Hatchback',
     href: '/cars?category=hatchback',
     images: [
       {
@@ -69,6 +75,22 @@ const categories: Category[] = [
 ];
 
 const Categories = () => {
+  const [counts, setCounts] = useState<Record<CarCategory, number> | null>(
+    null
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchCategoryCounts().then((data) => {
+      if (!cancelled) setCounts(data);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <section className="py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -124,7 +146,9 @@ const Categories = () => {
                   </p>
 
                   <div className="text-sm font-semibold text-primary">
-                    {category.count}
+                    {counts
+                      ? formatCategoryCount(counts[category.category])
+                      : 'Loading…'}
                   </div>
 
                   <div className="mt-6 text-primary group-hover:text-accent transition-colors duration-300">

@@ -1,21 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import citiesData from "@/data/cities.json";
 
-export default function FilterBar({ onApply }) {
-  const [search, setSearch] = useState("");
-  const [city, setCity] = useState("");
-  const [category, setCategory] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
+export default function FilterBar({ onApply, initialFilters = {} }) {
+  const [search, setSearch] = useState(initialFilters.search || "");
+  const [city, setCity] = useState(initialFilters.city || "");
+  const [category, setCategory] = useState(initialFilters.category || "");
+  const [minPrice, setMinPrice] = useState(initialFilters.minPrice || "");
+  const [maxPrice, setMaxPrice] = useState(initialFilters.maxPrice || "");
 
-  function apply() {
+  useEffect(() => {
+    setSearch(initialFilters.search || "");
+    setCity(initialFilters.city || "");
+    setCategory(initialFilters.category || "");
+    setMinPrice(initialFilters.minPrice || "");
+    setMaxPrice(initialFilters.maxPrice || "");
+  }, [
+    initialFilters.search,
+    initialFilters.city,
+    initialFilters.category,
+    initialFilters.minPrice,
+    initialFilters.maxPrice,
+  ]);
+
+  function buildQuery() {
     const q = {};
     if (search) q.search = search;
     if (city) q.city = city;
     if (category) q.category = category;
     if (minPrice) q.minPrice = minPrice;
     if (maxPrice) q.maxPrice = maxPrice;
-    onApply(q);
+    return q;
+  }
+
+  function apply() {
+    onApply(buildQuery());
   }
 
   return (
@@ -67,9 +85,9 @@ export default function FilterBar({ onApply }) {
         }}
       >
         <option value="">All types</option>
-        <option>Sedan</option>
-        <option>SUV</option>
-        <option>Hatchback</option>
+        <option value="Sedan">Sedan</option>
+        <option value="SUV">SUV</option>
+        <option value="Hatchback">Hatchback</option>
       </select>
       <input 
         placeholder="Min PKR/day" 
@@ -110,5 +128,3 @@ export default function FilterBar({ onApply }) {
     </div>
   );
 }
-
-

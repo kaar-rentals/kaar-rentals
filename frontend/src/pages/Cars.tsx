@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Filter, ArrowRight } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Filter } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import FeaturedCarCard from '@/components/cars/FeaturedCarCard';
@@ -8,14 +9,34 @@ import { Button } from '@/components/ui/button';
 import PageLoader from '@/components/layout/PageLoader';
 import { Car } from '@/services/api';
 import { apiUrl } from '@/lib/apiBase';
+import {
+  parseCarFiltersFromSearchParams,
+  carFiltersToSearchParams,
+} from '@/lib/categoryFilters';
 
 const Cars = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState({});
+  const [query, setQuery] = useState(() =>
+    parseCarFiltersFromSearchParams(searchParams)
+  );
   const [page, setPage] = useState(1);
   const token = localStorage.getItem("token");
-  const isAuthenticated = !!token;
+
+  const initialFilters = parseCarFiltersFromSearchParams(searchParams);
+
+  useEffect(() => {
+    const parsed = parseCarFiltersFromSearchParams(searchParams);
+    setQuery(parsed);
+    setPage(1);
+  }, [searchParams]);
+
+  const handleApplyFilters = (q: Record<string, string>) => {
+    setQuery(q);
+    setPage(1);
+    setSearchParams(carFiltersToSearchParams(q), { replace: true });
+  };
 
   useEffect(() => {
     document.title = 'Browse cars for rent – Kaar.Rentals';
@@ -116,7 +137,10 @@ const Cars = () => {
         {/* Filters Section - Minimal Design */}
         <section className="py-6 bg-white/80 backdrop-blur-sm border-b border-slate-200/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <FilterBar onApply={q => { setQuery(q); setPage(1); }} />
+            <FilterBar
+              initialFilters={initialFilters}
+              onApply={handleApplyFilters}
+            />
           </div>
         </section>
 

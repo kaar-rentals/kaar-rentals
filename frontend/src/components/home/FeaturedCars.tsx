@@ -5,8 +5,10 @@ import { Link } from 'react-router-dom';
 import FeaturedCarCard from '@/components/cars/FeaturedCarCard';
 import PageLoader from '@/components/layout/PageLoader';
 import { apiService, Car } from '@/services/api';
-import { cars as staticCars } from '@/data/cars';
-import { apiUrl } from '@/lib/apiBase';
+
+const FEATURED_CARS_LIMIT = 6;
+
+const isFeaturedCar = (car: Car) => car.featured === true;
 
 const FeaturedCars = () => {
   const [featuredCars, setFeaturedCars] = useState<Car[]>([]);
@@ -19,33 +21,20 @@ const FeaturedCars = () => {
   const loadFeaturedCars = async () => {
     try {
       setLoading(true);
-      const url = apiUrl('/api/cars?limit=12');
-      console.log('[FeaturedCars] fetching:', url);
+      const cars = await apiService.getCars({
+        featured: true,
+        limit: FEATURED_CARS_LIMIT,
+        sortBy: 'createdAt',
+        order: 'desc',
+      });
 
-      const response = await fetch(url);
-      if (!response.ok) {
-        console.error('[FeaturedCars] API error:', response.status, response.statusText);
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      const carsArray: Car[] = data.cars || [];
-      console.log('[FeaturedCars] received', carsArray.length, 'cars', data);
-
-      const featuredOnly = carsArray.filter((car: Car) => car.featured === true);
+      const list = Array.isArray(cars) ? cars : [];
       setFeaturedCars(
-        (featuredOnly.length > 0 ? featuredOnly : carsArray).slice(0, 6)
+        list.filter(isFeaturedCar).slice(0, FEATURED_CARS_LIMIT)
       );
     } catch (error) {
       console.error('[FeaturedCars] Error loading featured cars:', error);
-      try {
-        const carsData = await apiService.getCars({ limit: 12 });
-        const fallback = Array.isArray(carsData) ? carsData : [];
-        console.log('[FeaturedCars] fallback via apiService:', fallback.length);
-        setFeaturedCars(fallback.slice(0, 6));
-      } catch {
-        setFeaturedCars([]);
-      }
+      setFeaturedCars([]);
     } finally {
       setLoading(false);
     }
@@ -76,8 +65,8 @@ const FeaturedCars = () => {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No cars available at the moment.</p>
-            <p className="text-sm text-muted-foreground mt-2">Please try again later.</p>
+            <p className="text-muted-foreground">No featured cars available at the moment.</p>
+            <p className="text-sm text-muted-foreground mt-2">Please check back later.</p>
           </div>
         )}
 

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Phone, Mail, Facebook, Instagram, MessageCircle } from 'lucide-react';
 import { contactConfig } from '@/config/contact';
-import BrandFaviconLink from '@/components/layout/BrandFavicon';
+import BrandLogoLink from '@/components/layout/BrandLogo';
 
 const Footer = () => {
   return (
@@ -10,7 +10,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <BrandFaviconLink />
+            <BrandLogoLink variant="footer" />
             <p className="text-primary-foreground/70 dark:text-muted-foreground">
               Premium car rental service offering luxury vehicles with exceptional customer experience.
             </p>

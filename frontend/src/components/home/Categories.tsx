@@ -1,11 +1,12 @@
-import { Car, Truck, Zap } from 'lucide-react';
+import { SedanIcon, SuvIcon, HatchbackIcon } from '@/components/icons/VehicleCategoryIcons';
 import { Link } from 'react-router-dom';
 
 const Categories = () => {
   const categories = [
     {
       name: 'Sedans',
-      icon: Car,
+      icon: SedanIcon,
+      label: 'Browse sedan vehicles',
       description: 'Elegant and comfortable for business and leisure',
       count: '150+ vehicles',
       color: 'from-blue-500 to-blue-600',
@@ -13,7 +14,8 @@ const Categories = () => {
     },
     {
       name: 'SUVs',
-      icon: Truck,
+      icon: SuvIcon,
+      label: 'Browse SUV vehicles',
       description: 'Spacious and powerful for family adventures',
       count: '200+ vehicles',
       color: 'from-green-500 to-green-600',
@@ -21,7 +23,8 @@ const Categories = () => {
     },
     {
       name: 'Hatchbacks',
-      icon: Zap,
+      icon: HatchbackIcon,
+      label: 'Browse hatchback vehicles',
       description: 'Compact and efficient for city driving',
       count: '100+ vehicles',
       color: 'from-accent to-primary',
@@ -51,10 +54,11 @@ const Categories = () => {
                 to={category.href}
                 className="group block"
                 style={{ animationDelay: `${index * 0.1}s` }}
+                aria-label={category.label}
               >
                 <div className="premium-card p-8 text-center h-full group-hover:shadow-lg transition-all duration-300">
                   <div className={`inline-flex items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-r ${category.color} mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                    <IconComponent className="h-8 w-8 text-white" />
+                    <IconComponent className="h-8 w-16 text-white" role="img" aria-label={category.label} />
                   </div>
                   
                   <h3 className="text-2xl font-bold text-foreground mb-3">

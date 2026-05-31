@@ -5,6 +5,7 @@ import Footer from '@/components/layout/Footer';
 import FeaturedCarCard from '@/components/cars/FeaturedCarCard';
 import FilterBar from '@/components/FilterBar';
 import { Button } from '@/components/ui/button';
+import PageLoader from '@/components/layout/PageLoader';
 import { Car } from '@/services/api';
 import { apiUrl } from '@/lib/apiBase';
 
@@ -124,20 +125,17 @@ const Cars = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center mb-12">
               <div>
-                <h2 className="text-3xl font-bold text-slate-900 mb-2">
+                <h2 className="text-3xl font-bold text-foreground mb-2">
                   {loading ? 'Discovering Premium Vehicles...' : `${cars.length} Premium Vehicle${cars.length !== 1 ? 's' : ''}`}
                 </h2>
-                <p className="text-slate-600">
+                <p className="text-muted-foreground">
                   {loading ? 'Please wait while we load our curated collection' : 'Carefully selected for quality and performance'}
                 </p>
               </div>
             </div>
 
             {loading ? (
-              <div className="text-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Loading cars...</p>
-              </div>
+              <PageLoader message="Loading cars..." />
             ) : cars.length === 0 ? (
               <div className="text-center py-20">
                 <div className="text-muted-foreground mb-4">

@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import FeaturedCarCard from '@/components/cars/FeaturedCarCard';
+import PageLoader from '@/components/layout/PageLoader';
 import { apiService, Car } from '@/services/api';
 import { cars as staticCars } from '@/data/cars';
 import { apiUrl } from '@/lib/apiBase';
@@ -64,10 +65,7 @@ const FeaturedCars = () => {
         </div>
 
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading featured cars...</p>
-          </div>
+          <PageLoader message="Loading featured cars..." />
         ) : featuredCars.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12 slide-up">
             {featuredCars.map((car, index) => (

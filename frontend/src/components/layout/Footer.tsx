@@ -1,21 +1,17 @@
 import { Link } from 'react-router-dom';
-import { Car, MapPin, Phone, Mail, Facebook, Instagram, MessageCircle } from 'lucide-react';
+import { Phone, Mail, Facebook, Instagram, MessageCircle } from 'lucide-react';
 import { contactConfig } from '@/config/contact';
+import Logo from '@/components/layout/Logo';
 
 const Footer = () => {
   return (
-    <footer className="bg-foreground text-background">
+    <footer className="bg-primary text-primary-foreground dark:bg-card dark:text-card-foreground border-t border-border transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="bg-gradient-to-r from-primary to-accent p-2 rounded-lg">
-                <Car className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold">Kaar.Rentals</span>
-            </Link>
-            <p className="text-muted-foreground">
+            <Logo variant="footer" />
+            <p className="text-primary-foreground/70 dark:text-muted-foreground">
               Premium car rental service offering luxury vehicles with exceptional customer experience.
             </p>
             <div className="flex space-x-4">
@@ -77,15 +73,15 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-sm text-muted-foreground">
+        <div className="border-t border-primary-foreground/20 dark:border-border mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+          <p className="text-sm text-primary-foreground/70 dark:text-muted-foreground">
             © 2026 Kaar.Rentals. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <Link to="/privacy-policy" className="text-sm text-muted-foreground hover:text-accent transition-colors">
+            <Link to="/privacy-policy" className="text-sm text-primary-foreground/70 dark:text-muted-foreground hover:text-accent transition-colors">
               Privacy Policy
             </Link>
-            <Link to="/terms-of-service" className="text-sm text-muted-foreground hover:text-accent transition-colors">
+            <Link to="/terms-of-service" className="text-sm text-primary-foreground/70 dark:text-muted-foreground hover:text-accent transition-colors">
               Terms of Service
             </Link>
           </div>

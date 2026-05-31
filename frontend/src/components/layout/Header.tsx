@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Car, Menu, X, User, LogOut, Settings } from 'lucide-react';
+import { Menu, X, User, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import Logo from '@/components/layout/Logo';
+import ThemeToggle from '@/components/layout/ThemeToggle';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -26,16 +28,10 @@ const Header = () => {
   const navigation = [...baseNavigation, ...authenticatedNav];
 
   return (
-    <header className="fixed top-0 w-full bg-background/95 backdrop-blur-sm border-b border-border z-50">
+    <header className="fixed top-0 w-full bg-background/95 backdrop-blur-sm border-b border-border z-50 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-gradient-to-r from-primary to-accent p-2 rounded-lg">
-              <Car className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gradient">Kaar.Rentals</span>
-          </Link>
+          <Logo />
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
@@ -51,7 +47,8 @@ const Header = () => {
           </nav>
 
           {/* Desktop CTA Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-2">
+            <ThemeToggle />
             {user ? (
               <>
                 {user.role === 'admin' && (
@@ -104,7 +101,8 @@ const Header = () => {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-1">
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="sm"

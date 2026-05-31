@@ -58,7 +58,11 @@ const Categories = () => {
               >
                 <div className="premium-card p-8 text-center h-full group-hover:shadow-lg transition-all duration-300">
                   <div className={`inline-flex items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-r ${category.color} mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                    <IconComponent className="h-8 w-16 text-white" role="img" aria-label={category.label} />
+                    <IconComponent
+                      className="h-7 w-[3.25rem] text-white transition-transform duration-300 group-hover:scale-105"
+                      role="img"
+                      aria-label={category.label}
+                    />
                   </div>
                   
                   <h3 className="text-2xl font-bold text-foreground mb-3">

@@ -84,7 +84,7 @@ const Pricing = () => {
 
         {/* Launch offer */}
         <div className="flex justify-center mb-12 fade-in">
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent/15 border border-accent/30 text-foreground">
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent/15 border border-accent/30 text-foreground dark:text-accent">
             <Sparkles className="h-4 w-4 text-accent shrink-0" />
             <span className="text-sm sm:text-base font-semibold">
               First month at <span className="text-accent">50% OFF</span> (Limited Time)
@@ -159,8 +159,8 @@ const Pricing = () => {
         {/* Lifetime option */}
         <div className="mt-12 max-w-3xl mx-auto fade-in">
           <div className="premium-card p-6 sm:p-8 text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-r from-primary to-primary-dark mb-4">
-              <Infinity className="h-6 w-6 text-primary-foreground" />
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-r from-primary to-primary-dark dark:from-accent/20 dark:to-accent/10 dark:border dark:border-accent/40 mb-4">
+              <Infinity className="h-6 w-6 text-primary-foreground dark:text-accent" />
             </div>
             <h3 className="text-xl font-bold text-foreground mb-2">One-Time Lifetime Option</h3>
             <p className="text-muted-foreground mb-1">

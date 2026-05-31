@@ -6,7 +6,7 @@ import { apiUrl } from '@/lib/apiBase';
 import heroBg from '@/assets/hero-bg.jpg';
 
 const StatIcon = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex items-center justify-center w-12 h-12 rounded-full mb-2 mx-auto bg-zinc-500/90 dark:bg-zinc-600 border border-accent/50 shadow-sm">
+  <div className="home-stat-icon flex items-center justify-center w-12 h-12 rounded-full mb-2 mx-auto bg-zinc-500/90 dark:bg-zinc-700/80 border border-accent/50 shadow-sm">
     {children}
   </div>
 );
@@ -44,7 +44,7 @@ const Hero = () => {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${heroBg})` }}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/70 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/70 to-transparent dark:from-background/95 dark:via-background/85 dark:to-background/50"></div>
       </div>
 
       {/* Content */}
@@ -72,7 +72,7 @@ const Hero = () => {
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="border-foreground text-foreground hover:bg-foreground hover:text-background font-semibold px-8 py-4 text-lg"
+                  className="border-foreground text-foreground hover:bg-foreground hover:text-background dark:border-accent dark:text-accent dark:hover:bg-accent dark:hover:text-accent-foreground font-semibold px-8 py-4 text-lg"
                 >
                   List Your Car
                 </Button>
@@ -135,9 +135,9 @@ const Hero = () => {
       </div>
 
       {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-foreground animate-bounce">
-        <div className="w-6 h-10 border-2 border-foreground/30 rounded-full flex justify-center">
-          <div className="w-1 h-3 bg-foreground/60 rounded-full mt-2 animate-pulse"></div>
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-foreground dark:text-accent animate-bounce">
+        <div className="w-6 h-10 border-2 border-foreground/30 dark:border-accent/40 rounded-full flex justify-center">
+          <div className="w-1 h-3 bg-foreground/60 dark:bg-accent/70 rounded-full mt-2 animate-pulse"></div>
         </div>
       </div>
     </section>

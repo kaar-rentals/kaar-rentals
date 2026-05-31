@@ -21,9 +21,9 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen dark:bg-background">
       <Header />
-      <main className="pt-20">
+      <main className="pt-20 home-page">
         <Hero />
         <Categories />
         <Pricing />

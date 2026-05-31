@@ -197,6 +197,19 @@ All colors MUST be HSL.
   .bg-gradient-black {
     background: var(--gradient-black);
   }
+
+  /* Kaar.Rentals wordmark — matches logo typography (slab-serif + gold) */
+  .brand-wordmark {
+    font-family: 'Roboto Slab', Georgia, 'Times New Roman', serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: #8f6a12;
+  }
+
+  .dark .brand-wordmark {
+    color: #e4b23d;
+  }
 }
 
 @keyframes fadeIn {

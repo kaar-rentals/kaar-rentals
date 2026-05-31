@@ -3,6 +3,38 @@ import { cn } from '@/lib/utils';
 
 const BRAND_LOGO_SRC = '/kaar-rentals-logo.png';
 
+/** HTML wordmark extracted from brand logo — same markup in header and footer */
+export function BrandWordmark({ className }: { className?: string }) {
+  return (
+    <span className={cn('brand-wordmark text-lg sm:text-xl whitespace-nowrap', className)}>
+      Kaar<span className="mx-0.5">.</span>Rentals
+    </span>
+  );
+}
+
+/** Car mark from top of brand logo (icon only, no embedded text) */
+function BrandCarMark({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        'relative shrink-0 overflow-hidden rounded-sm',
+        'h-9 w-10 sm:h-10 sm:w-11',
+        className
+      )}
+      aria-hidden="true"
+    >
+      <img
+        src={BRAND_LOGO_SRC}
+        alt=""
+        className="absolute left-1/2 top-0 w-[220%] max-w-none -translate-x-1/2 object-cover object-top"
+        width={88}
+        height={44}
+        decoding="async"
+      />
+    </div>
+  );
+}
+
 type BrandLogoLinkProps = {
   variant?: 'header' | 'footer';
   className?: string;
@@ -17,28 +49,12 @@ const BrandLogoLink = ({ variant = 'header', className }: BrandLogoLinkProps) =>
       className={cn('inline-flex items-center gap-2 sm:gap-3 shrink-0', className)}
       aria-label="Kaar.Rentals home"
     >
-      <img
-        src={BRAND_LOGO_SRC}
-        alt=""
-        aria-hidden="true"
-        className={cn(
-          'object-contain shrink-0',
-          isFooter ? 'h-12 w-12 sm:h-14 sm:w-14' : 'h-9 w-9 sm:h-10 sm:w-10'
-        )}
-        width={isFooter ? 56 : 40}
-        height={isFooter ? 56 : 40}
-        decoding="async"
+      <BrandCarMark
+        className={isFooter ? 'h-11 w-12 sm:h-12 sm:w-[3.25rem]' : undefined}
       />
-      <span
-        className={cn(
-          'text-lg sm:text-xl font-bold whitespace-nowrap',
-          isFooter
-            ? 'text-primary-foreground dark:text-card-foreground'
-            : 'text-gradient'
-        )}
-      >
-        Kaar.Rentals
-      </span>
+      <BrandWordmark
+        className={cn(isFooter && '!text-[#e4b23d]')}
+      />
     </Link>
   );
 };

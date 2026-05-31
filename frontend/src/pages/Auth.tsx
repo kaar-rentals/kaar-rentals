@@ -3,13 +3,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import Logo from '@/components/layout/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Car, User, Mail, Lock, AlertCircle, Phone } from 'lucide-react';
+import { User, Mail, Lock, AlertCircle, Phone } from 'lucide-react';
 
 const Auth = () => {
   const { login, register } = useAuth();
@@ -89,9 +90,7 @@ const Auth = () => {
         <div className="max-w-md mx-auto px-4 py-12">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">
-              <div className="bg-gradient-to-r from-primary to-accent p-3 rounded-lg">
-                <Car className="h-8 w-8 text-white" />
-              </div>
+              <Logo variant="full" />
             </div>
             <h1 className="text-3xl font-bold text-foreground">Welcome to Kaar.Rentals</h1>
             <p className="text-muted-foreground mt-2">Sign in to your account or create a new one</p>

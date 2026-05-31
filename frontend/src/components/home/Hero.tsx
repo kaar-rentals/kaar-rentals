@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Star, Users, Car } from 'lucide-react';
+import { ArrowRight, Star, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { apiUrl } from '@/lib/apiBase';
@@ -83,7 +83,15 @@ const Hero = () => {
             <div className="grid grid-cols-3 gap-8 pt-8">
               <div className="text-center">
                 <StatIcon>
-                  <Car className="h-6 w-6 text-accent" />
+                  <img
+                    src="/icons/home-car-icon.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="h-7 w-7 object-contain"
+                    width={28}
+                    height={28}
+                    decoding="async"
+                  />
                 </StatIcon>
                 <div className="text-2xl font-bold text-foreground">{carCountLabel}</div>
                 <div className="text-sm text-foreground/70">Available Cars</div>

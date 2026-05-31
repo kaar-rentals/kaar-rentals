@@ -217,7 +217,7 @@ const CarDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Header />
         <main className="pt-20 flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
@@ -232,18 +232,18 @@ const CarDetails = () => {
 
   if (error || !car) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Header />
         <main className="pt-20 flex items-center justify-center min-h-[60vh]">
           <div className="text-center px-4">
             <div className="mb-6">
-              <div className="mx-auto w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                <AlertCircle className="h-12 w-12 text-red-600" />
+              <div className="mx-auto w-24 h-24 bg-red-100 dark:bg-red-950/50 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="h-12 w-12 text-red-600 dark:text-red-400" />
               </div>
-              <h1 className="text-2xl font-bold mb-2 text-gray-900">
+              <h1 className="text-2xl font-bold mb-2 text-foreground">
                 {error || 'Listing not found'}
               </h1>
-              <p className="text-gray-600 mb-6">
+              <p className="text-muted-foreground mb-6">
                 {error === 'Listing not found'
                   ? "The car listing you're looking for doesn't exist or may have been removed."
                   : 'Something went wrong while loading the listing details.'}
@@ -267,7 +267,7 @@ const CarDetails = () => {
   const features = car.features || [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Structured data for car listing */}
       <script
         type="application/ld+json"
@@ -296,9 +296,9 @@ const CarDetails = () => {
       <Header />
       <main className="pt-20">
         {/* Breadcrumb */}
-        <section className="py-4 bg-white border-b">
+        <section className="py-4 bg-card border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Link to="/cars" className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+            <Link to="/cars" className="inline-flex items-center text-muted-foreground hover:text-accent transition-colors">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Cars
             </Link>
@@ -337,15 +337,15 @@ const CarDetails = () => {
                     <>
                       <button
                         onClick={prevImage}
-                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-3 shadow-lg"
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-card/90 hover:bg-card dark:bg-zinc-900/90 dark:hover:bg-zinc-800 rounded-full p-3 shadow-lg"
                       >
-                        <ChevronLeft className="h-6 w-6 text-gray-800" />
+                        <ChevronLeft className="h-6 w-6 text-foreground" />
                       </button>
                       <button
                         onClick={nextImage}
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-3 shadow-lg"
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-card/90 hover:bg-card dark:bg-zinc-900/90 dark:hover:bg-zinc-800 rounded-full p-3 shadow-lg"
                       >
-                        <ChevronRight className="h-6 w-6 text-gray-800" />
+                        <ChevronRight className="h-6 w-6 text-foreground" />
                       </button>
                     </>
                   )}
@@ -359,7 +359,7 @@ const CarDetails = () => {
 
                   {/* Brand Badge */}
                   <div className="absolute top-4 left-4">
-                    <Badge className="bg-gray-900 text-white px-4 py-2 text-sm font-medium">
+                    <Badge className="bg-zinc-900/90 dark:bg-zinc-950/90 text-white px-4 py-2 text-sm font-medium">
                       {car.brand}
                     </Badge>
                   </div>
@@ -367,9 +367,9 @@ const CarDetails = () => {
                   {/* Heart Icon */}
                   <button 
                     onClick={() => setIsFavorited(!isFavorited)}
-                    className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full p-3 hover:bg-white transition-colors shadow-lg"
+                    className="absolute top-4 right-4 bg-card/90 dark:bg-zinc-900/90 backdrop-blur-sm rounded-full p-3 hover:bg-card dark:hover:bg-zinc-800 transition-colors shadow-lg"
                   >
-                    <Heart className={`h-5 w-5 ${isFavorited ? 'text-red-500 fill-current' : 'text-gray-700'}`} />
+                    <Heart className={`h-5 w-5 ${isFavorited ? 'text-red-500 fill-current' : 'text-muted-foreground'}`} />
                   </button>
                 </div>
 
@@ -381,7 +381,9 @@ const CarDetails = () => {
                         key={index}
                         onClick={() => setCurrentImageIndex(index)}
                         className={`flex-shrink-0 w-24 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                          index === currentImageIndex ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300'
+                          index === currentImageIndex
+                            ? 'border-accent ring-2 ring-accent/30'
+                            : 'border-border hover:border-accent/50'
                         }`}
                       >
                         <img
@@ -398,24 +400,24 @@ const CarDetails = () => {
               {/* Car Information - 1/3 width */}
               <div className="space-y-6">
                 {/* Sticky Booking Card */}
-                <div className="sticky top-24 bg-white rounded-xl shadow-lg border p-6">
+                <div className="sticky top-24 bg-card rounded-xl shadow-lg border border-border p-6">
                   <div className="space-y-4">
                     {/* Price */}
                     <div className="text-center">
-                      <div className="text-3xl font-bold text-gray-900 mb-1">
+                      <div className="text-3xl font-bold text-foreground mb-1">
                         PKR {(car.pricePerDay || car.price || 0).toLocaleString()}
-                        <span className="text-lg text-gray-600 font-normal">
+                        <span className="text-lg text-muted-foreground font-normal">
                           {car.priceType === 'monthly' ? '/month' : '/day'}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600">Best price guaranteed</p>
+                      <p className="text-sm text-muted-foreground">Best price guaranteed</p>
                     </div>
 
                     {/* Contact Owner Button */}
                     <div className="space-y-3">
                         <Button 
                           size="lg" 
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3"
+                          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-accent dark:hover:bg-accent/90 dark:text-accent-foreground font-semibold py-3"
                         onClick={async () => {
                           if (!user) {
                             setLoginModalOpen(true);
@@ -477,7 +479,7 @@ const CarDetails = () => {
         </section>
 
         {/* Car Information Section */}
-        <section className="py-8 bg-white">
+        <section className="py-8 bg-muted/30 dark:bg-background">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Main Car Info - 2/3 width */}
@@ -485,19 +487,21 @@ const CarDetails = () => {
                 {/* Car Title and Status */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <h1 className="text-4xl font-bold text-gray-900">
+                    <h1 className="text-4xl font-bold text-foreground">
                     {car.brand} {car.model}
                   </h1>
                     {car.status && (
                       <Badge 
                         variant={car.status === 'rented' ? 'destructive' : 'default'}
-                        className={car.status === 'rented' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}
+                        className={car.status === 'rented'
+                          ? 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300'
+                          : 'bg-green-100 text-green-800 dark:bg-green-950/60 dark:text-green-300'}
                       >
                         {car.status === 'rented' ? 'Rented' : 'Available'}
                       </Badge>
                     )}
                   </div>
-                  <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-gray-600 mb-4">
+                  <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-muted-foreground mb-4">
                     <span className="text-lg">{car.year}</span>
                     <span>•</span>
                     <span className="text-lg">{car.engineCapacity}</span>
@@ -516,32 +520,32 @@ const CarDetails = () => {
                       </>
                     )}
                   </div>
-                  <p className="text-lg text-gray-700 leading-relaxed">{car.description}</p>
+                  <p className="text-lg text-muted-foreground leading-relaxed">{car.description}</p>
                 </div>
 
                 {/* Quick Specs */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <User className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                    <div className="font-semibold text-gray-900">{car.seating} Seats</div>
-                    <div className="text-sm text-gray-600">Passengers</div>
+                  <div className="bg-muted dark:bg-zinc-900/60 border border-border rounded-lg p-4 text-center">
+                    <User className="h-8 w-8 mx-auto mb-2 text-blue-600 dark:text-accent" />
+                    <div className="font-semibold text-foreground">{car.seating} Seats</div>
+                    <div className="text-sm text-muted-foreground">Passengers</div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <Fuel className="h-8 w-8 mx-auto mb-2 text-green-600" />
-                    <div className="font-semibold text-gray-900">{car.mileage}</div>
-                    <div className="text-sm text-gray-600">Fuel Economy</div>
+                  <div className="bg-muted dark:bg-zinc-900/60 border border-border rounded-lg p-4 text-center">
+                    <Fuel className="h-8 w-8 mx-auto mb-2 text-green-600 dark:text-accent" />
+                    <div className="font-semibold text-foreground">{car.mileage}</div>
+                    <div className="text-sm text-muted-foreground">Fuel Economy</div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
+                  <div className="bg-muted dark:bg-zinc-900/60 border border-border rounded-lg p-4 text-center">
                     <Settings className="h-8 w-8 mx-auto mb-2 text-accent" />
-                    <div className="font-semibold text-gray-900">{car.transmission}</div>
-                    <div className="text-sm text-gray-600">Transmission</div>
+                    <div className="font-semibold text-foreground">{car.transmission}</div>
+                    <div className="text-sm text-muted-foreground">Transmission</div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <div className="h-8 w-8 mx-auto mb-2 bg-orange-100 rounded-full flex items-center justify-center">
-                      <span className="text-orange-600 font-bold text-sm">{car.category}</span>
+                  <div className="bg-muted dark:bg-zinc-900/60 border border-border rounded-lg p-4 text-center">
+                    <div className="h-8 w-8 mx-auto mb-2 bg-accent/15 dark:bg-accent/20 rounded-full flex items-center justify-center">
+                      <span className="text-accent font-bold text-sm">{car.category}</span>
                     </div>
-                    <div className="font-semibold text-gray-900">{car.category}</div>
-                    <div className="text-sm text-gray-600">Vehicle Type</div>
+                    <div className="font-semibold text-foreground">{car.category}</div>
+                    <div className="text-sm text-muted-foreground">Vehicle Type</div>
                   </div>
                 </div>
 
@@ -608,32 +612,32 @@ const CarDetails = () => {
 
               {/* Owner Information - 1/3 width */}
               <div className="space-y-6">
-                <div className="bg-white rounded-xl shadow-lg border p-6">
-                  <h3 className="text-xl font-semibold mb-4 text-gray-900">Owner Details</h3>
+                <div className="bg-card rounded-xl shadow-lg border border-border p-6">
+                  <h3 className="text-xl font-semibold mb-4 text-foreground">Owner Details</h3>
                   {user && car.owner?.name ? (
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-bold text-lg">
+                      <div className="w-12 h-12 bg-accent/15 dark:bg-accent/20 rounded-full flex items-center justify-center">
+                        <span className="text-accent font-bold text-lg">
                             {car.owner.name.charAt(0)}
                         </span>
                       </div>
                       <div>
-                          <h4 className="font-semibold text-lg text-gray-900">{car.owner.name}</h4>
+                          <h4 className="font-semibold text-lg text-foreground">{car.owner.name}</h4>
                       </div>
                     </div>
                     
                       {car.owner.location && (
                       <div className="flex items-center space-x-3">
-                        <MapPin className="h-4 w-4 text-gray-500" />
-                          <span className="text-sm text-gray-700">{car.owner.location}</span>
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">{car.owner.location}</span>
                       </div>
                       )}
                     </div>
                   ) : (
                     <div className="space-y-4 text-center">
                       <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto" />
-                      <p className="text-gray-600">
+                      <p className="text-muted-foreground">
                         Sign in to view owner details
                       </p>
                       <Button 
@@ -650,14 +654,16 @@ const CarDetails = () => {
                 {/* Status & Pricing - Owner/Admin Only */}
                 {canManageListing && (
                   <>
-                    <div className="bg-white rounded-xl shadow-lg border p-6">
-                      <h3 className="text-xl font-semibold mb-4 text-gray-900">Listing Status</h3>
+                    <div className="bg-card rounded-xl shadow-lg border border-border p-6">
+                      <h3 className="text-xl font-semibold mb-4 text-foreground">Listing Status</h3>
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Current Status:</span>
+                          <span className="text-sm text-muted-foreground">Current Status:</span>
                           <Badge 
                             variant={car.status === 'rented' ? 'destructive' : 'default'}
-                            className={car.status === 'rented' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}
+                            className={car.status === 'rented'
+                              ? 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300'
+                              : 'bg-green-100 text-green-800 dark:bg-green-950/60 dark:text-green-300'}
                           >
                             {car.status === 'rented' ? 'Rented' : 'Available'}
                           </Badge>
@@ -708,14 +714,14 @@ const CarDetails = () => {
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-xl shadow-lg border p-6">
-                      <h3 className="text-xl font-semibold mb-4 text-gray-900">Manage Pricing</h3>
+                    <div className="bg-card rounded-xl shadow-lg border border-border p-6">
+                      <h3 className="text-xl font-semibold mb-4 text-foreground">Manage Pricing</h3>
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Current Price:</span>
-                          <span className="font-semibold text-gray-900">
+                          <span className="text-sm text-muted-foreground">Current Price:</span>
+                          <span className="font-semibold text-foreground">
                             PKR {(car.pricePerDay || car.price || 0).toLocaleString()}
-                            <span className="text-sm text-gray-600">
+                            <span className="text-sm text-muted-foreground">
                               {car.priceType === 'monthly' ? '/month' : '/day'}
                             </span>
                           </span>
@@ -732,7 +738,7 @@ const CarDetails = () => {
                                 className="h-9"
                                 placeholder="Enter new price"
                               />
-                              <span className="text-sm text-gray-600">
+                              <span className="text-sm text-muted-foreground">
                                 {car.priceType === 'monthly' ? 'PKR/month' : 'PKR/day'}
                               </span>
                             </div>
@@ -844,8 +850,8 @@ const CarDetails = () => {
           {contactPhone && (
             <div className="mt-4 space-y-4">
               <div className="text-center">
-                <Phone className="h-12 w-12 mx-auto mb-4 text-blue-600" />
-                <p className="text-2xl font-bold">{contactPhone}</p>
+                <Phone className="h-12 w-12 mx-auto mb-4 text-accent" />
+                <p className="text-2xl font-bold text-foreground">{contactPhone}</p>
               </div>
               <div className="flex space-x-2">
                 <Button 

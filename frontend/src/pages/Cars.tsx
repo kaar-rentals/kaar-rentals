@@ -18,11 +18,14 @@ import {
   buildCarsApiQuery,
 } from '@/lib/categoryFilters';
 
+const PAGE_SIZE = 12;
+
 const Cars = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const token = localStorage.getItem('token');
 
   const categorySlug = searchParams.get('category');
@@ -47,7 +50,7 @@ const Cars = () => {
   const loadCars = useCallback(async () => {
     try {
       setLoading(true);
-      const qs = buildCarsApiQuery(filters, page, 12);
+      const qs = buildCarsApiQuery(filters, page, PAGE_SIZE);
       const url = apiUrl(`/api/cars?${qs}`);
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -70,6 +73,7 @@ const Cars = () => {
         list = filterCarsByCategorySlug(list, categorySlug);
       }
 
+      setTotal(typeof json.total === 'number' ? json.total : list.length);
       setCars(list);
     } catch (error) {
       console.error('[Cars] Error loading cars:', error);
@@ -93,6 +97,9 @@ const Cars = () => {
 
     loadCars();
   }, [loadCars]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const hasNextPage = page < totalPages;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -168,7 +175,7 @@ const Cars = () => {
                 <h2 className="text-3xl font-bold text-foreground mb-2">
                   {loading
                     ? 'Discovering Premium Vehicles...'
-                    : `${cars.length} Premium Vehicle${cars.length !== 1 ? 's' : ''}`}
+                    : `${total} Premium Vehicle${total !== 1 ? 's' : ''}`}
                 </h2>
                 <p className="text-muted-foreground">
                   {loading
@@ -210,7 +217,7 @@ const Cars = () => {
 
                 <div className="flex justify-center items-center gap-4">
                   <Button
-                    disabled={page === 1}
+                    disabled={page === 1 || loading}
                     onClick={() => setPage((p) => p - 1)}
                     variant="outline"
                     className="dark:border-zinc-700 dark:bg-zinc-900 dark:text-foreground dark:hover:bg-zinc-800"
@@ -218,9 +225,13 @@ const Cars = () => {
                     Previous
                   </Button>
                   <span className="text-sm font-medium text-foreground">
-                    Page {page}
+                    Page {page} of {totalPages}
                   </span>
-                  <Button className="dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90">
+                  <Button
+                    disabled={!hasNextPage || loading}
+                    onClick={() => setPage((p) => p + 1)}
+                    className="dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90"
+                  >
                     Next
                   </Button>
                 </div>

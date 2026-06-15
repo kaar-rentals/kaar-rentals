@@ -25,6 +25,7 @@ const Index = () => {
       <Header />
       <main className="pt-20 home-page">
         <Hero />
+        <FeaturedCars />
         <Categories />
         <Pricing />
         {/* Home page AdSense banner (configure slot via env: VITE_ADSENSE_SLOT_HOME) */}
@@ -33,7 +34,6 @@ const Index = () => {
             <AdBanner className="my-4" />
           </div>
         </section>
-        <FeaturedCars />
       </main>
       <Footer />
     </div>

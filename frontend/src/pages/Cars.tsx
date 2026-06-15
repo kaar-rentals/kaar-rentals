@@ -1,15 +1,17 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Filter } from 'lucide-react';
+import { Filter, LayoutGrid, List } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import FeaturedCarCard from '@/components/cars/FeaturedCarCard';
 import FilterBar from '@/components/FilterBar';
 import { Button } from '@/components/ui/button';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import PageLoader from '@/components/layout/PageLoader';
 import { Car } from '@/services/api';
 import { apiUrl } from '@/lib/apiBase';
 import { normalizeCar } from '@/lib/normalizeCar';
+import { getCarsBrowseShuffleSeed, shuffleCars } from '@/lib/shuffleCars';
 import {
   parseCarFiltersFromSearchParams,
   carFiltersToSearchParams,
@@ -19,13 +21,22 @@ import {
 } from '@/lib/categoryFilters';
 
 const PAGE_SIZE = 12;
+const FETCH_LIMIT = 1000;
+const LAYOUT_STORAGE_KEY = 'cars-view-layout';
+
+type ViewLayout = 'grid' | 'list';
+
+const readStoredLayout = (): ViewLayout => {
+  const stored = localStorage.getItem(LAYOUT_STORAGE_KEY);
+  return stored === 'list' ? 'list' : 'grid';
+};
 
 const Cars = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [cars, setCars] = useState<Car[]>([]);
+  const [allCars, setAllCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [viewLayout, setViewLayout] = useState<ViewLayout>(readStoredLayout);
   const token = localStorage.getItem('token');
 
   const categorySlug = searchParams.get('category');
@@ -37,6 +48,40 @@ const Cars = () => {
   );
 
   const initialFilters = filters;
+
+  const filterKey = useMemo(
+    () =>
+      [
+        categorySlug ?? '',
+        filters.search ?? '',
+        filters.city ?? '',
+        filters.minPrice ?? '',
+        filters.maxPrice ?? '',
+        filters.category ?? '',
+      ].join('|'),
+    [categorySlug, filters]
+  );
+
+  const shuffleSeed = useMemo(
+    () => getCarsBrowseShuffleSeed(filterKey),
+    [filterKey]
+  );
+
+  const shuffledCars = useMemo(
+    () => shuffleCars(allCars, shuffleSeed),
+    [allCars, shuffleSeed]
+  );
+
+  const displayedCars = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return shuffledCars.slice(start, start + PAGE_SIZE);
+  }, [shuffledCars, page]);
+
+  const handleLayoutChange = (value: string) => {
+    if (value !== 'grid' && value !== 'list') return;
+    setViewLayout(value);
+    localStorage.setItem(LAYOUT_STORAGE_KEY, value);
+  };
 
   useLayoutEffect(() => {
     setPage(1);
@@ -50,7 +95,7 @@ const Cars = () => {
   const loadCars = useCallback(async () => {
     try {
       setLoading(true);
-      const qs = buildCarsApiQuery(filters, page, PAGE_SIZE);
+      const qs = buildCarsApiQuery(filters, 1, FETCH_LIMIT);
       const url = apiUrl(`/api/cars?${qs}`);
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -60,7 +105,7 @@ const Cars = () => {
       const res = await fetch(url, { headers });
 
       if (!res.ok) {
-        setCars([]);
+        setAllCars([]);
         return;
       }
 
@@ -73,15 +118,14 @@ const Cars = () => {
         list = filterCarsByCategorySlug(list, categorySlug);
       }
 
-      setTotal(typeof json.total === 'number' ? json.total : list.length);
-      setCars(list);
+      setAllCars(list);
     } catch (error) {
       console.error('[Cars] Error loading cars:', error);
-      setCars([]);
+      setAllCars([]);
     } finally {
       setLoading(false);
     }
-  }, [filters, page, token, categorySlug]);
+  }, [filters, token, categorySlug]);
 
   useEffect(() => {
     document.title = 'Browse cars for rent – Kaar.Rentals';
@@ -98,8 +142,9 @@ const Cars = () => {
     loadCars();
   }, [loadCars]);
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(shuffledCars.length / PAGE_SIZE));
   const hasNextPage = page < totalPages;
+  const resultCount = shuffledCars.length;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -170,26 +215,49 @@ const Cars = () => {
 
         <section className="py-16 bg-gradient-to-b from-white to-slate-50/50 dark:from-zinc-950 dark:to-zinc-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center mb-12">
+            <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-12">
               <div>
                 <h2 className="text-3xl font-bold text-foreground mb-2">
                   {loading
                     ? 'Discovering Premium Vehicles...'
-                    : `${total} Premium Vehicle${total !== 1 ? 's' : ''}`}
+                    : `${resultCount} Premium Vehicle${resultCount !== 1 ? 's' : ''}`}
                 </h2>
                 <p className="text-muted-foreground">
                   {loading
                     ? 'Please wait while we load our curated collection'
                     : activeCategory
                       ? `Filtered by ${activeCategory}`
-                      : 'Carefully selected for quality and performance'}
+                      : 'Shuffled for variety — explore our full collection'}
                 </p>
               </div>
+
+              <ToggleGroup
+                type="single"
+                value={viewLayout}
+                onValueChange={handleLayoutChange}
+                aria-label="Choose layout"
+                className="self-start sm:self-auto border border-border rounded-lg p-1 bg-muted/40 dark:bg-zinc-900/60"
+              >
+                <ToggleGroupItem
+                  value="grid"
+                  aria-label="Grid view"
+                  className="data-[state=on]:bg-background data-[state=on]:text-foreground dark:data-[state=on]:bg-zinc-800"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="list"
+                  aria-label="List view"
+                  className="data-[state=on]:bg-background data-[state=on]:text-foreground dark:data-[state=on]:bg-zinc-800"
+                >
+                  <List className="h-4 w-4" />
+                </ToggleGroupItem>
+              </ToggleGroup>
             </div>
 
             {loading ? (
               <PageLoader message="Loading cars..." />
-            ) : cars.length === 0 ? (
+            ) : displayedCars.length === 0 ? (
               <div className="text-center py-20 rounded-xl border border-dashed border-border bg-muted/30 dark:bg-zinc-900/50">
                 <Filter className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
                 <h3 className="text-xl font-semibold text-foreground mb-2">
@@ -203,16 +271,20 @@ const Cars = () => {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
-                  {cars
-                    .sort((a, b) => {
-                      if (a.featured && !b.featured) return -1;
-                      if (!a.featured && b.featured) return 1;
-                      return 0;
-                    })
-                    .map((car) => (
-                      <FeaturedCarCard key={car._id} car={car} />
-                    ))}
+                <div
+                  className={
+                    viewLayout === 'grid'
+                      ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12'
+                      : 'flex flex-col gap-4 mb-12'
+                  }
+                >
+                  {displayedCars.map((car) => (
+                    <FeaturedCarCard
+                      key={car._id}
+                      car={car}
+                      variant={viewLayout}
+                    />
+                  ))}
                 </div>
 
                 <div className="flex justify-center items-center gap-4">

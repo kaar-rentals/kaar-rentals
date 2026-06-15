@@ -215,11 +215,69 @@ const CarDetails = () => {
     }
   };
 
+  const handleContactOwner = async () => {
+    if (!car) return;
+
+    if (!user) {
+      setLoginModalOpen(true);
+      return;
+    }
+
+    try {
+      const response = await fetch(apiUrl(`/api/cars/${car._id || car.id}/contact`), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        setLoginModalOpen(true);
+        return;
+      }
+
+      if (response.status === 404) {
+        const errorData = await response.json().catch(() => ({
+          message: 'Owner phone not available',
+        }));
+        toast({
+          title: 'Contact Unavailable',
+          description: errorData.message || 'Owner phone not available',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch contact');
+      }
+
+      const data = await response.json();
+      setContactPhone(data.phone);
+      setContactModalOpen(true);
+      try {
+        await apiService.logCarInquiry(
+          car._id,
+          'Contacted owner from listing page',
+          token
+        );
+      } catch {
+        /* non-blocking */
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch contact information';
+      toast({
+        title: 'Error',
+        description: message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <main className="pt-20 flex items-center justify-center min-h-[60vh]">
+        <main className="pt-16 md:pt-20 flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading car details...</p>
@@ -234,7 +292,7 @@ const CarDetails = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <main className="pt-20 flex items-center justify-center min-h-[60vh]">
+        <main className="pt-16 md:pt-20 flex items-center justify-center min-h-[60vh]">
           <div className="text-center px-4">
             <div className="mb-6">
               <div className="mx-auto w-24 h-24 bg-red-100 dark:bg-red-950/50 rounded-full flex items-center justify-center mb-4">
@@ -294,7 +352,7 @@ const CarDetails = () => {
         }}
       />
       <Header />
-      <main className="pt-20">
+      <main className="pt-16 md:pt-20 pb-24 lg:pb-0">
         {/* Breadcrumb */}
         <section className="py-4 bg-card border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -315,7 +373,7 @@ const CarDetails = () => {
                   <img 
                     src={getCurrentImage()} 
                     alt={`${car.brand} ${car.model}`}
-                    className="w-full h-[500px] object-cover rounded-xl cursor-pointer"
+                    className="w-full h-56 sm:h-80 lg:h-[500px] object-cover rounded-xl cursor-pointer"
                     onClick={() => {
                       // Open fullscreen image view
                       const newWindow = window.open(getCurrentImage(), '_blank');
@@ -417,55 +475,8 @@ const CarDetails = () => {
                     <div className="space-y-3">
                         <Button 
                           size="lg" 
-                          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-accent dark:hover:bg-accent/90 dark:text-accent-foreground font-semibold py-3"
-                        onClick={async () => {
-                          if (!user) {
-                            setLoginModalOpen(true);
-                            return;
-                          }
-                          
-                          try {
-                            const response = await fetch(apiUrl(`/api/cars/${car._id || car.id}/contact`), {
-                              headers: {
-                                'Authorization': `Bearer ${token}`,
-                              },
-                            });
-                            
-                            if (response.status === 401) {
-                              setLoginModalOpen(true);
-                              return;
-                            }
-                            
-                            if (response.status === 404) {
-                              const errorData = await response.json().catch(() => ({ message: 'Owner phone not available' }));
-                              toast({
-                                title: "Contact Unavailable",
-                                description: errorData.message || "Owner phone not available",
-                                variant: "destructive",
-                              });
-                              return;
-                            }
-                            
-                            if (!response.ok) {
-                              throw new Error('Failed to fetch contact');
-                            }
-                            
-                            const data = await response.json();
-                            setContactPhone(data.phone);
-                            setContactModalOpen(true);
-                            try {
-                              await apiService.logCarInquiry(car._id, 'Contacted owner from listing page', token);
-                            } catch {
-                              /* non-blocking */
-                            }
-                          } catch (err: any) {
-                            toast({
-                              title: "Error",
-                              description: err.message || "Failed to fetch contact information",
-                              variant: "destructive",
-                            });
-                          }
-                        }}
+                          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-accent dark:hover:bg-accent/90 dark:text-accent-foreground font-semibold py-3 min-h-11"
+                        onClick={handleContactOwner}
                       >
                         <Phone className="h-4 w-4 mr-2" />
                         Contact Owner
@@ -486,8 +497,8 @@ const CarDetails = () => {
               <div className="lg:col-span-2 space-y-8">
                 {/* Car Title and Status */}
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h1 className="text-4xl font-bold text-foreground">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                    <h1 className="text-2xl sm:text-4xl font-bold text-foreground">
                     {car.brand} {car.model}
                   </h1>
                     {car.status && (
@@ -806,6 +817,34 @@ const CarDetails = () => {
           </div>
         </section>
       </main>
+
+      {/* Mobile sticky contact bar */}
+      {car && (
+        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background/95 backdrop-blur-sm p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="flex items-center gap-3 max-w-7xl mx-auto">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-muted-foreground truncate">
+                {car.brand} {car.model}
+              </p>
+              <p className="text-lg font-bold text-foreground">
+                PKR {(car.pricePerDay || car.price || 0).toLocaleString()}
+                <span className="text-sm font-normal text-muted-foreground">
+                  {car.priceType === 'monthly' ? '/month' : '/day'}
+                </span>
+              </p>
+            </div>
+            <Button
+              size="lg"
+              className="shrink-0 min-h-11 px-5 bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-accent dark:hover:bg-accent/90 dark:text-accent-foreground"
+              onClick={handleContactOwner}
+            >
+              <Phone className="h-4 w-4 mr-2" />
+              Contact
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Footer />
 
       {/* Login Modal */}

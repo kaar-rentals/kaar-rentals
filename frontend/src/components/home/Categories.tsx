@@ -92,19 +92,19 @@ const Categories = () => {
   }, []);
 
   return (
-    <section className="py-20">
+    <section className="py-12 md:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16 fade-in">
-          <h2 className="text-4xl font-bold text-foreground mb-4">
+        <div className="text-center mb-10 md:mb-16 fade-in">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Browse by <span className="text-accent">Category</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto">
             Find the perfect vehicle for your needs from our diverse collection
             of premium cars across multiple categories.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 slide-up">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 slide-up">
           {categories.map((category, index) => (
             <Link
               key={category.name}
@@ -136,7 +136,7 @@ const Categories = () => {
                   />
                 </div>
 
-                <div className="p-8 pt-6">
+                <div className="p-5 md:p-8 pt-5 md:pt-6">
                   <h3 className="text-2xl font-bold text-foreground mb-3">
                     {category.name}
                   </h3>

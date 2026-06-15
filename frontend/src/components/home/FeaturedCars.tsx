@@ -41,13 +41,13 @@ const FeaturedCars = () => {
   };
 
   return (
-    <section className="py-20 bg-muted/30">
+    <section className="py-12 md:py-20 bg-muted/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16 fade-in">
-          <h2 className="text-4xl font-bold text-foreground mb-4">
+        <div className="text-center mb-10 md:mb-16 fade-in">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Featured <span className="text-accent">Vehicles</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto">
             Discover our handpicked selection of premium vehicles, each offering 
             the perfect blend of luxury, performance, and reliability.
           </p>

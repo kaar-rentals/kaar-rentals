@@ -23,7 +23,7 @@ const Index = () => {
   return (
     <div className="min-h-screen dark:bg-background">
       <Header />
-      <main className="pt-20 home-page">
+      <main className="pt-16 md:pt-20 home-page">
         <Hero />
         <FeaturedCars />
         <Categories />

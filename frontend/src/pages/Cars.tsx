@@ -12,6 +12,7 @@ import { Car } from '@/services/api';
 import { apiUrl } from '@/lib/apiBase';
 import { normalizeCar } from '@/lib/normalizeCar';
 import { getCarsBrowseShuffleSeed, shuffleCars } from '@/lib/shuffleCars';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   parseCarFiltersFromSearchParams,
   carFiltersToSearchParams,
@@ -37,7 +38,10 @@ const Cars = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [viewLayout, setViewLayout] = useState<ViewLayout>(readStoredLayout);
+  const isMobile = useIsMobile();
   const token = localStorage.getItem('token');
+
+  const effectiveLayout: ViewLayout = isMobile ? 'grid' : viewLayout;
 
   const categorySlug = searchParams.get('category');
   const activeCategory = normalizeCategory(categorySlug);
@@ -149,32 +153,35 @@ const Cars = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
-      <main className="pt-20">
-        <section className="relative py-24 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 overflow-hidden">
+      <main className="pt-16 md:pt-20">
+        <section className="relative py-10 md:py-24 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 overflow-hidden">
           <div className="absolute inset-0 bg-grid-slate-100 dark:bg-grid-zinc-800 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:[mask-image:linear-gradient(0deg,black,rgba(0,0,0,0.6))] -z-10 opacity-60 dark:opacity-40" />
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
-            <div className="mb-6">
-              <span className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-blue-800 dark:bg-primary/15 dark:text-primary text-sm font-medium mb-4">
+            <div className="mb-4 md:mb-6">
+              <span className="inline-flex items-center px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-blue-100 text-blue-800 dark:bg-primary/15 dark:text-primary text-xs md:text-sm font-medium mb-3 md:mb-4">
                 <span className="w-2 h-2 bg-blue-500 dark:bg-primary rounded-full mr-2 animate-pulse" />
                 Premium Fleet Collection
               </span>
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-bold text-slate-900 dark:text-foreground mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-slate-900 dark:text-foreground mb-4 md:mb-6 leading-tight">
               Discover Your
               <span className="block text-accent">
                 Perfect Ride
               </span>
             </h1>
 
-            <p className="text-xl text-slate-600 dark:text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-8">
-              Handpicked premium vehicles from verified owners. Each car is
-              carefully selected for quality, performance, and reliability to
-              ensure an exceptional rental experience.
+            <p className="text-base sm:text-xl text-slate-600 dark:text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-6 md:mb-8">
+              Handpicked premium vehicles from verified owners.
+              <span className="hidden sm:inline">
+                {' '}
+                Each car is carefully selected for quality, performance, and reliability to
+                ensure an exceptional rental experience.
+              </span>
             </p>
 
-            <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-slate-500 dark:text-muted-foreground">
+            <div className="hidden sm:flex flex-wrap justify-center items-center gap-6 md:gap-8 text-sm text-slate-500 dark:text-muted-foreground">
               <div className="flex items-center gap-2">
                 <div className="w-5 h-5 bg-green-100 dark:bg-green-950/60 rounded-full flex items-center justify-center">
                   <span className="w-2 h-2 bg-green-500 rounded-full" />
@@ -197,7 +204,7 @@ const Cars = () => {
           </div>
         </section>
 
-        <section className="py-6 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b border-slate-200/50 dark:border-zinc-800">
+        <section className="py-4 md:py-6 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b border-slate-200/50 dark:border-zinc-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {activeCategory && (
               <p className="mb-3 text-sm font-medium text-primary">
@@ -213,11 +220,11 @@ const Cars = () => {
           </div>
         </section>
 
-        <section className="py-16 bg-gradient-to-b from-white to-slate-50/50 dark:from-zinc-950 dark:to-zinc-900">
+        <section className="py-8 md:py-16 bg-gradient-to-b from-white to-slate-50/50 dark:from-zinc-950 dark:to-zinc-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-12">
+            <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-8 md:mb-12">
               <div>
-                <h2 className="text-3xl font-bold text-foreground mb-2">
+                <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2">
                   {loading
                     ? 'Discovering Premium Vehicles...'
                     : `${resultCount} Premium Vehicle${resultCount !== 1 ? 's' : ''}`}
@@ -236,7 +243,7 @@ const Cars = () => {
                 value={viewLayout}
                 onValueChange={handleLayoutChange}
                 aria-label="Choose layout"
-                className="self-start sm:self-auto border border-border rounded-lg p-1 bg-muted/40 dark:bg-zinc-900/60"
+                className="hidden sm:flex self-start sm:self-auto border border-border rounded-lg p-1 bg-muted/40 dark:bg-zinc-900/60"
               >
                 <ToggleGroupItem
                   value="grid"
@@ -273,36 +280,36 @@ const Cars = () => {
               <>
                 <div
                   className={
-                    viewLayout === 'grid'
-                      ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12'
-                      : 'flex flex-col gap-4 mb-12'
+                    effectiveLayout === 'grid'
+                      ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-12'
+                      : 'flex flex-col gap-4 mb-8 md:mb-12'
                   }
                 >
                   {displayedCars.map((car) => (
                     <FeaturedCarCard
                       key={car._id}
                       car={car}
-                      variant={viewLayout}
+                      variant={effectiveLayout}
                     />
                   ))}
                 </div>
 
-                <div className="flex justify-center items-center gap-4">
+                <div className="flex justify-center items-center gap-3 md:gap-4">
                   <Button
                     disabled={page === 1 || loading}
                     onClick={() => setPage((p) => p - 1)}
                     variant="outline"
-                    className="dark:border-zinc-700 dark:bg-zinc-900 dark:text-foreground dark:hover:bg-zinc-800"
+                    className="min-h-11 px-4 dark:border-zinc-700 dark:bg-zinc-900 dark:text-foreground dark:hover:bg-zinc-800"
                   >
                     Previous
                   </Button>
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-sm font-medium text-foreground px-1">
                     Page {page} of {totalPages}
                   </span>
                   <Button
                     disabled={!hasNextPage || loading}
                     onClick={() => setPage((p) => p + 1)}
-                    className="dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90"
+                    className="min-h-11 px-4 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90"
                   >
                     Next
                   </Button>

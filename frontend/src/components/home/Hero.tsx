@@ -38,7 +38,7 @@ const Hero = () => {
     carCount === null ? '…' : carCount > 0 ? `${carCount}+` : '0';
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[72svh] md:min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -48,15 +48,15 @@ const Hero = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-32">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="text-foreground space-y-8 fade-in">
             <div className="space-y-4">
-              <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
+              <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold leading-tight">
                 Drive Your
                 <span className="block text-accent">Dreams</span>
               </h1>
-              <p className="text-xl text-foreground/80 max-w-lg">
+              <p className="text-base sm:text-xl text-foreground/80 max-w-lg">
                 Experience luxury car rental like never before. Premium vehicles, exceptional service, unbeatable prices.
               </p>
             </div>
@@ -80,7 +80,7 @@ const Hero = () => {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-8 pt-8">
+            <div className="grid grid-cols-3 gap-4 sm:gap-8 pt-6 md:pt-8">
               <div className="text-center">
                 <StatIcon>
                   <img
@@ -143,7 +143,7 @@ const Hero = () => {
       </div>
 
       {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-foreground dark:text-accent animate-bounce">
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-foreground dark:text-accent animate-bounce hidden sm:block">
         <div className="w-6 h-10 border-2 border-foreground/30 dark:border-accent/40 rounded-full flex justify-center">
           <div className="w-1 h-3 bg-foreground/60 dark:bg-accent/70 rounded-full mt-2 animate-pulse"></div>
         </div>

@@ -91,7 +91,7 @@ const FeaturedCarCard = ({ car, variant = 'grid' }: FeaturedCarCardProps) => {
                   e.stopPropagation();
                   prevImage();
                 }}
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-card/90 hover:bg-card dark:bg-zinc-900/90 dark:hover:bg-zinc-800 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-card/90 hover:bg-card dark:bg-zinc-900/90 dark:hover:bg-zinc-800 rounded-full p-2.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 shadow-lg focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
                 aria-label={`Previous image of ${car.brand} ${car.model}`}
                 tabIndex={0}
               >
@@ -104,7 +104,7 @@ const FeaturedCarCard = ({ car, variant = 'grid' }: FeaturedCarCardProps) => {
                   e.stopPropagation();
                   nextImage();
                 }}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-card/90 hover:bg-card dark:bg-zinc-900/90 dark:hover:bg-zinc-800 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-card/90 hover:bg-card dark:bg-zinc-900/90 dark:hover:bg-zinc-800 rounded-full p-2.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 shadow-lg focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
                 aria-label={`Next image of ${car.brand} ${car.model}`}
                 tabIndex={0}
               >
@@ -117,22 +117,22 @@ const FeaturedCarCard = ({ car, variant = 'grid' }: FeaturedCarCardProps) => {
             </>
           )}
 
-          <div className="absolute top-4 left-4">
-            <Badge className="bg-slate-900/90 text-white px-3 py-1.5 text-sm font-semibold backdrop-blur-sm dark:bg-zinc-950/90">
+          <div className="absolute top-3 left-3 sm:top-4 sm:left-4">
+            <Badge className="bg-slate-900/90 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold backdrop-blur-sm dark:bg-zinc-950/90">
               {car.brand}
             </Badge>
           </div>
 
           {car.images && car.images.length > 0 && (
-            <div className="absolute top-4 left-20">
+            <div className="absolute top-3 left-[4.5rem] sm:top-4 sm:left-20 hidden sm:block">
               <div className="bg-green-500/90 text-white px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm flex items-center gap-1">
                 <Camera className="h-3 w-3" />
-                <span>Verified Photos</span>
+                <span className="hidden sm:inline">Verified Photos</span>
               </div>
             </div>
           )}
 
-          <div className="absolute top-4 right-4 flex gap-2">
+          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex gap-2">
             <button
               type="button"
               onClick={(e) => {
@@ -140,7 +140,7 @@ const FeaturedCarCard = ({ car, variant = 'grid' }: FeaturedCarCardProps) => {
                 e.stopPropagation();
                 setIsFavorited(!isFavorited);
               }}
-              className="bg-card/90 backdrop-blur-sm dark:bg-zinc-900/90 rounded-full p-2 hover:bg-card dark:hover:bg-zinc-800 transition-colors shadow-lg focus:outline-none focus:ring-2 focus:ring-ring"
+              className="bg-card/90 backdrop-blur-sm dark:bg-zinc-900/90 rounded-full p-2.5 hover:bg-card dark:hover:bg-zinc-800 transition-colors shadow-lg focus:outline-none focus:ring-2 focus:ring-ring"
               aria-label={
                 isFavorited
                   ? `Remove ${car.brand} ${car.model} from favorites`
@@ -152,12 +152,12 @@ const FeaturedCarCard = ({ car, variant = 'grid' }: FeaturedCarCardProps) => {
                 className={`h-4 w-4 ${isFavorited ? 'text-red-500 fill-current' : 'text-muted-foreground'}`}
               />
             </button>
-            <Badge className="bg-slate-900/90 text-white px-3 py-1.5 text-sm font-semibold backdrop-blur-sm dark:bg-zinc-950/90">
+            <Badge className="hidden sm:inline-flex bg-slate-900/90 text-white px-3 py-1.5 text-sm font-semibold backdrop-blur-sm dark:bg-zinc-950/90">
               {car.category}
             </Badge>
           </div>
 
-          <div className="absolute bottom-4 left-4">
+          <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4">
             <Badge
               className={`px-3 py-1.5 text-sm font-semibold backdrop-blur-sm ${
                 car.isRented
@@ -228,7 +228,7 @@ const FeaturedCarCard = ({ car, variant = 'grid' }: FeaturedCarCardProps) => {
             )}
           </div>
 
-          <div className={cn('grid gap-2', isList ? 'grid-cols-4 sm:grid-cols-6' : 'grid-cols-4')}>
+          <div className={cn('grid gap-2', isList ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-4')}>
             <div className="text-center">
               <div className="text-sm font-semibold text-foreground">{car.seating || 'N/A'}</div>
               <div className="text-xs text-muted-foreground">Seats</div>
@@ -253,12 +253,12 @@ const FeaturedCarCard = ({ car, variant = 'grid' }: FeaturedCarCardProps) => {
           </div>
 
           {car.description && (
-            <div className={cn('text-sm text-muted-foreground leading-relaxed', isList && 'hidden md:block')}>
+            <div className="text-sm text-muted-foreground leading-relaxed">
               <p className="line-clamp-2">{car.description}</p>
             </div>
           )}
 
-          <div className={cn('flex flex-wrap gap-2', isList && 'hidden sm:flex')}>
+          <div className="flex flex-wrap gap-2">
             {(car.features || []).slice(0, 3).map((feature, index) => (
               <Badge
                 key={index}

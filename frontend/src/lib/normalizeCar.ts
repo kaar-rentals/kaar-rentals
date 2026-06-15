@@ -15,6 +15,7 @@ export function normalizeCar(raw: Record<string, unknown>): Car {
       email: (o.email as string) || '',
       phone: o.phone as string | undefined,
       ...(o.location ? { location: o.location as string } : {}),
+      ...(o.unique_id ? { unique_id: o.unique_id as string } : {}),
     } as Car['owner'];
   } else if (typeof ownerRaw === 'string') {
     ownerId = ownerRaw;
@@ -35,7 +36,10 @@ export function normalizeCar(raw: Record<string, unknown>): Car {
     owner: owner ?? (raw.owner as Car['owner']),
     pricePerDay: Number(raw.pricePerDay ?? raw.price ?? 0),
     price: Number(raw.price ?? raw.pricePerDay ?? 0),
-    viewCount: Number(raw.viewCount ?? 0),
+    viewCount:
+      raw.viewCount !== undefined && raw.viewCount !== null
+        ? Number(raw.viewCount)
+        : undefined,
   };
 }
 

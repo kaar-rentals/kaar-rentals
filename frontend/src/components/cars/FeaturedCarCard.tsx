@@ -4,6 +4,7 @@ import { Car } from '@/services/api';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 interface FeaturedCarCardProps {
   car: Car;
@@ -12,7 +13,9 @@ interface FeaturedCarCardProps {
 
 const FeaturedCarCard = ({ car, variant = 'grid' }: FeaturedCarCardProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isFavorited, setIsFavorited] = useState(false);
+  const carId = String(car._id || car.id);
+  const { isLiked, toggleLike } = useFavorites();
+  const isFavorited = isLiked(carId);
 
   const nextImage = () => {
     if (car.images && car.images.length > 1) {
@@ -34,6 +37,7 @@ const FeaturedCarCard = ({ car, variant = 'grid' }: FeaturedCarCardProps) => {
   };
 
   const isList = variant === 'list';
+  const showViewCount = car.viewCount !== undefined;
 
   return (
     <Link
@@ -138,7 +142,7 @@ const FeaturedCarCard = ({ car, variant = 'grid' }: FeaturedCarCardProps) => {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                setIsFavorited(!isFavorited);
+                void toggleLike(carId);
               }}
               className="bg-card/90 backdrop-blur-sm dark:bg-zinc-900/90 rounded-full p-2.5 hover:bg-card dark:hover:bg-zinc-800 transition-colors shadow-lg focus:outline-none focus:ring-2 focus:ring-ring"
               aria-label={
@@ -228,7 +232,7 @@ const FeaturedCarCard = ({ car, variant = 'grid' }: FeaturedCarCardProps) => {
             )}
           </div>
 
-          <div className={cn('grid gap-2', isList ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-4')}>
+          <div className={cn('grid gap-2', isList ? 'grid-cols-2 sm:grid-cols-4' : showViewCount ? 'grid-cols-4' : 'grid-cols-3')}>
             <div className="text-center">
               <div className="text-sm font-semibold text-foreground">{car.seating || 'N/A'}</div>
               <div className="text-xs text-muted-foreground">Seats</div>
@@ -243,13 +247,15 @@ const FeaturedCarCard = ({ car, variant = 'grid' }: FeaturedCarCardProps) => {
               <div className="text-sm font-semibold text-foreground">{car.mileage || 'N/A'}</div>
               <div className="text-xs text-muted-foreground">Mileage</div>
             </div>
+            {showViewCount && (
             <div className="text-center">
               <div className="text-sm font-semibold text-foreground flex items-center justify-center gap-0.5">
                 <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-                {(car.viewCount ?? 0).toLocaleString()}
+                {car.viewCount!.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground">Views</div>
             </div>
+            )}
           </div>
 
           {car.description && (

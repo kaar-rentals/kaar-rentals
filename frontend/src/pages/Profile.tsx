@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { User, Mail, Calendar, Eye, Phone, Repeat2, Loader2, RefreshCw, Copy, Check, ToggleLeft, ToggleRight, Edit2, Save, X } from "lucide-react";
+import { User, Mail, Calendar, Eye, Phone, Repeat2, Loader2, RefreshCw, Copy, Check, ToggleLeft, ToggleRight, Edit2, Save, X, Heart } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import socket from "@/lib/socket";
 import { apiUrl } from "@/lib/apiBase";
 import OwnerListingsManager from "@/components/owner/OwnerListingsManager";
 import { normalizeCar } from "@/lib/normalizeCar";
+import { useFavorites } from "@/contexts/FavoritesContext";
 
 const Profile = () => {
   const { unique_id } = useParams<{ unique_id?: string }>();
@@ -32,6 +33,7 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [editingPrice, setEditingPrice] = useState<string | null>(null);
   const [priceForm, setPriceForm] = useState({ price: '', priceType: 'daily' });
+  const { likedCars, loadingLikes } = useFavorites();
 
   // Wait for auth hydration before deciding logged-out state
   useEffect(() => {
@@ -434,7 +436,7 @@ const Profile = () => {
               )}
               {!user?.name && (
                 <h1 className="text-3xl font-bold leading-tight">
-                  {unique_id ? 'User Profile' : 'My Profile'}
+                  {unique_id ? 'Owner Profile' : 'My Profile'}
                 </h1>
               )}
               {user?.unique_id && (
@@ -457,7 +459,9 @@ const Profile = () => {
                 </div>
               )}
               <p className="text-sm text-muted-foreground" aria-live="polite">
-                {unique_id ? 'Public profile' : 'Your account information and listings'}
+                {unique_id
+                  ? 'Browse all listings from this owner'
+                  : 'Your account information and listings'}
               </p>
             </div>
             {authUser && !unique_id && (
@@ -478,7 +482,8 @@ const Profile = () => {
             </Alert>
           )}
 
-          {/* User Profile Card */}
+          {/* User Profile Card — own profile only */}
+          {!unique_id && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -594,13 +599,73 @@ const Profile = () => {
               )}
             </CardContent>
           </Card>
+          )}
+
+          {!unique_id && authUser && token && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Heart className="h-5 w-5 text-red-500" />
+                  Liked Listings
+                </CardTitle>
+                <CardDescription>
+                  Cars you have liked appear here automatically
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingLikes ? (
+                  <div className="text-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                    <p className="text-muted-foreground">Loading liked listings...</p>
+                  </div>
+                ) : likedCars.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Heart className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
+                    <p className="text-muted-foreground mb-2">No liked listings yet</p>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Tap the heart on any car to save it here
+                    </p>
+                    <Link to="/cars">
+                      <Button variant="outline">Browse cars</Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {likedCars.map((listing) => (
+                      <Card key={listing._id} className="overflow-hidden">
+                        <Link to={`/car/${listing._id}/details`}>
+                          <div className="w-full h-48 bg-muted shrink-0 overflow-hidden">
+                            <img
+                              src={listing.images?.[0] || '/placeholder-car.svg'}
+                              alt={`${listing.brand} ${listing.model}`}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          </div>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">
+                              {listing.brand} {listing.model} ({listing.year})
+                            </CardTitle>
+                            <CardDescription>
+                              PKR {(listing.pricePerDay || listing.price || 0).toLocaleString()}
+                              {listing.priceType === 'monthly' ? '/month' : '/day'}
+                            </CardDescription>
+                          </CardHeader>
+                        </Link>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* User's Listings */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Eye className="h-5 w-5" />
-                {unique_id ? 'User Listings' : 'Your Listings'}
+                {unique_id ? 'Owner Listings' : 'Your Listings'}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -619,7 +684,7 @@ const Profile = () => {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {listings.map((listing: any) => (
                     <Card key={listing._id} className="overflow-hidden">
-                      <Link to={`/car/${listing._id}`}>
+                      <Link to={`/car/${listing._id}/details`}>
                         <div className="w-full h-48 bg-muted shrink-0 overflow-hidden">
                           <img
                             src={listing.images?.[0] || "/placeholder-car.svg"}

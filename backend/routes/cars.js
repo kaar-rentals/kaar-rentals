@@ -33,6 +33,41 @@ const isAdmin = require("../middleware/isAdmin");
 
 const VALID_CATEGORIES = ['Sedan', 'SUV', 'Hatchback'];
 
+function getCarOwnerIdFromDoc(car) {
+  const owner = car?.ownerId ?? car?.owner;
+  if (!owner) return null;
+  if (typeof owner === 'string') return String(owner);
+  if (typeof owner === 'object' && owner._id) return String(owner._id);
+  return null;
+}
+
+async function loadViewerIsAdmin(req) {
+  if (req._viewerIsAdmin !== undefined) return req._viewerIsAdmin;
+  if (!req.user?.id && !req.user?._id) {
+    req._viewerIsAdmin = false;
+    return false;
+  }
+  const user = await User.findById(req.user.id || req.user._id)
+    .select('is_admin role')
+    .lean();
+  req._viewerIsAdmin = !!(user && (user.is_admin === true || user.role === 'admin'));
+  return req._viewerIsAdmin;
+}
+
+function canSeeViewCount(req, car, viewerIsAdmin) {
+  if (viewerIsAdmin) return true;
+  if (!req.user?.id && !req.user?._id) return false;
+  const viewerId = String(req.user.id || req.user._id);
+  const ownerId = getCarOwnerIdFromDoc(car);
+  return Boolean(ownerId && viewerId === ownerId);
+}
+
+function stripViewCountUnlessAllowed(req, car, viewerIsAdmin) {
+  if (canSeeViewCount(req, car, viewerIsAdmin)) return car;
+  const { viewCount, ...rest } = car;
+  return rest;
+}
+
 /** Map URL slugs (sedan, suv) and legacy values to schema enum. */
 function normalizeCategoryQuery(category) {
   if (!category) return null;
@@ -166,13 +201,14 @@ router.get("/", async (req, res) => {
       .lean();
 
     // Format owner data based on authentication
+    const viewerIsAdmin = await loadViewerIsAdmin(req);
     cars = cars.map(car => {
       const owner = car.ownerId || car.owner; // Support both ownerId and legacy owner
+      let formatted = car;
       if (owner && typeof owner === 'object') {
         const ownerIdStr = owner._id ? String(owner._id) : null;
         if (req.user) {
-          // Authenticated: include name and location
-          return {
+          formatted = {
             ...car,
             ownerId: ownerIdStr,
             owner: {
@@ -185,8 +221,7 @@ router.get("/", async (req, res) => {
             }
           };
         } else {
-          // Unauthenticated: only unique_id
-          return {
+          formatted = {
             ...car,
             ownerId: ownerIdStr,
             owner: {
@@ -199,7 +234,7 @@ router.get("/", async (req, res) => {
           };
         }
       }
-      return car;
+      return stripViewCountUnlessAllowed(req, formatted, viewerIsAdmin);
     });
 
     // Add caching headers
@@ -274,7 +309,13 @@ router.post("/:id/view", async (req, res) => {
     }
 
     const viewCount = await recordListingView(req.params.id);
-    return res.json({ carId: req.params.id, viewCount });
+    const viewerIsAdmin = await loadViewerIsAdmin(req);
+    const carDoc = await Car.findById(req.params.id).select('ownerId owner').lean();
+    const payload = { carId: req.params.id, recorded: true };
+    if (carDoc && canSeeViewCount(req, carDoc, viewerIsAdmin)) {
+      payload.viewCount = viewCount;
+    }
+    return res.json(payload);
   } catch (err) {
     console.error('Error recording view:', err);
     return res.status(500).json({ message: 'Server error' });
@@ -325,7 +366,8 @@ router.get("/:id", async (req, res) => {
     res.set('Cache-Control', 'public, max-age=20, stale-while-revalidate=60');
     res.set('Vary', 'Authorization');
     
-    res.json(car);
+    const viewerIsAdmin = await loadViewerIsAdmin(req);
+    res.json(stripViewCountUnlessAllowed(req, car, viewerIsAdmin));
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }

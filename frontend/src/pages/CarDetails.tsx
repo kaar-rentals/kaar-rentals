@@ -15,6 +15,7 @@ import { apiUrl } from '@/lib/apiBase';
 import { normalizeCar, getCarOwnerId } from '@/lib/normalizeCar';
 import { usePageSeo } from '@/lib/usePageSeo';
 import { useListingViews } from '@/lib/useListingViews';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 const PLACEHOLDER_IMAGE = '/placeholder-car.svg';
 
@@ -27,7 +28,9 @@ const CarDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isFavorited, setIsFavorited] = useState(false);
+  const { isLiked, toggleLike } = useFavorites();
+  const carId = car?._id || id || '';
+  const isFavorited = carId ? isLiked(String(carId)) : false;
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [contactPhone, setContactPhone] = useState<string | null>(null);
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -37,6 +40,13 @@ const CarDetails = () => {
   const [viewCount, setViewCount] = useState(0);
   const viewRecordedFor = useRef<string | null>(null);
   const dealer = dealers[0]; // For demo, using first dealer
+
+  const currentUserId = user?.id || (user as { _id?: string })?._id;
+  const isAdmin = !!user && (Boolean(user.is_admin) || user.role === 'admin');
+  const ownerId = car ? getCarOwnerId(car) : null;
+  const isOwner =
+    !!currentUserId && !!ownerId && String(ownerId) === String(currentUserId);
+  const canManageListing = isAdmin || isOwner;
 
   const handleViewUpdate = useCallback(
     (payload: { carId: string; viewCount: number }) => {
@@ -50,7 +60,7 @@ const CarDetails = () => {
     [id]
   );
 
-  useListingViews(handleViewUpdate, !!id);
+  useListingViews(handleViewUpdate, !!id && canManageListing);
 
   useEffect(() => {
     loadCar();
@@ -60,18 +70,21 @@ const CarDetails = () => {
   useEffect(() => {
     if (!car?._id || viewRecordedFor.current === car._id) return;
     viewRecordedFor.current = car._id;
-    setViewCount(car.viewCount ?? 0);
+    if (car.viewCount !== undefined) {
+      setViewCount(car.viewCount);
+    }
 
     apiService
       .recordCarView(car._id)
       .then((count) => {
+        if (count === undefined) return;
         setViewCount(count);
         setCar((prev) => (prev ? { ...prev, viewCount: count } : prev));
       })
       .catch(() => {
         /* non-blocking */
       });
-  }, [car?._id]);
+  }, [car?._id, car?.viewCount]);
 
   const setCarNormalized = (raw: Record<string, unknown>) => {
     setCar(normalizeCar(raw));
@@ -157,13 +170,6 @@ const CarDetails = () => {
     ? `Rent a ${car.year} ${car.brand} ${car.model} in ${cityLabel} for PKR ${(car.pricePerDay || car.price || 0).toLocaleString()} per ${car.priceType === 'monthly' ? 'month' : 'day'}. Book verified cars from trusted owners on Kaar.Rentals.`
     : 'View car rental listings on Kaar.Rentals.';
   usePageSeo(seoTitle, seoDescription);
-
-  const currentUserId = user?.id || (user as any)?._id;
-  const isAdmin = !!user && (user.is_admin || user.role === 'admin');
-  const ownerId = car ? getCarOwnerId(car) : null;
-  const isOwner =
-    !!currentUserId && !!ownerId && String(ownerId) === String(currentUserId);
-  const canManageListing = isAdmin || isOwner;
 
   const handleStartEditPrice = () => {
     if (!car) return;
@@ -424,8 +430,9 @@ const CarDetails = () => {
 
                   {/* Heart Icon */}
                   <button 
-                    onClick={() => setIsFavorited(!isFavorited)}
+                    onClick={() => car && void toggleLike(String(car._id || car.id))}
                     className="absolute top-4 right-4 bg-card/90 dark:bg-zinc-900/90 backdrop-blur-sm rounded-full p-3 hover:bg-card dark:hover:bg-zinc-800 transition-colors shadow-lg"
+                    aria-label={isFavorited ? 'Remove from liked listings' : 'Add to liked listings'}
                   >
                     <Heart className={`h-5 w-5 ${isFavorited ? 'text-red-500 fill-current' : 'text-muted-foreground'}`} />
                   </button>
@@ -516,11 +523,15 @@ const CarDetails = () => {
                     <span className="text-lg">{car.year}</span>
                     <span>•</span>
                     <span className="text-lg">{car.engineCapacity}</span>
-                    <span>•</span>
-                    <span className="text-lg flex items-center gap-1.5">
-                      <Eye className="h-4 w-4" />
-                      {viewCount.toLocaleString()} views
-                    </span>
+                    {canManageListing && (
+                      <>
+                        <span>•</span>
+                        <span className="text-lg flex items-center gap-1.5">
+                          <Eye className="h-4 w-4" />
+                          {viewCount.toLocaleString()} views
+                        </span>
+                      </>
+                    )}
                     {(car.city || car.location) && (
                       <>
                         <span>•</span>
@@ -625,39 +636,40 @@ const CarDetails = () => {
               <div className="space-y-6">
                 <div className="bg-card rounded-xl shadow-lg border border-border p-6">
                   <h3 className="text-xl font-semibold mb-4 text-foreground">Owner Details</h3>
-                  {user && car.owner?.name ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-accent/15 dark:bg-accent/20 rounded-full flex items-center justify-center">
-                        <span className="text-accent font-bold text-lg">
-                            {car.owner.name.charAt(0)}
-                        </span>
-                      </div>
-                      <div>
-                          <h4 className="font-semibold text-lg text-foreground">{car.owner.name}</h4>
-                      </div>
-                    </div>
-                    
-                      {car.owner.location && (
+                  {car.owner?.unique_id ? (
+                    <div className="space-y-4">
                       <div className="flex items-center space-x-3">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">{car.owner.location}</span>
+                        <div className="w-12 h-12 bg-accent/15 dark:bg-accent/20 rounded-full flex items-center justify-center">
+                          <span className="text-accent font-bold text-lg">
+                            {(car.owner.name || 'O').charAt(0)}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-lg text-foreground">
+                            {car.owner.name || 'Verified Owner'}
+                          </h4>
+                          {car.owner.location && (
+                            <p className="text-sm text-muted-foreground">{car.owner.location}</p>
+                          )}
+                        </div>
                       </div>
-                      )}
+
+                      <Link to={`/profile/${car.owner.unique_id}`}>
+                        <Button variant="outline" className="w-full min-h-11">
+                          <User className="h-4 w-4 mr-2" />
+                          View owner profile
+                        </Button>
+                      </Link>
+                      <p className="text-xs text-muted-foreground text-center">
+                        See all listings from this owner
+                      </p>
                     </div>
                   ) : (
                     <div className="space-y-4 text-center">
                       <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto" />
                       <p className="text-muted-foreground">
-                        Sign in to view owner details
+                        Owner profile is not available for this listing.
                       </p>
-                      <Button 
-                        className="w-full"
-                        onClick={() => setLoginModalOpen(true)}
-                      >
-                        <LogIn className="h-4 w-4 mr-2" />
-                        Sign in to view owner details
-                      </Button>
                     </div>
                   )}
                 </div>

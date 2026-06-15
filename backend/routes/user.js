@@ -129,4 +129,98 @@ router.get("/me", authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/user/likes/ids - Liked car ids for the authenticated user
+router.get("/likes/ids", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user?.id && !req.user?._id) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const user = await User.findById(req.user.id || req.user._id).select('likedCars').lean();
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.json({
+      likedCarIds: (user.likedCars || []).map((id) => String(id)),
+    });
+  } catch (err) {
+    console.error('Error fetching liked car ids:', err);
+    return res.status(500).json({ error: 'Failed to fetch liked cars' });
+  }
+});
+
+// GET /api/user/likes - Full liked listings for the authenticated user
+router.get("/likes", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user?.id && !req.user?._id) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const Car = require("../models/Car");
+    const user = await User.findById(req.user.id || req.user._id)
+      .populate({
+        path: 'likedCars',
+        match: { isApproved: true },
+      })
+      .lean();
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const cars = (user.likedCars || []).filter(Boolean).map((car) => ({
+      ...car,
+      ownerId: car.ownerId ? String(car.ownerId) : undefined,
+    }));
+
+    return res.json({ cars });
+  } catch (err) {
+    console.error('Error fetching liked cars:', err);
+    return res.status(500).json({ error: 'Failed to fetch liked cars' });
+  }
+});
+
+// POST /api/user/likes/:carId - Like a listing
+router.post("/likes/:carId", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user?.id && !req.user?._id) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const Car = require("../models/Car");
+    const userId = req.user.id || req.user._id;
+    const { carId } = req.params;
+
+    const car = await Car.findById(carId).select('_id isApproved');
+    if (!car || !car.isApproved) {
+      return res.status(404).json({ error: 'Listing not found' });
+    }
+
+    await User.findByIdAndUpdate(userId, { $addToSet: { likedCars: carId } });
+    return res.json({ liked: true, carId });
+  } catch (err) {
+    console.error('Error liking car:', err);
+    return res.status(500).json({ error: 'Failed to like listing' });
+  }
+});
+
+// DELETE /api/user/likes/:carId - Unlike a listing
+router.delete("/likes/:carId", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user?.id && !req.user?._id) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const userId = req.user.id || req.user._id;
+    const { carId } = req.params;
+
+    await User.findByIdAndUpdate(userId, { $pull: { likedCars: carId } });
+    return res.json({ liked: false, carId });
+  } catch (err) {
+    console.error('Error unliking car:', err);
+    return res.status(500).json({ error: 'Failed to unlike listing' });
+  }
+});
+
 module.exports = router;

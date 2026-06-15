@@ -14,7 +14,9 @@ const userSchema = new mongoose.Schema({
   // Membership fields
   membershipActive: { type: Boolean, default: false },
   membershipPlan: { type: String, default: null }, // e.g., 'basic','premium'
-  membershipExpiry: { type: Date, default: null }
+  membershipExpiry: { type: Date, default: null },
+
+  likedCars: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Car' }],
 }, { timestamps: true });
 
 // Index for faster lookups

@@ -55,6 +55,7 @@ interface Car {
     email: string;
     phone?: string;
     location?: string;
+    unique_id?: string;
   };
   viewCount?: number;
   createdAt: string;
@@ -229,7 +230,7 @@ class ApiService {
     return normalizeCar(car as Record<string, unknown>);
   }
 
-  async recordCarView(id: string): Promise<number> {
+  async recordCarView(id: string): Promise<number | undefined> {
     const response = await fetch(apiUrl(`/api/cars/${id}/view`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -238,7 +239,50 @@ class ApiService {
       throw new Error('Failed to record view');
     }
     const data = await this.parseJsonResponse(response);
-    return Number(data.viewCount ?? 0);
+    return data.viewCount !== undefined ? Number(data.viewCount) : undefined;
+  }
+
+  async getLikedCarIds(token?: string): Promise<string[]> {
+    const response = await fetch(apiUrl('/api/user/likes/ids'), {
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch liked listings');
+    }
+    const data = await this.parseJsonResponse(response);
+    return Array.isArray(data.likedCarIds) ? data.likedCarIds.map(String) : [];
+  }
+
+  async getLikedCars(token?: string): Promise<Car[]> {
+    const response = await fetch(apiUrl('/api/user/likes'), {
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch liked listings');
+    }
+    const data = await this.parseJsonResponse(response);
+    const list = Array.isArray(data.cars) ? data.cars : [];
+    return list.map((raw: Record<string, unknown>) => normalizeCar(raw));
+  }
+
+  async likeCar(carId: string, token?: string): Promise<void> {
+    const response = await fetch(apiUrl(`/api/user/likes/${carId}`), {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to like listing');
+    }
+  }
+
+  async unlikeCar(carId: string, token?: string): Promise<void> {
+    const response = await fetch(apiUrl(`/api/user/likes/${carId}`), {
+      method: 'DELETE',
+      headers: getAuthHeaders(token),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to unlike listing');
+    }
   }
 
   async logCarInquiry(id: string, message?: string, token?: string): Promise<void> {

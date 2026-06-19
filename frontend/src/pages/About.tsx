@@ -3,6 +3,7 @@ import { Shield, Award, Users, MapPin } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { apiService } from '@/services/api';
+import { usePageSeo } from '@/lib/usePageSeo';
 
 const About = () => {
   const [stats, setStats] = useState({ users_count: 0, listings_count: 0, featured_count: 0 });
@@ -90,17 +91,12 @@ const About = () => {
     }
   ];
 
-  useEffect(() => {
-    document.title = 'About Kaar.Rentals – Reliable car rentals in Pakistan';
-    const desc = 'Learn how Kaar.Rentals connects verified car owners with renters, offering safe, transparent and premium rental experiences across Pakistan.';
-    let meta = document.querySelector("meta[name='description']");
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.setAttribute('name', 'description');
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute('content', desc);
-  }, []);
+  usePageSeo({
+    title: 'About Kaar.Rentals | Car Listing Marketplace Pakistan',
+    description:
+      'Learn how Kaar.Rentals connects car owners with renters across Pakistan. List your car for rent or browse self-drive listings in major cities.',
+    path: '/about',
+  });
 
   return (
     <div className="min-h-screen">

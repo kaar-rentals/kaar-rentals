@@ -20,8 +20,10 @@ import {
   Clock
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { usePageSeo } from '@/lib/usePageSeo';
 
 const OwnerProfile = () => {
+  usePageSeo({ title: 'Owner Profile | Kaar.Rentals', noIndex: true, path: '/owner-profile' });
   const { user } = useAuth();
 
   if (user?.role !== 'owner' && user?.role !== 'admin') {

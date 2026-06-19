@@ -34,6 +34,18 @@ export function buildPlanWhatsAppMessage(params: {
     .join('\n');
 }
 
+export function buildListCarInquiryMessage(): string {
+  return [
+    'Hi Kaar.Rentals,',
+    '',
+    'I would like to *list my car for rent* in Pakistan.',
+    '',
+    'Please share details about your listing plans (Basic, Standard, Premium, or Lifetime) and how to get started.',
+    '',
+    'Thank you!',
+  ].join('\n');
+}
+
 export function openPlanWhatsApp(params: {
   planName: string;
   carsLabel: string;

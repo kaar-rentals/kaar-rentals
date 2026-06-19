@@ -55,6 +55,7 @@ const Hero = () => {
               <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold leading-tight">
                 Drive Your
                 <span className="block text-accent">Dreams</span>
+                <span className="sr-only"> — Rent a Car in Pakistan</span>
               </h1>
               <p className="text-base sm:text-xl text-foreground/80 max-w-lg">
                 Experience luxury car rental like never before. Premium vehicles, exceptional service, unbeatable prices.
@@ -121,19 +122,19 @@ const Hero = () => {
                 <ul className="space-y-3 text-foreground/80">
                   <li className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-accent rounded-full"></div>
-                    <span>Premium luxury vehicles</span>
+                    <span>Browse cars for rent across Pakistan</span>
                   </li>
                   <li className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-accent rounded-full"></div>
-                    <span>24/7 customer support</span>
+                    <span>Self drive car rental in Lahore, Karachi & Islamabad</span>
                   </li>
                   <li className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-accent rounded-full"></div>
-                    <span>Flexible rental periods</span>
+                    <span>List your car for rent — reach renters via WhatsApp</span>
                   </li>
                   <li className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-accent rounded-full"></div>
-                    <span>Competitive pricing</span>
+                    <span>Monthly listing plans for car owners nationwide</span>
                   </li>
                 </ul>
               </div>

@@ -18,6 +18,7 @@ import {
   UserCheck,
   UserX
 } from 'lucide-react';
+import { usePageSeo } from '@/lib/usePageSeo';
 
 interface DashboardStats {
   totalCars: number;
@@ -39,6 +40,7 @@ interface User {
 }
 
 const Admin = () => {
+  usePageSeo({ title: 'Admin | Kaar.Rentals', noIndex: true, path: '/admin' });
   const { user, token } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [pendingCars, setPendingCars] = useState<any[]>([]);

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Upload, Car, DollarSign, MapPin, X, Image as ImageIcon, Star, CheckCircle, AlertCircle, Loader2, Settings } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Upload, Car, DollarSign, MapPin, X, Image as ImageIcon, Star, CheckCircle, AlertCircle, Loader2, Settings, MessageCircle } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -17,8 +17,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { apiUrl } from '@/lib/apiBase';
+import { usePageSeo } from '@/lib/usePageSeo';
+import { buildListCarInquiryMessage, buildWhatsAppUrl } from '@/lib/whatsapp';
 
 const ListCar = () => {
+  usePageSeo({
+    title: 'List Your Car for Rent in Pakistan | Monthly Listing Plans | Kaar.Rentals',
+    description:
+      'List your car for rent across Pakistan on Kaar.Rentals. Choose Standard, Premium, or Lifetime monthly plans — or Basic for 1–2 cars. Get direct WhatsApp leads from renters. Kaar does not handle bookings.',
+    path: '/list-car',
+  });
+
   const { user, token } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -337,13 +346,28 @@ const ListCar = () => {
           <section className="py-20">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
               <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h1 className="text-3xl font-bold mb-4">Listing Creation Restricted</h1>
-              <p className="text-lg text-muted-foreground mb-6">
-                Listing creation is restricted to admins. Please contact an administrator if you need to create a listing.
+              <h1 className="text-3xl font-bold mb-4">List Your Car for Rent in Pakistan</h1>
+              <p className="text-lg text-muted-foreground mb-4">
+                Kaar.Rentals is a listing marketplace — not a booking platform. Listings are set up manually by our team after you choose a plan.
               </p>
-              <Button onClick={() => navigate('/')} variant="outline">
-                Go to Homepage
-              </Button>
+              <p className="text-lg text-muted-foreground mb-6">
+                Choose a Basic, Standard, Premium, or Lifetime monthly plan to list your car in Lahore, Karachi, Islamabad, or anywhere in Pakistan. Renters browse listings and contact you directly on WhatsApp — you keep full control of rental terms. CNIC verification may be required.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button asChild variant="outline">
+                  <Link to="/pricing">View Listing Plans</Link>
+                </Button>
+                <Button asChild>
+                  <a
+                    href={buildWhatsAppUrl(buildListCarInquiryMessage())}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Contact on WhatsApp
+                  </a>
+                </Button>
+              </div>
             </div>
           </section>
         </main>
@@ -546,7 +570,7 @@ const ListCar = () => {
                     required 
                   />
                   <p className="text-sm text-muted-foreground">
-                    Set a competitive daily rate in Pakistani Rupees. We'll help optimize pricing based on market analysis.
+                    Set your rental rate in PKR. Renters see this price and contact you on WhatsApp to confirm dates and terms.
                   </p>
                 </div>
               </div>
@@ -559,6 +583,9 @@ const ListCar = () => {
                   </div>
                   <h2 className="text-2xl font-bold">Contact Information</h2>
                 </div>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Your WhatsApp number is shown on your listing so customers can reach you directly.
+                </p>
 
                 {/* Dealership Checkbox */}
                 <div className="mb-6">
@@ -675,7 +702,7 @@ const ListCar = () => {
                   <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h4 className="text-lg font-semibold mb-2">Upload Vehicle Photos</h4>
                   <p className="text-muted-foreground mb-4">
-                    Add high-quality photos of your vehicle (exterior, interior, engine bay)
+                    Add clear photos (exterior, interior, dashboard). Good photos help your listing appear in search across Pakistan.
                   </p>
                   <Button 
                     type="button" 

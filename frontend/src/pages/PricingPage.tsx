@@ -9,9 +9,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { buildWhatsAppUrl, buildPlanWhatsAppMessage } from '@/lib/whatsapp';
+import { usePageSeo } from '@/lib/usePageSeo';
 
 const PricingPage = () => {
   const { user } = useAuth();
+  usePageSeo({
+    title: 'Listing Plans for Car Owners | Standard, Premium, Lifetime | Kaar.Rentals',
+    description:
+      'List your car for rent in Pakistan. Choose Standard (PKR 2,999/mo), Premium (PKR 4,999/mo), or Lifetime listing plans. Reach renters in Lahore, Karachi, Islamabad & more.',
+    path: '/pricing',
+  });
   const [form, setForm] = useState({
     plan: 'Standard',
     cars: 'Up to 5 cars',
@@ -21,7 +28,6 @@ const PricingPage = () => {
   });
 
   useEffect(() => {
-    document.title = 'Pricing Plans – Kaar.Rentals';
     if (user?.name) {
       setForm((f) => ({ ...f, name: user.name }));
     }

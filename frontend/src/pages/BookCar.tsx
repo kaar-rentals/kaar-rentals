@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cars } from '@/data/cars';
+import { usePageSeo } from '@/lib/usePageSeo';
 
 const BookCar = () => {
+  usePageSeo({ title: 'Book Car | Kaar.Rentals', noIndex: true, path: '/car/book' });
   const { id } = useParams();
   const car = cars.find(c => c.id === id);
 

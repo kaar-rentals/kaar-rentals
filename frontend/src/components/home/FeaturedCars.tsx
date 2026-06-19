@@ -48,8 +48,7 @@ const FeaturedCars = () => {
             Featured <span className="text-accent">Vehicles</span>
           </h2>
           <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Discover our handpicked selection of premium vehicles, each offering 
-            the perfect blend of luxury, performance, and reliability.
+            Featured self drive car listings across Pakistan — contact owners directly via WhatsApp to rent.
           </p>
         </div>
 

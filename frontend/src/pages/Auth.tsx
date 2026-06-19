@@ -11,8 +11,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { User, Mail, Lock, AlertCircle, Phone } from 'lucide-react';
+import { usePageSeo } from '@/lib/usePageSeo';
 
 const Auth = () => {
+  usePageSeo({
+    title: 'Sign In | Kaar.Rentals',
+    description: 'Sign in to your Kaar.Rentals account.',
+    path: '/auth',
+    noIndex: true,
+  });
+
   const { login, register } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();

@@ -2,27 +2,206 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://kaar.rentals/</loc>
+    <lastmod>2026-06-19T23:45:20.244Z</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://kaar.rentals/cars</loc>
+    <lastmod>2026-06-19T23:45:20.244Z</lastmod>
+    <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://kaar.rentals/rent-car-lahore</loc>
+    <lastmod>2026-06-19T23:45:20.244Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/rent-car-karachi</loc>
+    <lastmod>2026-06-19T23:45:20.244Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/rent-car-islamabad</loc>
+    <lastmod>2026-06-19T23:45:20.244Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/rent-car-rawalpindi</loc>
+    <lastmod>2026-06-19T23:45:20.244Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/rent-car-faisalabad</loc>
+    <lastmod>2026-06-19T23:45:20.244Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/rent-car-peshawar</loc>
+    <lastmod>2026-06-19T23:45:20.244Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/rent-car-multan</loc>
+    <lastmod>2026-06-19T23:45:20.244Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/list-car</loc>
+    <lastmod>2026-06-19T23:45:20.244Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/pricing</loc>
+    <lastmod>2026-06-19T23:45:20.244Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://kaar.rentals/about</loc>
-    <priority>0.5</priority>
+    <lastmod>2026-06-19T23:45:20.244Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://kaar.rentals/contact</loc>
-    <priority>0.5</priority>
+    <lastmod>2026-06-19T23:45:20.244Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://kaar.rentals/privacy-policy</loc>
+    <lastmod>2026-06-19T23:45:20.244Z</lastmod>
+    <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://kaar.rentals/terms-of-service</loc>
+    <lastmod>2026-06-19T23:45:20.244Z</lastmod>
+    <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
+  <url>
+    <loc>https://kaar.rentals/car/6a353552508ce6604f962ba0/details</loc>
+    <lastmod>2026-06-19T12:25:57.159Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/6a35340d508ce6604f962b93/details</loc>
+    <lastmod>2026-06-19T12:20:31.908Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/6a3532fb508ce6604f962b86/details</loc>
+    <lastmod>2026-06-19T12:49:53.865Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/6a35327d508ce6604f962b6d/details</loc>
+    <lastmod>2026-06-19T12:13:50.910Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/6a3531c6508ce6604f962b5c/details</loc>
+    <lastmod>2026-06-19T12:48:52.731Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/6a1ff23c06a59c8efc4f9fc1/details</loc>
+    <lastmod>2026-06-12T08:32:57.972Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/6a1ff1b006a59c8efc4f9f94/details</loc>
+    <lastmod>2026-06-19T20:49:54.078Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/6a1ff10006a59c8efc4f9f51/details</loc>
+    <lastmod>2026-06-12T21:05:56.033Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/6a1ff03806a59c8efc4f9f0c/details</loc>
+    <lastmod>2026-06-19T21:49:11.827Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/699cbe6e40ff819ea910f43b/details</loc>
+    <lastmod>2026-06-12T08:34:50.117Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/699cbbf540ff819ea910f403/details</loc>
+    <lastmod>2026-06-19T10:00:13.110Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/699cbb5840ff819ea910f3fb/details</loc>
+    <lastmod>2026-05-22T11:53:06.052Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/699cbabe40ff819ea910f3ef/details</loc>
+    <lastmod>2026-06-09T08:05:17.983Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/699cb9c740ff819ea910f3c8/details</loc>
+    <lastmod>2026-06-12T08:35:37.167Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/69982e56221c9cf0f660e639/details</loc>
+    <lastmod>2026-06-19T12:50:34.415Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/6996d72087dcab86031c93fc/details</loc>
+    <lastmod>2026-06-12T08:36:20.287Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/6996d63887dcab86031c93f4/details</loc>
+    <lastmod>2026-06-19T11:33:03.397Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/6996d54987dcab86031c93e2/details</loc>
+    <lastmod>2026-06-18T20:01:47.693Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kaar.rentals/car/6996cb48d713fe2ff00c0d66/details</loc>
+    <lastmod>2026-06-19T12:49:09.520Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
 </urlset>
-

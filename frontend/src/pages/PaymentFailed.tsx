@@ -9,8 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
+import { usePageSeo } from '@/lib/usePageSeo';
 
 const PaymentFailed = () => {
+  usePageSeo({ title: 'Payment Failed | Kaar.Rentals', noIndex: true, path: '/payments/failed' });
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, token } = useAuth();

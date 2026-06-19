@@ -1,5 +1,5 @@
-import { useState, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Filter, LayoutGrid, List } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -8,11 +8,19 @@ import FilterBar from '@/components/FilterBar';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import PageLoader from '@/components/layout/PageLoader';
+import { JsonLd } from '@/components/seo/JsonLd';
 import { Car } from '@/services/api';
 import { apiUrl } from '@/lib/apiBase';
 import { normalizeCar } from '@/lib/normalizeCar';
 import { getCarsBrowseShuffleSeed, shuffleCars } from '@/lib/shuffleCars';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { usePageSeo } from '@/lib/usePageSeo';
+import { absoluteUrl } from '@/lib/seo';
+import {
+  getCityLandingBySlug,
+  cityLandingPath,
+} from '@/lib/citySeo';
+import { breadcrumbSchema, cityWebPageSchema } from '@/lib/schema';
 import {
   parseCarFiltersFromSearchParams,
   carFiltersToSearchParams,
@@ -27,12 +35,28 @@ const LAYOUT_STORAGE_KEY = 'cars-view-layout';
 
 type ViewLayout = 'grid' | 'list';
 
+const DEFAULT_HERO = {
+  badge: 'Premium Fleet Collection',
+  h1Line1: 'Discover Your',
+  h1Line2: 'Perfect Ride',
+  intro:
+    'Self drive car listings from verified owners across Pakistan.',
+  introExtended:
+    ' Browse rentals in Lahore, Karachi, Islamabad & more — contact owners via WhatsApp.',
+  trustPills: ['Verified Owners', 'Premium Quality', '24/7 Support'] as const,
+};
+
 const readStoredLayout = (): ViewLayout => {
   const stored = localStorage.getItem(LAYOUT_STORAGE_KEY);
   return stored === 'list' ? 'list' : 'grid';
 };
 
 const Cars = () => {
+  const { citySlug } = useParams<{ citySlug?: string }>();
+  const navigate = useNavigate();
+  const cityLanding = getCityLandingBySlug(citySlug);
+  const cityFilterApplied = useRef(false);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const [allCars, setAllCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,6 +104,39 @@ const Cars = () => {
     const start = (page - 1) * PAGE_SIZE;
     return shuffledCars.slice(start, start + PAGE_SIZE);
   }, [shuffledCars, page]);
+
+  const seoPath = cityLanding
+    ? cityLandingPath(cityLanding.slug)
+    : '/cars';
+
+  usePageSeo({
+    title: cityLanding
+      ? cityLanding.title
+      : 'Browse Cars for Rent in Pakistan | Self-Drive | Kaar.Rentals',
+    description: cityLanding
+      ? cityLanding.description
+      : 'Search self-drive car rentals in Lahore, Karachi, Islamabad & across Pakistan. Filter by city, price & body type. Contact owners directly via WhatsApp.',
+    path: seoPath,
+    keywords: cityLanding?.keywords,
+  });
+
+  useEffect(() => {
+    if (citySlug && !cityLanding) {
+      navigate('/cars', { replace: true });
+    }
+  }, [citySlug, cityLanding, navigate]);
+
+  useEffect(() => {
+    if (!cityLanding || cityFilterApplied.current) return;
+    if (!searchParams.get('city')) {
+      cityFilterApplied.current = true;
+      const next = carFiltersToSearchParams({
+        ...parseCarFiltersFromSearchParams(searchParams),
+        city: cityLanding.cityName,
+      });
+      setSearchParams(next, { replace: true });
+    }
+  }, [cityLanding, searchParams, setSearchParams]);
 
   const handleLayoutChange = (value: string) => {
     if (value !== 'grid' && value !== 'list') return;
@@ -132,19 +189,37 @@ const Cars = () => {
   }, [filters, token, categorySlug]);
 
   useEffect(() => {
-    document.title = 'Browse cars for rent – Kaar.Rentals';
-    const desc =
-      'Search and filter cars for rent by city, price, body type, transmission and more. Verified listings from real owners across Pakistan.';
-    let meta = document.querySelector("meta[name='description']");
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.setAttribute('name', 'description');
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute('content', desc);
-
     loadCars();
   }, [loadCars]);
+
+  const hero = cityLanding
+    ? {
+        badge: cityLanding.badge,
+        h1Line1: cityLanding.h1Line1,
+        h1Line2: cityLanding.h1Line2,
+        intro: cityLanding.intro,
+        introExtended: '',
+        trustPills: cityLanding.trustPills,
+      }
+    : DEFAULT_HERO;
+
+  const citySchema = cityLanding
+    ? [
+        cityWebPageSchema(
+          cityLanding.cityName,
+          absoluteUrl(seoPath),
+          cityLanding.description
+        ),
+        breadcrumbSchema([
+          { name: 'Home', url: absoluteUrl('/') },
+          { name: 'Browse Cars', url: absoluteUrl('/cars') },
+          {
+            name: `Rent a Car in ${cityLanding.cityName}`,
+            url: absoluteUrl(seoPath),
+          },
+        ]),
+      ]
+    : null;
 
   const totalPages = Math.max(1, Math.ceil(shuffledCars.length / PAGE_SIZE));
   const hasNextPage = page < totalPages;
@@ -152,6 +227,7 @@ const Cars = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {citySchema && <JsonLd data={citySchema} />}
       <Header />
       <main className="pt-16 md:pt-20">
         <section className="relative py-10 md:py-24 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 overflow-hidden">
@@ -161,45 +237,56 @@ const Cars = () => {
             <div className="mb-4 md:mb-6">
               <span className="inline-flex items-center px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-blue-100 text-blue-800 dark:bg-primary/15 dark:text-primary text-xs md:text-sm font-medium mb-3 md:mb-4">
                 <span className="w-2 h-2 bg-blue-500 dark:bg-primary rounded-full mr-2 animate-pulse" />
-                Premium Fleet Collection
+                {hero.badge}
               </span>
             </div>
 
             <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-slate-900 dark:text-foreground mb-4 md:mb-6 leading-tight">
-              Discover Your
+              {hero.h1Line1}
               <span className="block text-accent">
-                Perfect Ride
+                {hero.h1Line2}
               </span>
             </h1>
 
             <p className="text-base sm:text-xl text-slate-600 dark:text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-6 md:mb-8">
-              Handpicked premium vehicles from verified owners.
-              <span className="hidden sm:inline">
-                {' '}
-                Each car is carefully selected for quality, performance, and reliability to
-                ensure an exceptional rental experience.
-              </span>
+              {hero.intro}
+              {hero.introExtended && (
+                <span className="hidden sm:inline">{hero.introExtended}</span>
+              )}
             </p>
 
             <div className="hidden sm:flex flex-wrap justify-center items-center gap-6 md:gap-8 text-sm text-slate-500 dark:text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 bg-green-100 dark:bg-green-950/60 rounded-full flex items-center justify-center">
-                  <span className="w-2 h-2 bg-green-500 rounded-full" />
-                </div>
-                <span>Verified Owners</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 bg-blue-100 dark:bg-blue-950/60 rounded-full flex items-center justify-center">
-                  <span className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full" />
-                </div>
-                <span>Premium Quality</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 bg-accent-light dark:bg-accent/20 rounded-full flex items-center justify-center">
-                  <span className="w-2 h-2 bg-accent rounded-full" />
-                </div>
-                <span>24/7 Support</span>
-              </div>
+              {cityLanding ? (
+                hero.trustPills.map((label) => (
+                  <div key={label} className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-green-100 dark:bg-green-950/60 rounded-full flex items-center justify-center">
+                      <span className="w-2 h-2 bg-green-500 rounded-full" />
+                    </div>
+                    <span>{label}</span>
+                  </div>
+                ))
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-green-100 dark:bg-green-950/60 rounded-full flex items-center justify-center">
+                      <span className="w-2 h-2 bg-green-500 rounded-full" />
+                    </div>
+                    <span>Verified Owners</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-blue-100 dark:bg-blue-950/60 rounded-full flex items-center justify-center">
+                      <span className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full" />
+                    </div>
+                    <span>Premium Quality</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-accent-light dark:bg-accent/20 rounded-full flex items-center justify-center">
+                      <span className="w-2 h-2 bg-accent rounded-full" />
+                    </div>
+                    <span>24/7 Support</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </section>
@@ -234,7 +321,9 @@ const Cars = () => {
                     ? 'Please wait while we load our curated collection'
                     : activeCategory
                       ? `Filtered by ${activeCategory}`
-                      : 'Shuffled for variety — explore our full collection'}
+                      : cityLanding
+                        ? `Self drive listings in ${cityLanding.cityName}`
+                        : 'Shuffled for variety — explore our full collection'}
                 </p>
               </div>
 
@@ -273,7 +362,9 @@ const Cars = () => {
                 <p className="text-muted-foreground max-w-md mx-auto">
                   {activeCategory
                     ? `No ${activeCategory} listings match your filters`
-                    : 'Try adjusting your search criteria or filters'}
+                    : cityLanding
+                      ? `No listings in ${cityLanding.cityName} match your filters`
+                      : 'Try adjusting your search criteria or filters'}
                 </p>
               </div>
             ) : (

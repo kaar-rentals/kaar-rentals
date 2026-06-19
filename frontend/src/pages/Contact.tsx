@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { MapPin, Phone, Mail, Clock, MessageCircle, Facebook, Instagram } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -7,19 +6,45 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { contactConfig } from '@/config/contact';
+import { usePageSeo } from '@/lib/usePageSeo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { faqPageSchema } from '@/lib/schema';
+
+const CONTACT_FAQS = [
+  {
+    question: 'What documents do I need to rent a car in Pakistan?',
+    answer:
+      'Valid CNIC and driving license are required. Contact the car owner directly on WhatsApp to confirm documents and rental terms — Kaar.Rentals does not process bookings.',
+  },
+  {
+    question: 'How do I list my car for rent on Kaar.Rentals?',
+    answer:
+      'Choose a listing plan (Basic, Standard, Premium, or Lifetime), contact us on WhatsApp with your car details, and go live after approval. Renters contact you directly on WhatsApp — you keep full control of rental terms.',
+  },
+  {
+    question: 'How does booking work?',
+    answer:
+      'There is no platform booking. Browse listings, then message or call the owner on WhatsApp to arrange pickup, dates, and payment directly.',
+  },
+  {
+    question: 'Which cities do you cover?',
+    answer:
+      'Listings across Pakistan including Lahore, Karachi, Islamabad, Rawalpindi, Faisalabad, Peshawar, and Multan. Owners can list in any city; renters search by location.',
+  },
+  {
+    question: 'What listing plans are available for car owners?',
+    answer:
+      'Basic (PKR 1,499/mo, 1–2 cars), Standard (PKR 2,999/mo), Premium (PKR 4,999/mo), and Lifetime (PKR 5,999 one-time per car). See our pricing page or contact us on WhatsApp to get started.',
+  },
+];
 
 const Contact = () => {
-  useEffect(() => {
-    document.title = 'Contact Kaar.Rentals – Support & bookings';
-    const desc = 'Contact Kaar.Rentals for car rental bookings, support and partnership enquiries. Call, WhatsApp or email our team 24/7.';
-    let meta = document.querySelector("meta[name='description']");
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.setAttribute('name', 'description');
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute('content', desc);
-  }, []);
+  usePageSeo({
+    title: 'Contact Kaar.Rentals | Car Rental Support Pakistan',
+    description:
+      'Contact Kaar.Rentals for car listing support, renter enquiries & help across Pakistan. WhatsApp, phone & email — 24/7.',
+    path: '/contact',
+  });
 
   const contactInfo = [
     {
@@ -46,6 +71,7 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen">
+      <JsonLd data={faqPageSchema(CONTACT_FAQS)} />
       <Header />
       <main className="pt-20">
         {/* Hero Section */}
@@ -209,24 +235,7 @@ const Contact = () => {
             </div>
 
             <div className="space-y-6">
-              {[
-                {
-                  question: "What documents do I need to rent a car?",
-                  answer: "You'll need a valid driver's license, credit card, and ID. International customers may need an international driving permit."
-                },
-                {
-                  question: "Can I modify or cancel my reservation?",
-                  answer: "Yes, you can modify or cancel your reservation up to 24 hours before pickup time without penalty."
-                },
-                {
-                  question: "Is insurance included in the rental price?",
-                  answer: "Basic insurance is included. We offer additional coverage options for enhanced protection."
-                },
-                {
-                  question: "Do you offer delivery and pickup services?",
-                  answer: "Yes, we provide complimentary delivery and pickup within city limits for premium bookings."
-                }
-              ].map((faq, index) => (
+              {CONTACT_FAQS.map((faq, index) => (
                 <div key={index} className="premium-card p-6">
                   <h3 className="text-lg font-semibold mb-3">{faq.question}</h3>
                   <p className="text-muted-foreground">{faq.answer}</p>

@@ -14,6 +14,9 @@ import { cars, dealers } from '@/data/cars';
 import { apiUrl } from '@/lib/apiBase';
 import { normalizeCar, getCarOwnerId } from '@/lib/normalizeCar';
 import { usePageSeo } from '@/lib/usePageSeo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { carProductSchema } from '@/lib/schema';
+import { absoluteUrl, buildCarListingDescription, buildCarListingTitle } from '@/lib/seo';
 import { useListingViews } from '@/lib/useListingViews';
 import { useFavorites } from '@/contexts/FavoritesContext';
 
@@ -164,12 +167,16 @@ const CarDetails = () => {
 
   const cityLabel = car?.city || car?.location || 'Pakistan';
   const seoTitle = car
-    ? `${car.brand} ${car.model} ${car.year} for rent in ${cityLabel} – Kaar.Rentals`
-    : 'Car Details – Kaar.Rentals';
+    ? buildCarListingTitle(car)
+    : 'Car Listings for Rent in Pakistan | Kaar.Rentals';
   const seoDescription = car
-    ? `Rent a ${car.year} ${car.brand} ${car.model} in ${cityLabel} for PKR ${(car.pricePerDay || car.price || 0).toLocaleString()} per ${car.priceType === 'monthly' ? 'month' : 'day'}. Book verified cars from trusted owners on Kaar.Rentals.`
-    : 'View car rental listings on Kaar.Rentals.';
-  usePageSeo(seoTitle, seoDescription);
+    ? buildCarListingDescription(car)
+    : 'Browse self drive car listings across Pakistan on Kaar.Rentals. Contact owners via WhatsApp.';
+  usePageSeo({
+    title: seoTitle,
+    description: seoDescription,
+    path: car ? `/car/${car._id}/details` : '/cars',
+  });
 
   const handleStartEditPrice = () => {
     if (!car) return;
@@ -332,30 +339,24 @@ const CarDetails = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Structured data for car listing */}
-      <script
-        type="application/ld+json"
-        suppressHydrationWarning
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Product',
-            name: `${car.brand} ${car.model} ${car.year}`,
-            description: car.description,
-            image: car.images && car.images.length > 0 ? car.images[0] : undefined,
-            brand: car.brand,
-            url: typeof window !== 'undefined' ? window.location.href : undefined,
-            offers: {
-              '@type': 'Offer',
-              priceCurrency: 'PKR',
-              price: car.pricePerDay || car.price || 0,
-              availability:
-                car.status === 'rented'
-                  ? 'https://schema.org/OutOfStock'
-                  : 'https://schema.org/InStock',
-            },
-          }),
-        }}
+      <JsonLd
+        data={carProductSchema({
+          brand: car.brand,
+          model: car.model,
+          year: car.year,
+          description: car.description,
+          images: car.images,
+          city: car.city,
+          location: car.location,
+          pricePerDay: car.pricePerDay,
+          price: car.price,
+          priceType: car.priceType,
+          status: car.status,
+          category: car.category,
+          url: absoluteUrl(`/car/${car._id}/details`),
+          ownerName: car.owner?.name,
+          ownerPhone: car.owner?.phone,
+        })}
       />
       <Header />
       <main className="pt-16 md:pt-20 pb-24 lg:pb-0">

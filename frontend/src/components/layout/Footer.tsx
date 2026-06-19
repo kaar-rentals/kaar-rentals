@@ -12,7 +12,7 @@ const Footer = () => {
           <div className="space-y-4">
             <BrandLogoLink variant="footer" />
             <p className="text-primary-foreground/70 dark:text-muted-foreground">
-              Premium car rental service offering luxury vehicles with exceptional customer experience.
+              Pakistan's peer-to-peer car listing marketplace. Browse or list cars for rent — contact owners via WhatsApp.
             </p>
             <div className="flex flex-wrap gap-2">
               <a
@@ -61,6 +61,9 @@ const Footer = () => {
             <h3 className="text-lg font-semibold">Quick Links</h3>
             <ul className="space-y-3">
               <li><Link to="/cars" className="inline-flex min-h-10 items-center hover:text-accent transition-colors">Browse Cars</Link></li>
+              <li><Link to="/rent-car-lahore" className="inline-flex min-h-10 items-center hover:text-accent transition-colors">Rent a Car in Lahore</Link></li>
+              <li><Link to="/rent-car-karachi" className="inline-flex min-h-10 items-center hover:text-accent transition-colors">Rent a Car in Karachi</Link></li>
+              <li><Link to="/rent-car-islamabad" className="inline-flex min-h-10 items-center hover:text-accent transition-colors">Rent a Car in Islamabad</Link></li>
               <li><Link to="/about" className="inline-flex min-h-10 items-center hover:text-accent transition-colors">About Us</Link></li>
               <li><Link to="/list-car" className="inline-flex min-h-10 items-center hover:text-accent transition-colors">List Your Car</Link></li>
             </ul>

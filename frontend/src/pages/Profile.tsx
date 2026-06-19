@@ -17,8 +17,10 @@ import { apiUrl } from "@/lib/apiBase";
 import OwnerListingsManager from "@/components/owner/OwnerListingsManager";
 import { normalizeCar } from "@/lib/normalizeCar";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { usePageSeo } from '@/lib/usePageSeo';
 
 const Profile = () => {
+  usePageSeo({ title: 'My Profile | Kaar.Rentals', noIndex: true, path: '/profile' });
   const { unique_id } = useParams<{ unique_id?: string }>();
   const { user: authUser, token, loading: authLoading } = useAuth();
   const navigate = useNavigate();

@@ -10,7 +10,7 @@ const plans = [
     name: 'Basic',
     price: 1499,
     cars: '1–2 cars',
-    description: 'Perfect for individual owners getting started.',
+    description: 'List your car for rent in Lahore, Karachi, Islamabad & across Pakistan.',
     features: [
       'List up to 2 vehicles',
       'Standard listing visibility',
@@ -26,7 +26,7 @@ const plans = [
     name: 'Standard',
     price: 2999,
     cars: 'Up to 5 cars',
-    description: 'Best value for growing fleets and small dealers.',
+    description: 'Reach renters searching for self drive car rental in major Pakistani cities.',
     features: [
       'List up to 5 vehicles',
       'Priority listing placement',
@@ -43,7 +43,7 @@ const plans = [
     name: 'Premium',
     price: 4999,
     cars: 'Unlimited cars',
-    description: 'For dealers and power users who need no limits.',
+    description: 'Maximum visibility for owners listing multiple cars nationwide.',
     features: [
       'Unlimited vehicle listings',
       'Top search placement',
@@ -78,7 +78,7 @@ const Pricing = () => {
             Listing <span className="text-accent">Plans</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Simple monthly pricing to list your cars on Kaar.Rentals. Choose the plan that fits your fleet.
+            Simple monthly pricing to list your car for rent on Kaar.Rentals — Lahore, Karachi, Islamabad & all Pakistan.
           </p>
         </div>
 
@@ -164,7 +164,7 @@ const Pricing = () => {
             </div>
             <h3 className="text-xl font-bold text-foreground mb-2">One-Time Lifetime Option</h3>
             <p className="text-muted-foreground mb-1">
-              Prefer a single payment? List one car forever with our lifetime plan.
+              Prefer a single payment? List your car for rent forever — one car, one fee, no monthly renewal.
             </p>
             <p className="text-2xl font-bold text-foreground">
               PKR 5,999 <span className="text-base font-normal text-muted-foreground">per car</span>
